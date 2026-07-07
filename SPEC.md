@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 (draft) |
+| **Version** | 0.2 (draft) |
 | **Date** | July 7, 2026 |
 | **Prepared by** | Ben Davis, Cato Consulting Group |
 | **Prepared for** | Kevin Kunz, Sleeptopia Inc. · The Mattress Hub |
@@ -14,6 +14,7 @@
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-07-07 | Initial draft |
+| 0.2 | 2026-07-07 | Added §3.5 Definition of Finished & Successful (combined definition of done and success criteria) |
 
 ---
 
@@ -27,7 +28,7 @@ Sleeptopia and The Mattress Hub will build a **consented, HIPAA-grade sleep outc
 
 **The two hard problems, stated honestly.** First, the legal architecture: Sleeptopia is a HIPAA covered entity, The Mattress Hub is a retailer that HIPAA does not cover at all, and consumers' wearable data is governed by a *different* body of law (FTC and state consumer-health-data rules). "Make it HIPAA compliant" is necessary but not sufficient — this spec designs a dual-track compliance framework (§4). Second, the integration reality: some data sources Kevin's vision names have no public API (Tempur-Pedic's Sleeptracker), and others need vendor-terms verification (CPAP telemetry). This spec provides a primary path and a fallback for every source (§5), so no single vendor decision can stall the platform.
 
-**What success looks like:**
+**What success looks like** (headline milestones — the full combined definition of finished-and-successful is §3.5):
 
 | Horizon | Milestones |
 |---|---|
@@ -124,6 +125,24 @@ These twelve changes sharpen the founding plan while staying entirely inside its
 | R10 | **Buy the wearable layer via one aggregator.** A single aggregator integration replaces five brittle native integrations; the only mandatory native work is an iOS app for Apple HealthKit. This cuts months from the build. | §5.5 |
 | R11 | **CPAP provider-side data is the crown jewel — verify the license.** Vendor terms for AirView/Care Orchestrator may not cover research/secondary use. Get written confirmation in Phase 0, with patient-level consent fallbacks (myAir authorization, SD-card ingest) specced and ready. | §5.2 |
 | R12 | **"Not selling data" still needs a business model — write it down.** The revenue lines are sponsored studies, de-identified analytics subscriptions, and validation services, all under DUA, with contractual guardrails that make the no-selling pledge verifiable. Without this the venture's economics are a hand-wave, and partners will notice. | §12.4 |
+
+### 3.5 Definition of Finished & Successful
+
+"Finished" and "successful" are one definition, on purpose. A registry that is fully built but has proven nothing is not finished — it is an expensive database. Each capability below therefore pairs its build-complete condition with the measurable outcome that shows it working. **The platform is done when every row holds true — and stays true.** Phase exit criteria in §13 are the intermediate checkpoints that roll up to this table.
+
+| Capability | Built when… | Successful when… |
+|---|---|---|
+| **Compliance foundation** | Entity formed; IRB-approved protocol live; Lane A/B/C consent instruments in production; BAAs and DUA templates executed; the consent-revocation drill passes end-to-end ([TECHNICAL.md §T3.3](TECHNICAL.md)) | Every stored data element traces to a current consent; revocations propagate within one sync cycle; zero reportable breaches or unauthorized disclosures — verified by annual audit, not asserted |
+| **Enrollment engine** | Clinic and retail funnels both live, each holding the baseline-window discipline (§6.2) | 300–600 consented participants by month 12; 1,500–3,000 by month 24; ≥ 400 Lane-C **linked** participants by month 24 (the platform's most valuable cohort); baseline window captured for ≥ 70% of enrollees |
+| **Data engine** | All five source classes (§5.1–5.5) plus the PRO battery (§5.6) flowing into the identified tier | ≥ 80% of active participants meet the ≥ 14-valid-nights/month rule (§6.5); CPAP telemetry present for ≥ 90% of CPAP participants; mattress SKU attached to ≥ 95% of enrolled retail purchases; day-90 PRO completion ≥ 60% |
+| **Research engine** | OMOP research mart live and versioned under an Expert Determination opinion; statistical analysis plans pre-specified; external-access workflow operating (§11.4) | Registry methods paper published; the flagship positional-OSA sub-study delivers a well-powered answer to G4 — **in either direction**: a definitive "mattress choice doesn't move positional outcomes" is success; an underpowered shrug is failure |
+| **Business engine** | Partner reporting on the de-identified tier; recommendation engine v1 shipped inside the §10.3 guardrails; multi-site onboarding kit ready | ≥ 1 sponsored study signed; ≥ 1 external site (DME or dental practice) contributing data; the STOP-BANG → HST referral funnel measurably generating Sleeptopia patients; partner revenue covering platform operating costs by month 36 |
+
+The single-sentence test, for the partners' wall:
+
+> The platform is finished and successful when a participant can walk in through either front door, be consented in plain language, have their sleep measured before and after treatment without manual heroics, and — pooled with a few thousand others — teach us something about positional sleep apnea worth publishing; when a partner is paying for those insights under a DUA; and when not one byte of identifiable patient data has ever been sold or leaked.
+
+**Explicitly not success**: raw enrollment counts without linked, baseline-complete participants; dashboards without publications; a technically complete platform whose consent, baseline, or data-quality discipline has quietly eroded. This table is the tripwire that surfaces §14's risks early — review it against live numbers quarterly.
 
 ---
 
@@ -482,7 +501,7 @@ Partners receive **analyses, and de-identified or Limited-Data-Set access under 
 
 ## 13. Implementation Roadmap
 
-Phases sequence the full vision; nothing is cut. Effort bands assume a small senior team (shape in [TECHNICAL.md §T5](TECHNICAL.md)); dollar bands are order-of-magnitude for planning, not quotes.
+Phases sequence the full vision; nothing is cut. Each phase's exit criteria are intermediate checkpoints toward the combined definition of finished-and-successful in §3.5. Effort bands assume a small senior team (shape in [TECHNICAL.md §T5](TECHNICAL.md)); dollar bands are order-of-magnitude for planning, not quotes.
 
 | Phase | Months | Contents | Exit criteria | Effort |
 |---|---|---|---|---|
