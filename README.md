@@ -18,6 +18,7 @@ The long-term value is not selling patient data. It is building a compliant, de-
 | [TECHNICAL.md](TECHNICAL.md) | Development team | Integration specifications, data model, system architecture, security controls, build estimates |
 | [DELIVERY.md](DELIVERY.md) | Kevin, partners, delivery team | Start-to-finish agent-accelerated build timeline, agent staffing plan, critical path |
 | [EVALUATION.md](EVALUATION.md) | Partners, evaluation agents | Objective measurement criteria run by independent (non-build) agents: gate reviews, continuous checks, quarterly scorecard |
+| [DEMO.md](DEMO.md) | Ben (build), Kevin (post-demo) | August demo: end-to-end demo arc, element-level working-core vs. reserve tables, 4-week build plan |
 
 ## How to read
 
