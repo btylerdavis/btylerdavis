@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.2 (draft) |
+| **Version** | 0.3 (draft) |
 | **Date** | July 7, 2026 |
 | **Prepared by** | Ben Davis, Cato Consulting Group |
 | **Prepared for** | Kevin Kunz, Sleeptopia Inc. · The Mattress Hub |
@@ -15,6 +15,7 @@
 |---|---|---|
 | 0.1 | 2026-07-07 | Initial draft |
 | 0.2 | 2026-07-07 | Added §3.5 Definition of Finished & Successful (combined definition of done and success criteria) |
+| 0.3 | 2026-07-07 | Cross-linked new DELIVERY.md (agent-accelerated timeline and staffing) and EVALUATION.md (independent evaluation harness) |
 
 ---
 
@@ -142,7 +143,7 @@ The single-sentence test, for the partners' wall:
 
 > The platform is finished and successful when a participant can walk in through either front door, be consented in plain language, have their sleep measured before and after treatment without manual heroics, and — pooled with a few thousand others — teach us something about positional sleep apnea worth publishing; when a partner is paying for those insights under a DUA; and when not one byte of identifiable patient data has ever been sold or leaked.
 
-**Explicitly not success**: raw enrollment counts without linked, baseline-complete participants; dashboards without publications; a technically complete platform whose consent, baseline, or data-quality discipline has quietly eroded. This table is the tripwire that surfaces §14's risks early — review it against live numbers quarterly.
+**Explicitly not success**: raw enrollment counts without linked, baseline-complete participants; dashboards without publications; a technically complete platform whose consent, baseline, or data-quality discipline has quietly eroded. This table is the tripwire that surfaces §14's risks early — review it against live numbers quarterly. Independent, agent-run measurement of every row — with methods, thresholds, and cadences — is specified in [EVALUATION.md](EVALUATION.md).
 
 ---
 
@@ -501,7 +502,7 @@ Partners receive **analyses, and de-identified or Limited-Data-Set access under 
 
 ## 13. Implementation Roadmap
 
-Phases sequence the full vision; nothing is cut. Each phase's exit criteria are intermediate checkpoints toward the combined definition of finished-and-successful in §3.5. Effort bands assume a small senior team (shape in [TECHNICAL.md §T5](TECHNICAL.md)); dollar bands are order-of-magnitude for planning, not quotes.
+Phases sequence the full vision; nothing is cut. Each phase's exit criteria are intermediate checkpoints toward the combined definition of finished-and-successful in §3.5, and each phase exit is verified by an independent gate review ([EVALUATION.md §3](EVALUATION.md)). Effort bands assume a small senior team (shape in [TECHNICAL.md §T5](TECHNICAL.md)); dollar bands are order-of-magnitude for planning, not quotes. An agent-accelerated delivery calendar that compresses these phases to roughly twelve months of build time — without changing their scope or exit criteria — is in [DELIVERY.md](DELIVERY.md).
 
 | Phase | Months | Contents | Exit criteria | Effort |
 |---|---|---|---|---|

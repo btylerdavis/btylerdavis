@@ -16,6 +16,8 @@ The long-term value is not selling patient data. It is building a compliant, de-
 |---|---|---|
 | [SPEC.md](SPEC.md) | Kevin, The Mattress Hub, business partners, counsel | Vision, goals, legal/compliance architecture, data sources, study design, participant experience, partnerships, roadmap, risks |
 | [TECHNICAL.md](TECHNICAL.md) | Development team | Integration specifications, data model, system architecture, security controls, build estimates |
+| [DELIVERY.md](DELIVERY.md) | Kevin, partners, delivery team | Start-to-finish agent-accelerated build timeline, agent staffing plan, critical path |
+| [EVALUATION.md](EVALUATION.md) | Partners, evaluation agents | Objective measurement criteria run by independent (non-build) agents: gate reviews, continuous checks, quarterly scorecard |
 
 ## How to read
 
