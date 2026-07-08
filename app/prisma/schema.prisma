@@ -1,0 +1,203 @@
+// Demo subset of TECHNICAL.md §T2 (outcomes-store data model).
+//
+// Datasource is SQLite for local dev; the schema is kept Postgres-compatible
+// (no SQLite-only features) so the datasource can be swapped to Supabase
+// Postgres at deploy time. Enum-like fields are plain String columns with the
+// allowed values documented — string-check constraints / native enums are
+// added when we land on Postgres. JSON payloads are stored as JSON strings
+// (String columns) for the same reason.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity split (T2.1). The outcomes models below know only participantId.
+// DemoIdentity is the demo stand-in for the production Identity & Consent
+// Service (ICS): display fields live ONLY here, and outcomes queries must
+// never join DemoIdentity except in explicitly identified-tier views.
+// ---------------------------------------------------------------------------
+
+model Participant {
+  id                   String   @id @default(uuid())
+  yearOfBirth          Int
+  sex                  String // "male" | "female"
+  enrollmentTouchpoint String // "clinic" | "retail"
+  createdAt            DateTime @default(now())
+
+  identity          DemoIdentity?
+  consentRecords    ConsentRecord[]
+  episodes          Episode[]
+  treatmentEvents   TreatmentEvent[]
+  devices           Device[]
+  mattressPurchases MattressPurchase[]
+  sleepSessions     SleepSession[]
+  observations      Observation[]
+  proResponses      ProResponse[]
+}
+
+/// Demo-only display fields, split from Participant to mirror the production
+/// identity split (ICS vs. outcomes store). Never joined in outcomes queries.
+model DemoIdentity {
+  id            String @id @default(uuid())
+  participantId String @unique
+  displayName   String
+  email         String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Consent (T2.6). Append-only by convention: revocation flips status and sets
+// revokedAt on the existing record; re-grant creates a NEW record. Rows are
+// never deleted, so full history is preserved.
+// ---------------------------------------------------------------------------
+
+model ConsentRecord {
+  id                String    @id @default(uuid())
+  participantId     String
+  instrumentType    String // "LANE_A" | "LANE_B" | "LANE_C"
+  instrumentVersion String
+  status            String // "granted" | "revoked" | "expired"
+  grantedAt         DateTime
+  revokedAt         DateTime?
+  /// JSON string: array of { dataClass, use } grants (ConsentScope[])
+  scope             String
+  createdAt         DateTime  @default(now())
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@index([participantId, instrumentType])
+}
+
+model Episode {
+  id            String    @id @default(uuid())
+  participantId String
+  protocolPhase String // "baseline" | "intervention" | "followup"
+  startDate     DateTime
+  endDate       DateTime?
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@index([participantId])
+}
+
+model TreatmentEvent {
+  id            String   @id @default(uuid())
+  participantId String
+  type          String // "cpap_setup" | "appliance_delivery" | "mattress_delivery" | "titration_change" | "therapy_stop"
+  eventDate     DateTime
+  /// JSON string
+  detail        String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@index([participantId, type])
+}
+
+model Device {
+  id            String    @id @default(uuid())
+  participantId String
+  deviceClass   String // "wearable" | "cpap" | "sleep_mat" | "appliance"
+  make          String
+  model         String
+  assignedAt    DateTime
+  returnedAt    DateTime?
+
+  participant  Participant   @relation(fields: [participantId], references: [id])
+  sleepSession SleepSession[]
+  observations Observation[]
+
+  @@index([participantId, deviceClass])
+}
+
+/// Curated reference data (T2.4 catalog); Tempur-Pedic lines seeded first.
+model MattressCatalog {
+  sku            String @id
+  brand          String
+  model          String
+  firmnessRating Int // normalized 1-10
+  materialClass  String // "memory_foam" | "hybrid" | "innerspring" | "latex"
+  size           String
+
+  purchases MattressPurchase[]
+}
+
+model MattressPurchase {
+  id            String    @id @default(uuid())
+  participantId String
+  sku           String
+  purchaseDate  DateTime
+  deliveryDate  DateTime? // delivery date = exposure change timestamp
+  storeId       String
+
+  participant Participant     @relation(fields: [participantId], references: [id])
+  catalogItem MattressCatalog @relation(fields: [sku], references: [sku])
+
+  @@index([participantId])
+}
+
+model SleepSession {
+  id            String   @id @default(uuid())
+  participantId String
+  source        String // e.g. "healthkit" | "aggregator:garmin" | "sleep_mat"
+  deviceId      String?
+  startTs       DateTime
+  endTs         DateTime
+  /// JSON string: stages, efficiency, interruptions, ...
+  summary       String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+  device      Device?     @relation(fields: [deviceId], references: [id])
+
+  @@index([participantId, startTs])
+}
+
+/// Canonical time-series record (T2.3). Adding a source never adds columns.
+model Observation {
+  id            String   @id @default(uuid())
+  participantId String
+  source        String // "airview" | "aggregator:garmin" | "healthkit" | "sleep_mat" | "hst" | "pro" | "pos" | ...
+  deviceId      String?
+  concept       String // "cpap_usage_minutes" | "residual_ahi" | "supine_time_pct" | "therapy_gap" | ...
+  valueNumeric  Float?
+  valueText     String?
+  unit          String?
+  effectiveDate DateTime
+  grain         String // "raw" | "session" | "day" | "period"
+  /// JSON string array, e.g. ["short_wear","device_gap"]
+  qualityFlags  String
+  ingestedAt    DateTime @default(now())
+
+  participant Participant @relation(fields: [participantId], references: [id])
+  device      Device?     @relation(fields: [deviceId], references: [id])
+
+  @@index([participantId, concept, effectiveDate])
+  @@index([concept, effectiveDate])
+}
+
+model ProResponse {
+  id                String   @id @default(uuid())
+  participantId     String
+  instrument        String // "ESS" | "ISI" | "STOP_BANG" | "nightly_wear"
+  instrumentVersion String
+  administeredAt    DateTime
+  /// JSON string: per-item scores
+  itemScores        String
+  totalScore        Float
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@index([participantId, instrument, administeredAt])
+}
+
+/// Singleton row holding the demo "current date" (the time machine's clock).
+model SimClock {
+  id          String   @id @default("singleton")
+  currentDate DateTime
+}
