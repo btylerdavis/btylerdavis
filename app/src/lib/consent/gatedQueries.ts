@@ -50,6 +50,45 @@ function splitGranted(
 }
 
 /**
+ * Applies the read gate to fetched rows.
+ *
+ * "Requested" classes are either the explicit opts.dataClasses or the classes
+ * actually present in the fetched rows; any requested class without a current
+ * grant marks the result blocked and its rows are filtered out. When nothing
+ * was fetched and nothing was explicitly requested, the result is blocked
+ * unless the participant holds at least one grant for the use — so a
+ * no-grant participant always reads as { data: [], blocked: true }.
+ */
+function gateRows<T>(
+  rows: T[],
+  classOf: (row: T) => DataClass,
+  grants: GrantSet,
+  use: ConsentUse,
+  explicit: DataClass[] | undefined,
+  fallbackClasses: DataClass[]
+): GatedResult<T> {
+  const inScope = explicit ? rows.filter((row) => explicit.includes(classOf(row))) : rows;
+  const encountered = [...new Set(inScope.map(classOf))];
+  const requested = explicit ?? encountered;
+  const { granted, blocked } = splitGranted(grants, requested, use);
+
+  if (requested.length === 0) {
+    // Nothing stored and nothing explicitly asked for: blocked unless some
+    // grant exists for this use.
+    const anyGrant = fallbackClasses.some((dc) => grantSetHas(grants, dc, use));
+    return anyGrant
+      ? { data: [], blocked: false, blockedDataClasses: [] }
+      : { data: [], blocked: true, blockedDataClasses: fallbackClasses };
+  }
+
+  return {
+    data: inScope.filter((row) => granted.has(classOf(row))),
+    blocked: blocked.length > 0,
+    blockedDataClasses: blocked,
+  };
+}
+
+/**
  * Observations for a participant, filtered by consent grant for the given
  * use. With no current grant this returns data: [] and blocked: true.
  */
@@ -58,13 +97,6 @@ export async function getObservations(
   opts: GatedReadOptions
 ): Promise<GatedResult<Observation>> {
   const grants = opts.grants ?? (await loadGrants(participantId));
-  const requested = opts.dataClasses ?? OBSERVATION_DATA_CLASSES;
-  const { granted, blocked } = splitGranted(grants, requested, opts.use);
-
-  if (granted.size === 0) {
-    return { data: [], blocked: true, blockedDataClasses: blocked };
-  }
-
   const rows = await prisma.observation.findMany({
     where: {
       participantId,
@@ -75,9 +107,14 @@ export async function getObservations(
     },
     orderBy: { effectiveDate: "asc" },
   });
-
-  const data = rows.filter((row) => granted.has(sourceToDataClass(row.source)));
-  return { data, blocked: blocked.length > 0, blockedDataClasses: blocked };
+  return gateRows(
+    rows,
+    (row) => sourceToDataClass(row.source),
+    grants,
+    opts.use,
+    opts.dataClasses,
+    OBSERVATION_DATA_CLASSES
+  );
 }
 
 /** Sleep sessions, gated the same way (sources: wearable / sleep_mat). */
@@ -86,13 +123,6 @@ export async function getSleepSessions(
   opts: GatedReadOptions
 ): Promise<GatedResult<SleepSession>> {
   const grants = opts.grants ?? (await loadGrants(participantId));
-  const requested = opts.dataClasses ?? (["wearable_sleep", "sleep_mat"] as DataClass[]);
-  const { granted, blocked } = splitGranted(grants, requested, opts.use);
-
-  if (granted.size === 0) {
-    return { data: [], blocked: true, blockedDataClasses: blocked };
-  }
-
   const rows = await prisma.sleepSession.findMany({
     where: {
       participantId,
@@ -102,9 +132,14 @@ export async function getSleepSessions(
     },
     orderBy: { startTs: "asc" },
   });
-
-  const data = rows.filter((row) => granted.has(sourceToDataClass(row.source)));
-  return { data, blocked: blocked.length > 0, blockedDataClasses: blocked };
+  return gateRows(
+    rows,
+    (row) => sourceToDataClass(row.source),
+    grants,
+    opts.use,
+    opts.dataClasses,
+    ["wearable_sleep", "sleep_mat"]
+  );
 }
 
 /** PRO responses, gated on the pro_responses data class. */
@@ -179,7 +214,10 @@ export async function getLinkedProfile(
           orderBy: { effectiveDate: "asc" },
         })
       : Promise.resolve([]),
-    prisma.treatmentEvent.findMany({ where: { participantId }, orderBy: { eventDate: "asc" } }),
+    // Treatment events are clinical-lane data: gated on hst_clinical like HST rows.
+    grantSetHas(grants, "hst_clinical", opts.use)
+      ? prisma.treatmentEvent.findMany({ where: { participantId }, orderBy: { eventDate: "asc" } })
+      : Promise.resolve([]),
     // Identity join is allowed ONLY in the identified tier.
     opts.use === "view_identified"
       ? prisma.demoIdentity.findUnique({ where: { participantId } })

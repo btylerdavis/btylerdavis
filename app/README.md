@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sleep Outcomes Platform — Demo App
 
-## Getting Started
+Week 1 foundation of the [DEMO.md](../DEMO.md) build: Next.js (App Router) + TypeScript + Tailwind + Prisma. SQLite locally; the schema is Postgres-compatible and swaps to Supabase Postgres at deploy.
 
-First, run the development server:
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env && npm install   # install (generates the Prisma client)
+npx prisma migrate dev                # create/migrate the local SQLite db
+npm run seed                          # deterministic ~2,000-participant synthetic cohort (~75s)
+npm test                              # vitest: consent engine + time machine
+npm run dev                           # then open http://localhost:3000/dev/status
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What's here
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `prisma/schema.prisma` — demo subset of the TECHNICAL.md §T2 data model. Display fields live only in `DemoIdentity` (mirrors the production identity split); consent history is append-only.
+- `src/lib/consent/` — the consent engine (production semantics, TECHNICAL.md §T2.6): `(dataClass, use)` scope grants per instrument (Lane A/B/C), `assertIngestAllowed` ingest gate on every write path, consent-gated read helpers (`getObservations`, `getSleepSessions`, `getLinkedProfile` — the only DemoIdentity join in the codebase), and `revokeConsent`/`grantConsent` (revoke flips status + `revokedAt`; re-grant appends a new record).
+- `src/lib/synthetic/` — deterministic cohort generator (seeded PRNG, no `Math.random`): OSA severity 35/40/25, ~50% supine-predominant, five treatment arms, adherence decay with `therapy_gap` outcomes, nightly wearable/CPAP/sleep-mat observations with literature-plausible treatment effects (supine-time −8..15 pts post medium-firm-hybrid delivery; ESS −3..5 on adherent CPAP), 15% wearable missingness, ESS/ISI/STOP-BANG PROs. Marcus Reed's id is exported as `MARCUS_REED_PARTICIPANT_ID`.
+- `src/lib/simclock.ts` — the time machine: `advanceDays(n)` generates the newly-elapsed nights for all participants (same deterministic nightly logic as the seed) and respects revoked consent.
+- `/dev/status` — server-rendered foundation check: counts, sim clock, Marcus's consent states, and allowed/blocked consent-gate probes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Re-seeding is safe and reproducible: `npm run seed` wipes and regenerates identical data.
