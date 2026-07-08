@@ -27,8 +27,10 @@ import {
   sourceToDataClass,
   type DataClass,
 } from "@/lib/consent";
+import { GuardrailBadge } from "@/components/RecommendationCard";
 import { prisma } from "@/lib/db";
 import { formatDay, shortId, toIsoDay } from "@/lib/format";
+import { loadRecommendations } from "@/lib/recommendations/queries";
 import { getSimClock, MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { addDays } from "@/lib/synthetic/profiles";
 
@@ -72,11 +74,12 @@ export default async function ParticipantTrendsPage({
   const [simDate, grants] = await Promise.all([getSimClock(), loadGrants(id)]);
   const windowFrom = addDays(simDate, -(WINDOW_DAYS - 1));
 
-  const [observations, pros, events, linked] = await Promise.all([
+  const [observations, pros, events, linked, recommendations] = await Promise.all([
     getObservations(id, { use: "view_identified", grants, from: windowFrom, to: simDate }),
     getProResponses(id, { use: "view_identified", grants, instruments: ["ESS", "ISI"] }),
     getTreatmentEvents(id, { use: "view_identified", grants }),
     getLinkedProfile(id, { use: "view_identified", grants }),
+    loadRecommendations(id, { grants }),
   ]);
 
   // --- day scaffold: every night in the window, missing nights stay null ---
@@ -228,6 +231,39 @@ export default async function ParticipantTrendsPage({
               </div>
             </div>
           </Card>
+
+          {/* AI recommendations preview (Act 7) — identified-tier, guardrail-labeled */}
+          {!recommendations.blocked && recommendations.recommendations.length > 0 && (
+            <Card className="p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-navy">
+                    {recommendations.recommendations.length === 1
+                      ? "1 recommendation for you"
+                      : `${recommendations.recommendations.length} recommendations for you`}
+                  </h2>
+                  <ul className="mt-2 space-y-1.5">
+                    {recommendations.recommendations.map((rec) => (
+                      <li key={rec.ruleId} className="flex flex-wrap items-center gap-2 text-sm">
+                        <GuardrailBadge guardrail={rec.guardrail} />
+                        <span className="text-body">{rec.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link
+                  href={`/participant/${id}/recommendations`}
+                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                >
+                  See why →
+                </Link>
+              </div>
+              <p className="mt-3 border-t border-pale-blue pt-2 text-[11px] text-muted">
+                Wellness guidance, not medical advice — runs on your identified data under your
+                consent (SPEC §10.2)
+              </p>
+            </Card>
+          )}
 
           {/* Treatment timeline — the before/after anchor */}
           <ChartCard

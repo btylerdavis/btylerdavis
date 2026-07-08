@@ -430,10 +430,12 @@ export function TrendSparkline({
   points,
   unit,
   color = SERIES.primary,
+  name = "Sleep efficiency",
 }: {
   points: { day: string; value: number | null }[];
   unit: string;
   color?: string;
+  name?: string;
 }) {
   return (
     <div className="h-20">
@@ -446,7 +448,7 @@ export function TrendSparkline({
             cursor={CURSOR}
             isAnimationActive={false}
           />
-          <Line dataKey="value" name="Sleep efficiency" stroke={color} {...LINE_PROPS} />
+          <Line dataKey="value" name={name} stroke={color} {...LINE_PROPS} />
         </LineChart>
       </ResponsiveContainer>
     </div>

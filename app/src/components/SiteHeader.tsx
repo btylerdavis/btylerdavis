@@ -14,26 +14,36 @@ import Link from "next/link";
  * - "coach":      the sleep-coach console chrome (clinic door).
  * - "research":   the registry research-mart console chrome.
  * - "compliance": the consent/compliance console chrome.
+ * - "partner":    the Tempur-Sealy partner console (DUA-gated, de-id only).
+ * - "exec":       the executive business-layer console.
  */
 const RESEARCH_LINKS = [
   { href: "/research", label: "Cohort explorer" },
   { href: "/research/positional", label: "Positional study" },
   { href: "/research/compare", label: "Comparisons" },
   { href: "/research/deid", label: "De-identification" },
+  { href: "/research/abstract", label: "Abstract" },
 ];
 
 const COMPLIANCE_LINKS = [{ href: "/compliance/revocation", label: "Revocation" }];
+
+const BUSINESS_LINKS = [
+  { href: "/partner", label: "Partner portal" },
+  { href: "/exec", label: "Exec dashboard" },
+];
 
 const UTILITY_HEADLINES: Record<string, string> = {
   coach: "Sleep Coach Console — Wichita",
   research: "Research Console — de-identified mart, DUA-gated",
   compliance: "Compliance Console — consent enforcement, audited",
+  partner: "Partner console — de-identified, DUA-gated",
+  exec: "Executive Console — funnel, growth, and the data asset",
 };
 
 export function SiteHeader({
   variant = "site",
 }: {
-  variant?: "site" | "retail" | "coach" | "research" | "compliance";
+  variant?: "site" | "retail" | "coach" | "research" | "compliance" | "partner" | "exec";
 }) {
   const utilityLinks = ["Submit Rx", "Pay My Bill", "Reorder Supplies"];
   const navLinks = [
@@ -120,6 +130,16 @@ export function SiteHeader({
               Compliance
             </span>
           )}
+          {variant === "partner" && (
+            <span className="rounded-full bg-navy px-3 py-1 text-xs font-semibold text-white sm:text-sm">
+              Partner · Tempur-Sealy
+            </span>
+          )}
+          {variant === "exec" && (
+            <span className="rounded-full bg-hero-navy px-3 py-1 text-xs font-semibold text-white sm:text-sm">
+              Executive
+            </span>
+          )}
         </div>
       </div>
 
@@ -149,6 +169,22 @@ export function SiteHeader({
             Compliance
           </span>
           {COMPLIANCE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-medium text-body hover:text-brand-blue"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <span
+            aria-hidden
+            className="mx-1 hidden h-3.5 border-l border-pale-blue sm:inline-block"
+          />
+          <span className="font-semibold tracking-[0.12em] text-navy uppercase">
+            Business
+          </span>
+          {BUSINESS_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
