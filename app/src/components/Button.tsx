@@ -6,7 +6,7 @@ import type { ComponentProps, ReactNode } from "react";
  * full-radius, solid brandBlue with white text; accentPurple variant for
  * portal/external-style actions (the "Sleeptopia Direct" pattern).
  */
-export type ButtonVariant = "primary" | "purple" | "outline" | "quiet";
+export type ButtonVariant = "primary" | "purple" | "outline" | "quiet" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
@@ -18,6 +18,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "border border-brand-blue/60 bg-white text-navy hover:bg-pale-blue focus-visible:outline-brand-blue",
   quiet:
     "bg-transparent text-navy underline-offset-4 hover:underline focus-visible:outline-brand-blue",
+  danger:
+    "bg-danger text-white hover:bg-hero-navy focus-visible:outline-danger",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

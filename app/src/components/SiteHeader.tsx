@@ -5,17 +5,35 @@ import Link from "next/link";
  * Site chrome mirroring sleeptopia.com's header: a utilityBar-colored top
  * strip (Submit Rx / Pay My Bill / Reorder Supplies + purple "Sleeptopia
  * Direct" pill — inert, for authenticity) over a white nav band with the
- * logo top-left.
+ * logo top-left, plus a slim console strip linking the Research and
+ * Compliance screens (DEMO.md Acts 5–6).
  *
  * Variants:
- * - "site":   consumer chrome with the shop nav links (inert).
- * - "retail": consumer chrome co-branded "× The Mattress Hub".
- * - "coach":  the sleep-coach console chrome (clinic door).
+ * - "site":       consumer chrome with the shop nav links (inert).
+ * - "retail":     consumer chrome co-branded "× The Mattress Hub".
+ * - "coach":      the sleep-coach console chrome (clinic door).
+ * - "research":   the registry research-mart console chrome.
+ * - "compliance": the consent/compliance console chrome.
  */
+const RESEARCH_LINKS = [
+  { href: "/research", label: "Cohort explorer" },
+  { href: "/research/positional", label: "Positional study" },
+  { href: "/research/compare", label: "Comparisons" },
+  { href: "/research/deid", label: "De-identification" },
+];
+
+const COMPLIANCE_LINKS = [{ href: "/compliance/revocation", label: "Revocation" }];
+
+const UTILITY_HEADLINES: Record<string, string> = {
+  coach: "Sleep Coach Console — Wichita",
+  research: "Research Console — de-identified mart, DUA-gated",
+  compliance: "Compliance Console — consent enforcement, audited",
+};
+
 export function SiteHeader({
   variant = "site",
 }: {
-  variant?: "site" | "retail" | "coach";
+  variant?: "site" | "retail" | "coach" | "research" | "compliance";
 }) {
   const utilityLinks = ["Submit Rx", "Pay My Bill", "Reorder Supplies"];
   const navLinks = [
@@ -32,9 +50,7 @@ export function SiteHeader({
       <div className="bg-utility-bar text-hero-navy">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 text-xs sm:px-6">
           <span className="truncate font-medium">
-            {variant === "coach"
-              ? "Sleep Coach Console — Wichita"
-              : "Better Sleep Starts with Sleeptopia."}
+            {UTILITY_HEADLINES[variant] ?? "Better Sleep Starts with Sleeptopia."}
           </span>
           <nav aria-label="Utility" className="flex items-center gap-3 sm:gap-4">
             {utilityLinks.map((label) => (
@@ -94,7 +110,54 @@ export function SiteHeader({
               Coach portal
             </span>
           )}
+          {variant === "research" && (
+            <span className="rounded-full bg-brand-blue px-3 py-1 text-xs font-semibold text-white sm:text-sm">
+              Research
+            </span>
+          )}
+          {variant === "compliance" && (
+            <span className="rounded-full bg-accent-purple px-3 py-1 text-xs font-semibold text-white sm:text-sm">
+              Compliance
+            </span>
+          )}
         </div>
+      </div>
+
+      {/* Console strip — compact second-row links to the Act 5–6 screens */}
+      <div className="border-b border-pale-blue bg-surface">
+        <nav
+          aria-label="Consoles"
+          className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-1.5 text-xs sm:px-6"
+        >
+          <span className="font-semibold tracking-[0.12em] text-sky-blue uppercase">
+            Research
+          </span>
+          {RESEARCH_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-medium text-body hover:text-brand-blue"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <span
+            aria-hidden
+            className="mx-1 hidden h-3.5 border-l border-pale-blue sm:inline-block"
+          />
+          <span className="font-semibold tracking-[0.12em] text-accent-purple uppercase">
+            Compliance
+          </span>
+          {COMPLIANCE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="font-medium text-body hover:text-brand-blue"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );

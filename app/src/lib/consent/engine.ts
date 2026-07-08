@@ -181,6 +181,21 @@ export async function revokeConsent(
   });
 }
 
+/**
+ * Full append-only consent ledger for a participant, oldest first — the
+ * audit trail the revocation console renders (grant → revoke → re-grant all
+ * stay visible; nothing is ever deleted).
+ */
+export async function getConsentHistory(
+  participantId: string,
+  db: Db = prisma
+): Promise<ConsentRecord[]> {
+  return db.consentRecord.findMany({
+    where: { participantId },
+    orderBy: [{ grantedAt: "asc" }, { createdAt: "asc" }],
+  });
+}
+
 /** Latest record per instrument — for status/audit views. */
 export async function getConsentStates(
   participantId: string,
