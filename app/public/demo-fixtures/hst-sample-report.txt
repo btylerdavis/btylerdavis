@@ -1,0 +1,35 @@
+SLEEPTOPIA SLEEP DIAGNOSTICS
+Home Sleep Apnea Test — Interpretation Report
+
+Patient ID:        (removed for demo)
+Referring Source:  The Mattress Hub retail screening program
+Study Date:        2026-04-08
+Recording Device:  NightOwl home sleep apnea test, single-night recording
+Total Recording Time: 7 h 12 min        Total Sleep Time (est.): 6 h 24 min
+
+RESPIRATORY FINDINGS
+Overall AHI: 24.0 events/hour (moderate range)
+Supine AHI: 41.0 events/hour
+Non-supine AHI: 9.8 events/hour
+ODI (4%): 19.2 events/hour
+Respiratory events were predominantly obstructive hypopneas with
+associated desaturation; central events were rare.
+
+OXIMETRY
+Mean SpO2: 93.8 %
+SpO2 Nadir: 84.0 %
+Cumulative time below 90% saturation: 14.2 minutes.
+
+BODY POSITION
+Time Supine: 52.0 % of total sleep time
+Event clustering was strongly position-dependent, with the large
+majority of respiratory events occurring while supine.
+
+IMPRESSION
+Moderate obstructive sleep apnea with marked positional dependence
+(supine AHI more than four times the non-supine AHI). Findings are
+consistent with supine-predominant (positional) OSA. Recommend review
+of positional therapy options alongside standard PAP evaluation.
+
+This report is a synthetic demonstration document. It does not
+describe a real patient.

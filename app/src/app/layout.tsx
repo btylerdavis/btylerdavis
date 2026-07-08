@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fredoka, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import { DemoWatermark } from "@/components/DemoWatermark";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/** Headings: bold rounded sans (brand.md visual match for the site). */
+const fredoka = Fredoka({
   subsets: ["latin"],
+  variable: "--font-fredoka",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/** Body: clean humanist sans. */
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
+  variable: "--font-source-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Sleep Outcomes Platform — Demo",
-  description: "Sleep outcomes registry demo (synthetic cohort)",
+  title: "Sleeptopia — Better Sleep Starts with Data",
+  description:
+    "Sleeptopia × The Mattress Hub sleep outcomes demo. Synthetic cohort — no real patient data.",
+  icons: { icon: "/brand/sleeptopia-mark.svg" },
 };
 
 export default function RootLayout({
@@ -25,9 +30,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fredoka.variable} ${sourceSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        <DemoWatermark />
+      </body>
     </html>
   );
 }
