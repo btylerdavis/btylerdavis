@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
@@ -41,6 +42,8 @@ import { addDays } from "@/lib/synthetic/profiles";
  * data class lacks a grant render the same red-chip blocked pattern as the
  * snapshot page — consent visibility is a feature.
  */
+export const metadata: Metadata = { title: "Sleep trends" };
+
 export const dynamic = "force-dynamic";
 
 const WINDOW_DAYS = 90;

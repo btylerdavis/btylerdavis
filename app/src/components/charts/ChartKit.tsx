@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import { formatDay } from "@/lib/format";
-import { eventColor, EVENT_SHORT_LABELS } from "./eventStyles";
+import { eventColor, planEventReferenceLines } from "./eventStyles";
 import { CHROME, FONT, shortDay, sparseDayTicks } from "./theme";
 
 /**
@@ -196,27 +196,32 @@ export interface ChartEvent {
 }
 
 /**
- * ReferenceLine elements for events inside the charted window. Labels
- * stagger vertically so near-simultaneous events (Marcus: mattress day 13,
- * CPAP day 14) stay readable.
+ * ReferenceLine elements for events inside the charted window, laid out by
+ * planEventReferenceLines: events within 3 days share one combined label
+ * (Marcus: mattress day 13 + CPAP day 14 → "Mattress + CPAP"), and label
+ * anchors still near each other stagger vertically — no collisions.
  */
 export function eventReferenceLines(events: ChartEvent[], days: string[]): ReactNode[] {
   const inWindow = events.filter((event) => days.includes(event.day));
-  return inWindow.map((event, index) => (
+  return planEventReferenceLines(inWindow).map((line) => (
     <ReferenceLine
-      key={`${event.type}-${event.day}`}
-      x={event.day}
-      stroke={eventColor(event.type)}
+      key={`${line.type}-${line.day}`}
+      x={line.day}
+      stroke={eventColor(line.type)}
       strokeWidth={1.5}
       strokeDasharray="4 3"
-      label={{
-        value: EVENT_SHORT_LABELS[event.type] ?? event.label,
-        position: "insideTop",
-        dy: (index % 2) * 14,
-        fill: eventColor(event.type),
-        fontSize: FONT.tick,
-        fontWeight: 600,
-      }}
+      label={
+        line.label === null
+          ? undefined
+          : {
+              value: line.label,
+              position: "insideTop",
+              dy: line.dy,
+              fill: eventColor(line.type),
+              fontSize: FONT.tick,
+              fontWeight: 600,
+            }
+      }
     />
   ));
 }

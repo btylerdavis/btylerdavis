@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import {
   getConsentStates,
@@ -10,6 +11,8 @@ import { MARCUS_REED_PARTICIPANT_ID } from "@/lib/synthetic/profiles";
  * Foundation verification page: eyeball that the data model, seed, sim clock
  * and consent gates all work. Read-only — never mutates state on render.
  */
+export const metadata: Metadata = { title: "Build status" };
+
 export const dynamic = "force-dynamic";
 
 export default async function DevStatusPage() {
@@ -126,6 +129,9 @@ export default async function DevStatusPage() {
       <p className="text-xs text-gray-400">
         Foundation build (Week 1). Seed via <code>npm run seed</code>; advance the time machine via{" "}
         <code>advanceDays(n)</code> in <code>src/lib/simclock.ts</code>.
+      </p>
+      <p className="mt-2 text-xs text-gray-400">
+        Demonstration environment — synthetic cohort, no real patient data.
       </p>
     </main>
   );

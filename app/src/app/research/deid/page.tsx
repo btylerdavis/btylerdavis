@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -26,6 +27,8 @@ import { MARCUS_REED_PARTICIPANT_ID } from "@/lib/synthetic/profiles";
  * pseudonym, 5-year age band, identifiers dropped. Below: small-cell
  * suppression on cohort counts, and the mart CSV extract.
  */
+export const metadata: Metadata = { title: "De-identification" };
+
 export const dynamic = "force-dynamic";
 
 const SEVERITY_ORDER = ["mild", "moderate", "severe"];

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/Card";
@@ -24,6 +25,8 @@ import { DUA_COOKIE } from "../dua";
  * cell under k=11. The DUA cookie gates entry; the "what you cannot see"
  * card makes SPEC §12.3's rules of engagement visible.
  */
+export const metadata: Metadata = { title: "Partner dashboard" };
+
 export const dynamic = "force-dynamic";
 
 export default async function PartnerDashboardPage() {

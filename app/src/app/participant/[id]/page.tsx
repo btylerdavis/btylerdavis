@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
@@ -24,6 +25,8 @@ import { getSimClock } from "@/lib/simclock";
  * (getLinkedProfile) permits it — otherwise the page shows the pseudonymous
  * participant id, demonstrating the identity split.
  */
+export const metadata: Metadata = { title: "Participant snapshot" };
+
 export const dynamic = "force-dynamic";
 
 const LANE_LABELS: Record<string, string> = {

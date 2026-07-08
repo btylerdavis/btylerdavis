@@ -16,7 +16,10 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "Sleeptopia — Better Sleep Starts with Data",
+  title: {
+    default: "Sleeptopia — Better Sleep Starts with Data",
+    template: "%s — Sleeptopia",
+  },
   description:
     "Sleeptopia × The Mattress Hub sleep outcomes demo. Synthetic cohort — no real patient data.",
   icons: { icon: "/brand/sleeptopia-mark.svg" },

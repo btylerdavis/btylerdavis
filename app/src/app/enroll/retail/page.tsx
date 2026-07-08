@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { prisma } from "@/lib/db";
@@ -9,6 +10,8 @@ import { RetailFlow } from "./RetailFlow";
  * The retail door (DEMO.md Act 1): the in-store QR landing at The Mattress
  * Hub. Multi-step client flow; all writes happen in server actions.
  */
+export const metadata: Metadata = { title: "Join at the store" };
+
 export const dynamic = "force-dynamic";
 
 export default async function RetailEnrollPage() {

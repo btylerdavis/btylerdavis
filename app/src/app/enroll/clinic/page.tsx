@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { toIsoDay } from "@/lib/format";
@@ -9,6 +10,8 @@ import { ClinicFlow } from "./ClinicFlow";
  * enrollment — combined ICF + HIPAA (Lane A), HST intake with positional-OSA
  * flagging, CPAP setup, and the Lane C linkage beat.
  */
+export const metadata: Metadata = { title: "Clinic enrollment" };
+
 export const dynamic = "force-dynamic";
 
 export default async function ClinicEnrollPage() {

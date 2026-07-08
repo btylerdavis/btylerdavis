@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -19,6 +20,8 @@ import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
  * consent-filtered research-tier reads; the methods card is the honesty
  * layer, styled as a proper card rather than fine print.
  */
+export const metadata: Metadata = { title: "Positional study" };
+
 export const dynamic = "force-dynamic";
 
 export default async function PositionalDashboardPage() {

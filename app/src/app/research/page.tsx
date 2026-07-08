@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -22,6 +23,8 @@ import { MATTRESS_CATALOG } from "@/lib/synthetic/catalog";
  * come from the consent-filtered research tier (use "research_deid"): a
  * revoked participant vanishes from every number on this page.
  */
+export const metadata: Metadata = { title: "Cohort explorer" };
+
 export const dynamic = "force-dynamic";
 
 export default async function ResearchExplorerPage({

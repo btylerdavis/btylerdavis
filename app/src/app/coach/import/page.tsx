@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -9,6 +10,8 @@ import { ImportFlow } from "./ImportFlow";
  * through the consent ingest gates, visible on the trends charts
  * immediately.
  */
+export const metadata: Metadata = { title: "Device import" };
+
 export const dynamic = "force-dynamic";
 
 export default function CoachImportPage() {

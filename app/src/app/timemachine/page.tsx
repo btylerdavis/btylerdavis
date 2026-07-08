@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -11,6 +12,8 @@ import { TimeMachineControl } from "./TimeMachineControl";
  * front and center; advancing it generates every participant's newly-elapsed
  * nights through the consent ingest gates and every dashboard recomputes.
  */
+export const metadata: Metadata = { title: "Time machine" };
+
 export const dynamic = "force-dynamic";
 
 export default async function TimeMachinePage() {

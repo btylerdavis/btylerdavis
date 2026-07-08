@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -16,6 +17,8 @@ import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
  * indication callout — the demo point is that the platform surfaces the
  * threat instead of burying it. Precomputed in lib/research/compare (tested).
  */
+export const metadata: Metadata = { title: "Treatment comparisons" };
+
 export const dynamic = "force-dynamic";
 
 const ARM_SHORT: Record<string, string> = {

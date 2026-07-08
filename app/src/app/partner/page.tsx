@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Card } from "@/components/Card";
@@ -13,6 +14,8 @@ import { DUA_COOKIE } from "./dua";
  * Accepting sets a session cookie (server action) and opens the dashboard;
  * SPEC §12.3's rules of engagement are on the card, not in fine print.
  */
+export const metadata: Metadata = { title: "Partner portal" };
+
 export const dynamic = "force-dynamic";
 
 export default async function PartnerLandingPage() {

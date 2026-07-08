@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -16,6 +17,8 @@ import { MAX_SIM_DAYS } from "@/lib/simclock";
  * data-asset tiles. All counts are consent-filtered aggregates — the same
  * discipline as the coach and research layers, one level up.
  */
+export const metadata: Metadata = { title: "Exec dashboard" };
+
 export const dynamic = "force-dynamic";
 
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;

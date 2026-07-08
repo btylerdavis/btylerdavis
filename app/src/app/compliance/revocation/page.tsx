@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -30,6 +31,8 @@ import { RevocationConsole } from "./RevocationConsole";
  * move. The console (client) triggers the server action and renders the
  * before/after report; refresh() re-renders these panels around it.
  */
+export const metadata: Metadata = { title: "Revocation console" };
+
 export const dynamic = "force-dynamic";
 
 const CLASS_LABELS: Record<DataClass, string> = {

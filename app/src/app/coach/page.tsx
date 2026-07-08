@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -15,6 +16,8 @@ import { formatDay, shortId } from "@/lib/format";
  * patient list. All aggregates are consent-filtered cohort-wide; names
  * appear only where the Lane C identified join permits.
  */
+export const metadata: Metadata = { title: "Coach portal" };
+
 export const dynamic = "force-dynamic";
 
 const FLAG_PANEL_LIMIT = 8;
@@ -50,8 +53,8 @@ export default async function CoachPortalPage({
                   Your patients, tonight
                 </h1>
                 <p className="mt-2 text-sm text-muted">
-                  {tiles.enrolled.toLocaleString("en-US")} clinic-enrolled participants as of{" "}
-                  {formatDay(dashboard.clockIso)} · every number below passed the consent gate
+                  {tiles.enrolled.toLocaleString("en-US")} consented patients · both doors · as
+                  of {formatDay(dashboard.clockIso)} — every number below passed the consent gate
                 </p>
               </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">

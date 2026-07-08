@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -15,6 +16,8 @@ import { CopyAbstractButton } from "./CopyAbstractButton";
  * print stylesheet (Tailwind print: variants) strips the chrome so the
  * browser's Print → PDF produces a clean one-pager, watermark included.
  */
+export const metadata: Metadata = { title: "Study abstract" };
+
 export const dynamic = "force-dynamic";
 
 export default async function AbstractPage() {

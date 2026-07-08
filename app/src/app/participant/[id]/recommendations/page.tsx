@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
@@ -19,6 +20,8 @@ import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
  * instead of cards. Every card carries its §10.3 guardrail-class badge and
  * the non-device-CDS boundary line.
  */
+export const metadata: Metadata = { title: "Recommendations" };
+
 export const dynamic = "force-dynamic";
 
 const CLASS_LABELS: Record<string, string> = {
