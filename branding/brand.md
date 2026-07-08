@@ -1,30 +1,43 @@
 # Sleeptopia Branding Kit (demo)
 
-**Status: structure complete — awaiting exact assets (see "What Ben provides" below).**
+**Status: complete — colors and structure sampled from Ben's July 7 screenshots of sleeptopia.com; logo recreated as SVG.**
 
-## Why the assets aren't pulled yet
+## Palette (sampled from screenshots)
 
-This build environment's network policy blocks outbound requests to sleeptopia.com (and to archive/proxy mirrors of it), so the logo file and exact colors could not be extracted automatically. Everything that *is* verifiable from public listings is captured below; the palette in [tokens.json](tokens.json) is a provisional sleep-brand theme, clearly flagged, that keeps UI work unblocked until the real values drop in.
+| Token | Hex | Where it appears on the site |
+|---|---|---|
+| primaryNavy | `#1B4A7A` | Headings, "Sleep" in wordmark, nav links |
+| heroNavy | `#1A2B4C` | Hero overlay card, dark panels |
+| brandBlue | `#3F92CE` | Pill CTA buttons (Browse HSTs, Book An Appointment) |
+| skyBlue | `#5FAEDD` | "topia" in wordmark, logo mark, eyebrow text |
+| utilityBar | `#A9D9EF` | Top utility bar |
+| paleBlue | `#E1F0FA` | Section background wash |
+| accentPurple | `#8A5EC1` | "Sleeptopia Direct" button, "Step 1/2:" labels |
+| textBody | `#3E4A5A` | Body copy |
 
-## Verified brand facts (public listings)
+Shape language: **pill buttons** (full radius), large-radius (~16px) white cards with soft shadows, airy light-blue sections. Full tokens incl. demo-only semantic colors (success/warning/danger/watermark): [tokens.json](tokens.json).
 
-| Item | Value |
-|---|---|
-| Name | Sleeptopia (Sleeptopia, Inc.) |
-| Tagline | "Your End-To-End Sleep Apnea Service Provider" (site title) |
-| Address | 411 S Pattie St, Wichita, KS 67211 |
-| Phone | (316) 573-5699 |
-| Positioning | Home sleep tests, same-day setup, CPAP machines/masks/supplies, sleep coaches, works with all insurances |
-| Co-brand for demo | "Sleeptopia × The Mattress Hub" (retail-door screens + footer) |
+## Typography
 
-## What Ben provides (≈5 minutes, from any browser)
+Headings: bold rounded sans — visual match **Fredoka** (fallback Baloo 2/Nunito). Body: clean humanist sans — visual match **Source Sans 3** (fallback Lato). Close matches, not confirmed from page source; pin exactly anytime by pasting the site's `fonts.googleapis.com` URL.
 
-1. **Screenshot** of the sleeptopia.com homepage (full page if possible) — paste it into the chat. Exact colors get sampled from it and tokens.json updated.
-2. **Logo file**: right-click the site logo → "Save image as…" → drop it in chat or commit to `branding/assets/sleeptopia-logo.png` (plus a white/knockout version if the site has one in the footer).
-3. Optional: the fonts — view page source, search "fonts.googleapis" and paste the URL(s).
+## Logo
 
-## How the app consumes this
+Recreated as SVG from the screenshots (rounded plus-cross: navy plus offset lower-left behind a sky-blue plus, two-tone wordmark):
 
-- `app/` reads `branding/tokens.json` at build time → Tailwind theme extension (week 2 UI task).
-- Every screen: Sleeptopia logo/wordmark top-left, `DEMO DATA` watermark bottom-right, co-brand line in footer.
-- Until the logo file lands, the app renders a wordmark fallback ("Sleeptopia" in heading font + primary color, moon glyph) — swapping to the real logo is a single file drop, no code change.
+- `assets/sleeptopia-mark.svg` — mark only (favicons, small UI)
+- `assets/sleeptopia-logo.svg` — full lockup, light backgrounds
+- `assets/sleeptopia-logo-dark-bg.svg` — full lockup, navy panels/footers
+
+Faithful at header sizes. Optional: drop the site's original file over these paths for pixel-exact fidelity — no code change needed.
+
+## Voice & structure cues (for demo authenticity)
+
+- Hero pattern: dark navy card over lifestyle photo; question-led ("What Brought You Here Today?") with pill-button choices — reuse this pattern for the demo's enrollment entry.
+- Step pattern: "One. Two. Done." eyebrow + purple "Step 1/2:" labels — reuse for enrollment walkthroughs.
+- Utility bar: Submit Rx / Pay My Bill / Reorder Supplies / purple "Sleeptopia Direct" — mirror the layout for the coach-portal chrome.
+- **Narrative hook: the site's shop already includes "Mattress & Pillows."** The Mattress Hub partnership extends a category Sleeptopia already sells — use this line in the demo: the platform connects a business Kevin is already in to the clinical outcomes he already generates.
+
+## Co-branding rule
+
+Sleeptopia primary throughout; The Mattress Hub name on retail-door screens and footer: "Sleeptopia × The Mattress Hub".
