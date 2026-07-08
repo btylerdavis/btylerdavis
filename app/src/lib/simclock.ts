@@ -11,7 +11,7 @@ import {
   type GeneratedBatch,
   type WriteCounts,
 } from "./synthetic/generator";
-import { addDays, buildProfile } from "./synthetic/profiles";
+import { addDays, buildProfile, DEMO_EPOCH } from "./synthetic/profiles";
 
 /**
  * The time machine (DEMO.md Act 3). A singleton SimClock row holds the
@@ -23,6 +23,23 @@ import { addDays, buildProfile } from "./synthetic/profiles";
  */
 
 export const SIM_CLOCK_ID = "singleton";
+
+/**
+ * Demo safety rail: the clock never advances past day 400 of the demo
+ * timeline (DEMO_EPOCH = Marcus's enrollment). Advancing the whole cohort
+ * one day writes ~10k rows; 400 days keeps the database and every chart
+ * window comfortably inside rehearsed territory.
+ */
+export const MAX_SIM_DAYS = 400;
+
+export function maxSimDate(): Date {
+  return addDays(DEMO_EPOCH, MAX_SIM_DAYS);
+}
+
+/** Whole days since Marcus's enrollment (day 0 = DEMO_EPOCH). */
+export function simDayNumber(date: Date): number {
+  return Math.round((date.getTime() - DEMO_EPOCH.getTime()) / 86_400_000);
+}
 
 export async function getSimClock(): Promise<Date> {
   const row = await prisma.simClock.findUnique({ where: { id: SIM_CLOCK_ID } });
@@ -60,6 +77,12 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
 
   const from = await getSimClock();
   const to = addDays(from, n);
+  if (to > maxSimDate()) {
+    throw new Error(
+      `advanceDays: refusing to advance past day ${MAX_SIM_DAYS} of the demo timeline ` +
+        `(requested day ${simDayNumber(to)})`
+    );
+  }
 
   const participants = await prisma.participant.findMany({ select: { id: true } });
   const consentByParticipant = new Map<string, ConsentRecord[]>();

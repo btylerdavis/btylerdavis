@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "./db";
 import { evaluateGrants, revokeConsent } from "./consent";
-import { advanceDays, getSimClock, setSimClock } from "./simclock";
+import { advanceDays, getSimClock, MAX_SIM_DAYS, maxSimDate, setSimClock, simDayNumber } from "./simclock";
 import { enrollmentRows } from "./synthetic/enrollment";
 import { buildIngestGate, nightlyRows } from "./synthetic/generator";
 import {
@@ -124,5 +124,18 @@ describe("time machine (sim clock)", () => {
 
   it("getSimClock throws before seeding", async () => {
     await expect(getSimClock()).rejects.toThrow(/npm run seed/);
+  });
+
+  it("refuses to advance past day 400 of the demo timeline", async () => {
+    // No participants inserted: generation is a no-op, only the rail matters.
+    await setSimClock(addDays(maxSimDate(), -1));
+    const summary = await advanceDays(1); // lands exactly on the rail — allowed
+    expect(simDayNumber(summary.to)).toBe(MAX_SIM_DAYS);
+
+    await expect(advanceDays(1)).rejects.toThrow(/day 400/);
+    // Overshooting from below is refused whole, not clamped.
+    await setSimClock(addDays(maxSimDate(), -3));
+    await expect(advanceDays(10)).rejects.toThrow(/day 400/);
+    expect(simDayNumber(await getSimClock())).toBe(MAX_SIM_DAYS - 3);
   });
 });

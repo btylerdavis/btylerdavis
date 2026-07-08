@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
@@ -116,9 +117,17 @@ export default async function ParticipantPage({
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
-              Participant snapshot
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                Participant snapshot
+              </p>
+              <Link
+                href={`/participant/${id}/trends`}
+                className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+              >
+                View trends →
+              </Link>
+            </div>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               {displayName ?? `Participant ${shortId(id)}`}
             </h1>

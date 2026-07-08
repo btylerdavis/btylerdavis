@@ -1,4 +1,4 @@
-import type { Observation, SleepSession, ProResponse } from "@prisma/client";
+import type { Observation, SleepSession, ProResponse, TreatmentEvent } from "@prisma/client";
 import { prisma } from "../db";
 import { grantSetHas, loadGrants, type GrantSet } from "./engine";
 import { sourceToDataClass } from "./scopes";
@@ -157,6 +157,29 @@ export async function getProResponses(
       ...(opts.instruments ? { instrument: { in: opts.instruments } } : {}),
     },
     orderBy: { administeredAt: "asc" },
+  });
+  return { data, blocked: false, blockedDataClasses: [] };
+}
+
+/**
+ * Treatment events (cpap_setup, mattress_delivery, therapy_stop, ...) are
+ * clinical-lane data, gated on hst_clinical — the same rule getLinkedProfile
+ * applies. Refused outright without a current grant for the requested use.
+ */
+export async function getTreatmentEvents(
+  participantId: string,
+  opts: { use: ConsentUse; types?: string[]; grants?: GrantSet }
+): Promise<GatedResult<TreatmentEvent>> {
+  const grants = opts.grants ?? (await loadGrants(participantId));
+  if (!grantSetHas(grants, "hst_clinical", opts.use)) {
+    return { data: [], blocked: true, blockedDataClasses: ["hst_clinical"] };
+  }
+  const data = await prisma.treatmentEvent.findMany({
+    where: {
+      participantId,
+      ...(opts.types ? { type: { in: opts.types } } : {}),
+    },
+    orderBy: { eventDate: "asc" },
   });
   return { data, blocked: false, blockedDataClasses: [] };
 }

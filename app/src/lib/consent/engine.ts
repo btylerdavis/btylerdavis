@@ -75,6 +75,35 @@ export function grantSetHas(grants: GrantSet, dataClass: DataClass, use: Consent
   return grants.has(grantKey(dataClass, use));
 }
 
+const NO_GRANTS: GrantSet = new Set<string>();
+
+/**
+ * Effective grants for EVERY participant in one query — the cohort-scale
+ * counterpart of loadGrants. Bulk read paths (coach portal aggregates, time
+ * machine) use this so consent filtering stays a single table scan instead
+ * of N per-participant queries. Participants with no records map to an
+ * empty set (everything refused).
+ */
+export async function loadAllGrants(db: Db = prisma): Promise<Map<string, GrantSet>> {
+  const records = await db.consentRecord.findMany();
+  const byParticipant = new Map<string, ConsentRecord[]>();
+  for (const record of records) {
+    const list = byParticipant.get(record.participantId) ?? [];
+    list.push(record);
+    byParticipant.set(record.participantId, list);
+  }
+  const grants = new Map<string, GrantSet>();
+  for (const [participantId, list] of byParticipant) {
+    grants.set(participantId, evaluateGrants(list));
+  }
+  return grants;
+}
+
+/** Missing-safe accessor for loadAllGrants results: absent = no grants. */
+export function grantsFor(all: Map<string, GrantSet>, participantId: string): GrantSet {
+  return all.get(participantId) ?? NO_GRANTS;
+}
+
 /** Checks the latest consent state; revoked/expired grants fail. */
 export async function hasGrant(
   participantId: string,
