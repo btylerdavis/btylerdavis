@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { loadCoachDashboard } from "../coach/queries";
+import {
+  dataClassConsentStates,
+  restoreDataClass,
+  revokeDataClass,
+} from "../compliance/revocation";
 import { prisma } from "../db";
 import { pseudonym } from "../deid";
 import { loadExecDashboard } from "../exec/queries";
@@ -26,7 +31,9 @@ import {
   grantConsent,
   grantSetHas,
   loadGrants,
+  reviseConsentScope,
   revokeConsent,
+  sourceToDataClass,
   type ConsentUse,
 } from "./index";
 
@@ -363,5 +370,168 @@ describe("full revocation seals every product surface", () => {
     const ledger = await prisma.consentRecord.findMany({ where: { participantId: subject } });
     expect(ledger).toHaveLength(3); // append-only: flipped, never deleted
     expect(ledger.every((record) => record.status === "revoked" && record.revokedAt !== null)).toBe(true);
+  });
+});
+
+describe("partial revocation (per data class)", () => {
+  it("revoking only wearable_sleep blocks that class everywhere while CPAP keeps flowing; restore works", async () => {
+    const subject = await seedFullParticipant("Partial Pat", TP_SKU);
+    const control = await seedFullParticipant("Kept Kim", OTHER_SKU);
+
+    // --- sanity BEFORE: the class is granted and flowing ----------------------
+    const statesBefore = await dataClassConsentStates(subject);
+    expect(
+      statesBefore.find((state) => state.dataClass === "wearable_sleep")?.granted
+    ).toBe(true);
+
+    // --- revoke ONE class -------------------------------------------------------
+    const report = await revokeDataClass(subject, "wearable_sleep");
+    expect(report.action).toBe("revoke");
+    expect(report.dataClass).toBe("wearable_sleep");
+    // Both instruments whose scope covered the class were revised.
+    expect([...report.instruments].sort()).toEqual(["LANE_A", "LANE_B"]);
+    expect(report.before.viewableDataClasses).toContain("wearable_sleep");
+    expect(report.after.viewableDataClasses).not.toContain("wearable_sleep");
+    expect(
+      report.before.viewableDataClasses.length - report.after.viewableDataClasses.length
+    ).toBe(1); // exactly one class moved
+    // Ingest probes: only the revoked class throws.
+    for (const probe of report.ingestProbes) {
+      expect(probe.allowed).toBe(probe.dataClass !== "wearable_sleep");
+    }
+
+    // 1. Gated readers, both tiers: wearable rows sealed, everything else flows.
+    for (const use of ["view_identified", "research_deid"] as ConsentUse[]) {
+      const obs = await getObservations(subject, { use });
+      expect(obs.blocked).toBe(true);
+      expect(obs.blockedDataClasses).toEqual(["wearable_sleep"]);
+      expect(
+        obs.data.some((row) => sourceToDataClass(row.source) === "wearable_sleep")
+      ).toBe(false);
+      expect(obs.data.some((row) => row.concept === "cpap_usage_minutes")).toBe(true);
+      expect(obs.data.some((row) => row.concept === "supine_time_pct")).toBe(true);
+
+      const cpapOnly = await getObservations(subject, {
+        use,
+        dataClasses: ["cpap_telemetry"],
+      });
+      expect(cpapOnly.blocked).toBe(false);
+      expect(cpapOnly.data).toHaveLength(10);
+
+      const sessions = await getSleepSessions(subject, { use });
+      expect(sessions.blocked).toBe(true); // the only session is wearable-sourced
+      expect(sessions.data).toHaveLength(0);
+
+      const devices = await getDevices(subject, { use });
+      expect(devices.blocked).toBe(true);
+      expect(devices.blockedDataClasses).toEqual(["wearable_sleep"]);
+      expect(devices.data.map((device) => device.deviceClass).sort()).toEqual([
+        "appliance",
+        "cpap",
+        "sleep_mat",
+      ]);
+
+      const [pros, events] = await Promise.all([
+        getProResponses(subject, { use }),
+        getTreatmentEvents(subject, { use }),
+      ]);
+      expect(pros.blocked).toBe(false);
+      expect(pros.data).toHaveLength(3);
+      expect(events.blocked).toBe(false);
+      expect(events.data).toHaveLength(1);
+    }
+
+    // 2. The class grid reflects it; every other class still granted.
+    const statesAfter = await dataClassConsentStates(subject);
+    for (const state of statesAfter) {
+      expect(state.granted).toBe(state.dataClass !== "wearable_sleep");
+    }
+    expect(
+      statesAfter
+        .find((state) => state.dataClass === "wearable_sleep")
+        ?.revisableInstruments.sort()
+    ).toEqual(["LANE_A", "LANE_B"]);
+
+    // 3. Recommendations: partial (not blocked) — wearable inputs null, CPAP live.
+    const recs = await loadRecommendations(subject);
+    expect(recs.blocked).toBe(false);
+    expect(recs.blockedDataClasses).toEqual(["wearable_sleep"]);
+    expect(recs.inputs.lowSpo2NightsLast14).toBeNull();
+    expect(recs.inputs.hasCpap).toBe(true);
+    expect(recs.inputs.cpapNights30).toBe(10);
+
+    // 4. Coach: still on the roster with adherence, and NOT a wearable-gap
+    //    false positive (consent-blocked ≠ silent device).
+    const coach = await loadCoachDashboard({ page: 1, sortDir: "desc" });
+    expect(coach.tiles.enrolled).toBe(2);
+    const coachRow = coach.patients.rows.find((row) => row.participantId === subject);
+    expect(coachRow?.adherencePct).not.toBeNull();
+    expect(coach.flags.wearableGaps.map((row) => row.participantId)).not.toContain(subject);
+
+    // 5. Research: still a member (other classes carry research grants), the
+    //    wearable research grant alone is gone, and the export row survives.
+    const research = await loadResearchCohort();
+    const member = research.byId.get(subject);
+    expect(member).toBeDefined();
+    expect(grantSetHas(member!.grants, "wearable_sleep", "research_deid")).toBe(false);
+    expect(grantSetHas(member!.grants, "cpap_telemetry", "research_deid")).toBe(true);
+    expect(member!.cpapAdherencePct).not.toBeNull();
+    expect(member!.essBaseline).not.toBeNull();
+    expect(
+      research.supineNights.some((night) => night.participantId === subject)
+    ).toBe(true); // sleep_mat untouched
+    const exportCsv = buildDeidExportCsv(research.members, "2026-06-30");
+    expect(exportCsv).toContain(pseudonym(subject));
+    expect(exportCsv).toContain(pseudonym(control));
+
+    // 6. Ledger: append-only — two scope-revised records, originals untouched.
+    const ledger = await prisma.consentRecord.findMany({ where: { participantId: subject } });
+    expect(ledger).toHaveLength(5); // 3 grants + LANE_A & LANE_B revisions
+    expect(ledger.every((record) => record.status === "granted")).toBe(true);
+    expect(ledger.every((record) => record.revokedAt === null)).toBe(true);
+
+    // --- restore the class --------------------------------------------------------
+    const restored = await restoreDataClass(subject, "wearable_sleep");
+    expect(restored.action).toBe("restore");
+    expect([...restored.instruments].sort()).toEqual(["LANE_A", "LANE_B"]);
+
+    const obsRestored = await getObservations(subject, { use: "view_identified" });
+    expect(obsRestored.blocked).toBe(false);
+    expect(obsRestored.data.some((row) => row.concept === "sleep_duration_min")).toBe(true);
+    const devicesRestored = await getDevices(subject, { use: "view_identified" });
+    expect(devicesRestored.blocked).toBe(false);
+    expect(devicesRestored.data).toHaveLength(4);
+    const sessionsRestored = await getSleepSessions(subject, { use: "view_identified" });
+    expect(sessionsRestored.data).toHaveLength(1);
+    const recsRestored = await loadRecommendations(subject);
+    expect(recsRestored.blockedDataClasses).toEqual([]);
+
+    expect(await prisma.consentRecord.count({ where: { participantId: subject } })).toBe(7);
+
+    // Control participant never noticed any of it.
+    const controlObs = await getObservations(control, { use: "view_identified" });
+    expect(controlObs.blocked).toBe(false);
+  });
+
+  it("reviseConsentScope refuses instruments without a current grant; class restore never resurrects a revoked instrument", async () => {
+    const subject = await seedFullParticipant("Sealed Sam", TP_SKU);
+
+    // Fully revoke LANE_B, then try to revise it — nothing to revise.
+    await revokeConsent(subject, "LANE_B");
+    expect(await reviseConsentScope(subject, "LANE_B", [])).toBeNull();
+
+    // mattress_purchase is only covered by LANE_B (revoked) → not revisable,
+    // and restoring the class leaves the revoked instrument sealed.
+    const states = await dataClassConsentStates(subject);
+    const purchaseState = states.find((state) => state.dataClass === "mattress_purchase");
+    expect(purchaseState?.granted).toBe(false);
+    expect(purchaseState?.revisableInstruments).toEqual([]);
+
+    const restored = await restoreDataClass(subject, "mattress_purchase");
+    expect(restored.instruments).toEqual([]);
+    const grants = await loadGrants(subject);
+    expect(grantSetHas(grants, "mattress_purchase", "view_identified")).toBe(false);
+    // wearable_sleep still flows via the untouched LANE_A.
+    expect(grantSetHas(grants, "wearable_sleep", "view_identified")).toBe(true);
   });
 });

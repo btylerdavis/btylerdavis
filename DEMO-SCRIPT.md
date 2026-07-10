@@ -189,11 +189,12 @@ Read the crib (section 4). Close with SPEC/DELIVERY.
 | **Live wearable OAuth** (Apple/Fitbit/Garmin) | "Connections are simulated today, but the file importers are real — I can show you a real Apple Health export parsing right now." | Simulated connect in enrollment; working Apple Health XML + AirView CSV parsers at `/coach/import` (sample buttons) | Terra/Vital sandbox app + OAuth + webhooks; ~1–2 weeks of work, gated on vendor approval |
 | **CPAP SD-card parse** | "We ingest the AirView export format for real; reading a raw SD card from a store machine is the next artifact on the list." | AirView-format ingestion working end to end | OSCAR-style card parser; days of work once a real card is in hand |
 | **Real Sleep Mat** | "The sensor stream is synthetic tonight, but it's in the exact Withings data shape — a $100 mat under a real bed makes it real data." | Synthetic stream in Withings Sleep Mat shape driving every supine chart | Buy the mat, Withings API OAuth, two weeks of real nights before the next demo |
-| **LLM / "real AI" narratives** | "Deliberately rules-based today — deterministic and defensible. The LLM narrative layer is built as a toggle-in, pending governance." | Rules engine with guardrail-class badges on every card | Prompted narrative generation + review pipeline + model-governance dashboard; days to prototype, governance is the real work |
-| **DentiTrac** (appliance telemetry) | "The appliance arm runs on self-report plus dentist entry today; DentiTrac import is designed, waiting on the vendor." | Oral-appliance arm with wear tracking and adherence charts | Vendor agreement + format spec, then it's one more importer |
+| **LLM / "real AI" narratives** | **Now working — show it:** "Flip the purple 'AI narrative (preview)' toggle on Marcus's recommendations — every card grows a drafted narrative composed from his real numbers. Deliberately template-based and deterministic today; production swaps in a governed LLM behind the same toggle (SPEC §10.4)." | Narrative toggle live on `/participant/<id>/recommendations`; banned-phrase tests cover every draft | Governed-LLM generation + review pipeline + model-governance dashboard; days to prototype, governance is the real work |
+| **DentiTrac** (appliance telemetry) | **Now working — show it:** "Open the DentiTrac tab on `/coach/import` and load the bundled export — nights and mean wear hours parse live. Preview only by design: the write path waits on the vendor agreement." | DentiTrac tab with bundled fixture, parse + preview (no DB writes), pilot banner | Vendor agreement + live feed, then ingest through the same consent gate |
 | **PSQI / FOSQ questionnaires** | "ESS and ISI are fully implemented — PSQI and FOSQ are flagged on screen as pending licensing, which we won't fake." | ESS + ISI real instruments, real scoring, day-30/90 cadence | License the instruments; the PRO engine is generic, days each to add |
-| **Partial revocation** (per-data-class) | "Today's kill switch is all-or-nothing; the consent engine underneath is already per-data-class — you saw the toggles at enrollment." | Granular grants + full-revocation enforcement, live | Per-class revocation UI + enforcement tests on the existing engine; small |
-| **OMOP / registry-standard export** | "The de-id mart exports CSV with real date-shifting and suppression; OMOP conformance is a mapping exercise on top." | Working de-id pipeline + CSV extract | OMOP CDM mapping + vocabularies; weeks, well-trodden path |
+| **Partial revocation** (per-data-class) | **Now working — show it:** "On the revocation console, toggle just 'Wearable sleep' off — his wearable charts block everywhere while CPAP keeps flowing, and the ledger shows the appended scope revision. Restore it the same way." | Per-class toggle grid on `/compliance/revocation` (append-only scope revisions, full before/after report), enforcement tests across every surface | Deletion-certificate generation |
+| **OMOP / registry-standard export** | **Now working — show it:** "On `/research/deid`, 'Export OMOP bundle' downloads a DUA-gated zip — PERSON, OBSERVATION_PERIOD, MEASUREMENT, DEVICE_EXPOSURE, mapped per TECHNICAL.md §T2.5 from de-identified rows only." | OMOP bundle export live behind the DUA gate; leakage-scanned in tests | Full LOINC/SNOMED vocabulary alignment; ED documentation panel |
+| **Effect-size scenarios** ("what if mattresses do nothing?") | **Now working — show it (offline):** "`SCENARIO=null npm run seed` rebuilds the identical cohort with the mattress effect zeroed — the medium band on the flagship dashboard goes flat. That's the selection-bias conversation, runnable. Re-seed with the default before the demo." | Null-effect scenario seed, deterministic, labeled on the seed output ("scenario: null") | More scenarios (effect sweeps, dropout stress) on the same switcher |
 | **Native mobile apps** | "Everything you held tonight is responsive web — that's a deliberate demo choice, and the production plan covers apps." | Phone-ready web for every participant surface | Production decision per SPEC/DELIVERY; months, not a demo item |
 | **Tempur-Sealy API / full catalog** | "Tonight's catalog is sixty real SKUs, hand-curated. The portal they'd log into is the thing you just used." | DUA-gated partner portal on live de-id queries; real product data | Partner integration agreement, catalog feed + POS delivery webhook; weeks once they engage |
 
@@ -208,9 +209,10 @@ Rhythm for every row: *honest one-liner → show what exists → name the build.
 
 **Real code — you touched it tonight:** both enrollment doors; the consent engine gating
 every single read and write you saw; the STOP-BANG scoring; the HST parser that flagged
-Marcus; the Apple Health and AirView file importers; the de-identification pipeline and its
-CSV export; the revocation enforcement you triggered yourself; every dashboard, running live
-queries; the abstract that wrote itself.
+Marcus; the Apple Health and AirView file importers; the de-identification pipeline, its
+CSV export and the OMOP bundle; the revocation enforcement you triggered yourself — down to
+a single data class; the drafted AI narratives on the recommendation cards; every dashboard,
+running live queries; the abstract that wrote itself.
 
 **Synthetic — and labeled that way on every screen:** the two thousand patients and every
 night of their data. The distributions are from the literature — half positional, realistic
@@ -218,8 +220,9 @@ adherence decay, realistic dropout — and the funnel models full referral accep
 real life won't. Marcus is scripted. The watermark in the corner never lied to you.
 
 **In reserve — built to the seam, shown on request:** live wearable connections, the SD-card
-parse, a real sleep mat, LLM narratives, DentiTrac, the licensed questionnaires, partial
-revocation, OMOP export, native apps, and the Tempur-Sealy integration.
+parse, a real sleep mat, the governed LLM behind the narrative toggle (the drafted preview is
+live), the DentiTrac live feed (its import preview is live), the licensed questionnaires,
+native apps, and the Tempur-Sealy integration.
 
 Everything you touched is working software. The only simulated thing is the patients — and
 SPEC.md is the blueprint for making them real, with DELIVERY.md as the timeline. That's the

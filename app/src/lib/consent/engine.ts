@@ -27,17 +27,26 @@ const grantKey = (dataClass: DataClass, use: ConsentUse) => `${dataClass}|${use}
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
-function parseScope(record: ConsentRecord): ConsentScope {
+/** Parses a ConsentRecord.scope JSON string; malformed scopes read as empty (fail closed). */
+export function parseScopeJson(scope: string): ConsentScope {
   try {
-    const parsed = JSON.parse(record.scope);
+    const parsed = JSON.parse(scope);
     return Array.isArray(parsed) ? (parsed as ConsentScope) : [];
   } catch {
     return [];
   }
 }
 
-/** Pure evaluation of a participant's consent history into effective grants. */
-export function evaluateGrants(records: ConsentRecord[]): GrantSet {
+function parseScope(record: ConsentRecord): ConsentScope {
+  return parseScopeJson(record.scope);
+}
+
+/**
+ * Latest record per instrument (by grantedAt, then createdAt) — the record
+ * that defines an instrument's *current* state. Shared by evaluateGrants and
+ * the partial-revocation console (which needs the current scope to revise).
+ */
+export function latestRecordsByInstrument(records: ConsentRecord[]): Map<string, ConsentRecord> {
   const latestByInstrument = new Map<string, ConsentRecord>();
   for (const record of records) {
     const current = latestByInstrument.get(record.instrumentType);
@@ -50,6 +59,12 @@ export function evaluateGrants(records: ConsentRecord[]): GrantSet {
       latestByInstrument.set(record.instrumentType, record);
     }
   }
+  return latestByInstrument;
+}
+
+/** Pure evaluation of a participant's consent history into effective grants. */
+export function evaluateGrants(records: ConsentRecord[]): GrantSet {
+  const latestByInstrument = latestRecordsByInstrument(records);
 
   const grants = new Set<string>();
   for (const record of latestByInstrument.values()) {
@@ -178,6 +193,47 @@ export async function revokeConsent(
   return db.consentRecord.update({
     where: { id: current.id },
     data: { status: "revoked" satisfies ConsentStatus, revokedAt: opts.revokedAt ?? new Date() },
+  });
+}
+
+/**
+ * Partial revocation (DEMO.md §3, reserve → working): revises an
+ * instrument's scope by appending a NEW granted record carrying the reduced
+ * (or re-expanded) scope. Nothing is flipped or deleted — the prior record
+ * stays in the ledger untouched, and the new record, being latest, becomes
+ * the instrument's current state, so every ingest/read gate re-evaluates
+ * against the revised scope immediately.
+ *
+ * Returns null when the instrument has no current granted record: a fully
+ * revoked instrument is restored via grantConsent (a fresh grant), not by
+ * scope revision.
+ */
+export async function reviseConsentScope(
+  participantId: string,
+  instrumentType: InstrumentType,
+  scope: ConsentScope,
+  opts: { grantedAt?: Date; db?: Db } = {}
+): Promise<ConsentRecord | null> {
+  const db = opts.db ?? prisma;
+  const current = await db.consentRecord.findFirst({
+    where: { participantId, instrumentType, status: "granted", revokedAt: null },
+    orderBy: [{ grantedAt: "desc" }, { createdAt: "desc" }],
+  });
+  if (!current) return null;
+  // The revision must become the instrument's latest record: never let a
+  // caller-supplied grantedAt (e.g. the sim clock) sort before the current
+  // record — equal grantedAt is fine, createdAt breaks the tie.
+  const requestedAt = opts.grantedAt ?? new Date();
+  const grantedAt = requestedAt < current.grantedAt ? current.grantedAt : requestedAt;
+  return db.consentRecord.create({
+    data: {
+      participantId,
+      instrumentType,
+      instrumentVersion: current.instrumentVersion,
+      status: "granted" satisfies ConsentStatus,
+      grantedAt,
+      scope: JSON.stringify(scope),
+    },
   });
 }
 

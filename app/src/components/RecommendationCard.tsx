@@ -1,6 +1,7 @@
 import { Card } from "@/components/Card";
 import { TrendSparkline } from "@/components/charts/ResearchCharts";
 import { SERIES } from "@/components/charts/theme";
+import { NARRATIVE_DISCLAIMER } from "@/lib/recommendations/narrative";
 import {
   GUARDRAIL_FOOTER,
   GUARDRAIL_LABELS,
@@ -16,6 +17,10 @@ import type { RecommendationsResult } from "@/lib/recommendations/queries";
  * non-device-CDS boundary line as a footer. Badge colors follow the theme:
  * comfort = skyBlue, adherence-support = brandBlue,
  * discuss-with-provider = accentPurple.
+ *
+ * With `showNarrative` + `narrative` set, the card also renders the drafted
+ * AI-narrative preview (template-composed from the same inputs — see
+ * lib/recommendations/narrative.ts) with its disclaimer line.
  */
 
 const BADGE_CLASSES: Record<GuardrailClass, string> = {
@@ -54,9 +59,14 @@ export function GuardrailBadge({ guardrail }: { guardrail: GuardrailClass }) {
 export function RecommendationCard({
   recommendation,
   series,
+  narrative,
+  showNarrative = false,
 }: {
   recommendation: Recommendation;
   series: RecommendationsResult["series"];
+  /** drafted AI-narrative preview text (lib/recommendations/narrative.ts) */
+  narrative?: string;
+  showNarrative?: boolean;
 }) {
   const rec = recommendation;
   const spark = rec.sparkline ? SPARK_META[rec.sparkline] : null;
@@ -70,6 +80,16 @@ export function RecommendationCard({
         <GuardrailBadge guardrail={rec.guardrail} />
       </div>
       <p className="mt-2 text-sm leading-relaxed text-body">{rec.body}</p>
+
+      {showNarrative && narrative && (
+        <div className="mt-4 rounded-card border border-accent-purple/30 bg-accent-purple/5 p-4">
+          <p className="text-xs font-semibold tracking-[0.12em] text-accent-purple uppercase">
+            AI narrative (preview)
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-body">{narrative}</p>
+          <p className="mt-2 text-[11px] text-muted">{NARRATIVE_DISCLAIMER}</p>
+        </div>
+      )}
 
       {/* Why: the actual data behind the suggestion */}
       <div className="mt-4 rounded-card bg-pale-blue/60 p-4">

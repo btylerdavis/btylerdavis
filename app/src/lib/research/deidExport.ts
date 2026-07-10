@@ -53,7 +53,8 @@ export const DEID_EXPORT_HEADER = [
   "sleep_eff_change_pp",
 ].join(",");
 
-function csvField(value: string | number | boolean | null): string {
+/** CSV-escapes one field (shared with the OMOP bundle builders). */
+export function csvField(value: string | number | boolean | null): string {
   if (value === null) return "";
   if (typeof value === "number") return String(Math.round(value * 10) / 10);
   if (typeof value === "boolean") return value ? "true" : "false";

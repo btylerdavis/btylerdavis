@@ -23,6 +23,32 @@ export const INITIAL_CLOCK_OFFSET_DAYS = 90;
 /** Fully-scripted persona for the demo script. */
 export const MARCUS_REED_PARTICIPANT_ID = "d81a5f64-9c3e-4b7a-8f21-6e0a4c9b5d17";
 
+/**
+ * Effect-size scenario switcher (DEMO.md §3 — "what if mattresses do
+ * nothing?", the selection-bias conversation). `SCENARIO=null npm run seed`
+ * re-derives the SAME cohort — identical ids, demographics, arms, adherence,
+ * consent history, and RNG draw sequence — with the mattress supine effect
+ * ≈ 0: flagship (supine-predominant × medium-firm-hybrid) buyers get their
+ * effect draw remapped from the 8–15-point band into the 0–3-point noise
+ * band every other purchase already gets, so the medium firmness band reads
+ * FLAT on the positional dashboard. Deterministic per scenario. Downstream,
+ * a supine drop ≤ 6 also stops driving ESS/ISI improvements for
+ * mattress-only responders (same rule as the default cohort).
+ *
+ * The scenario is read from the environment at profile-build time, so the
+ * time machine stays consistent with the seed as long as the server runs
+ * with the same SCENARIO value.
+ */
+export type SeedScenario = "default" | "null";
+
+export function seedScenario(
+  env: string | undefined = process.env.SCENARIO
+): SeedScenario {
+  if (env === undefined || env === "" || env === "default") return "default";
+  if (env === "null") return "null";
+  throw new Error(`Unknown SCENARIO "${env}" — use "default" or "null"`);
+}
+
 export type TreatmentArm =
   | "cpap"
   | "appliance"
@@ -275,13 +301,20 @@ export function buildProfile(participantId: string): ParticipantProfile {
     mattressSku !== null && isMediumFirmHybrid(catalogBySku(mattressSku));
 
   // Flagship signal: supine-time drops 8-15 points post-delivery for
-  // supine-predominant participants on medium-firm hybrids.
+  // supine-predominant participants on medium-firm hybrids. The RNG draw is
+  // identical in every scenario (one call per mattress owner) — the null
+  // scenario only REMAPS the flagship band 8–15 onto the 0–3 noise band, so
+  // the rest of the profile (and every later draw) is byte-identical.
+  const flagshipCombo = hasMattress && supinePredominant && mattressIsMediumFirmHybrid;
+  const drawnDropPoints = flagshipCombo
+    ? rng.uniform(8, 15)
+    : hasMattress
+      ? rng.uniform(0, 3)
+      : 0;
   const supineDropPoints =
-    hasMattress && supinePredominant && mattressIsMediumFirmHybrid
-      ? rng.uniform(8, 15)
-      : hasMattress
-        ? rng.uniform(0, 3)
-        : 0;
+    seedScenario() === "null" && flagshipCombo
+      ? ((drawnDropPoints - 8) / 7) * 3 // 8–15 → 0–3: mattress effect ≈ 0
+      : drawnDropPoints;
 
   // CPAP adherence: ~70% adherent (mean 6.2h), ~30% decline to abandonment.
   const cpapAdherent = rng.chance(0.7);
@@ -425,7 +458,8 @@ function marcusProfile(): ParticipantProfile {
     mattressDeliveryOffsetDays: 13,
     mattressSku: MARCUS_SKU,
     mattressIsMediumFirmHybrid: true,
-    supineDropPoints: 14,
+    // Null scenario: even the scripted persona's mattress does nothing.
+    supineDropPoints: seedScenario() === "null" ? 0 : 14,
     cpapAdherent: true,
     cpapMeanUsageMin: 408, // 6.8 h — strong responder
     cpapSkipNightP: 0.03,

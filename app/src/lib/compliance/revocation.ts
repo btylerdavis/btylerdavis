@@ -7,8 +7,13 @@ import {
   grantConsent,
   grantSetHas,
   grantsFor,
+  INSTRUMENT_SCOPES,
+  INSTRUMENT_TYPES,
+  latestRecordsByInstrument,
   loadAllGrants,
   loadGrants,
+  parseScopeJson,
+  reviseConsentScope,
   revokeConsent,
   sourceToDataClass,
   type DataClass,
@@ -25,6 +30,11 @@ import { addDays } from "../synthetic/profiles";
  * the gated readers block, and the consent-filtered cohort counts drop. The
  * restore path re-grants via NEW records, so the audit trail keeps the full
  * grant → revoke → re-grant history — the trail itself is the demo point.
+ *
+ * Partial revocation (reserve → working): revokeDataClass / restoreDataClass
+ * revise ONE data class across every covering instrument via
+ * reviseConsentScope — new records with reduced/re-expanded scopes, so only
+ * that class blocks (or resumes) everywhere while the rest keeps flowing.
  */
 
 const INGEST_PROBE_CLASSES: DataClass[] = [
@@ -200,13 +210,42 @@ export async function probeGatedRead(
 export interface RevocationReport {
   participantId: string;
   action: "revoke" | "restore";
-  /** instruments revoked / re-granted by this action */
+  /** instruments revoked / re-granted / scope-revised by this action */
   instruments: InstrumentType[];
+  /** present for per-data-class actions (partial revocation) */
+  dataClass?: DataClass;
   before: ConsentImpactSnapshot;
   after: ConsentImpactSnapshot;
   ingestProbes: IngestProbe[];
   identifiedReadProbe: ReadProbe;
   researchReadProbe: ReadProbe;
+}
+
+/** Shared tail of every console action: after-snapshot + live gate probes. */
+async function finishReport(
+  participantId: string,
+  action: "revoke" | "restore",
+  instruments: InstrumentType[],
+  before: ConsentImpactSnapshot,
+  dataClass?: DataClass
+): Promise<RevocationReport> {
+  const [after, ingestProbes, identifiedReadProbe, researchReadProbe] = await Promise.all([
+    snapshotConsentImpact(participantId),
+    probeIngestGates(participantId),
+    probeGatedRead(participantId, "view_identified"),
+    probeGatedRead(participantId, "research_deid"),
+  ]);
+  return {
+    participantId,
+    action,
+    instruments,
+    ...(dataClass ? { dataClass } : {}),
+    before,
+    after,
+    ingestProbes,
+    identifiedReadProbe,
+    researchReadProbe,
+  };
 }
 
 /**
@@ -225,28 +264,14 @@ export async function revokeAllConsents(participantId: string): Promise<Revocati
     if (record) revoked.push(state.instrumentType as InstrumentType);
   }
 
-  const [after, ingestProbes, identifiedReadProbe, researchReadProbe] = await Promise.all([
-    snapshotConsentImpact(participantId),
-    probeIngestGates(participantId),
-    probeGatedRead(participantId, "view_identified"),
-    probeGatedRead(participantId, "research_deid"),
-  ]);
-
-  return {
-    participantId,
-    action: "revoke",
-    instruments: revoked,
-    before,
-    after,
-    ingestProbes,
-    identifiedReadProbe,
-    researchReadProbe,
-  };
+  return finishReport(participantId, "revoke", revoked, before);
 }
 
 /**
  * Demo reset: re-grants every instrument the participant EVER signed, as new
- * ConsentRecords — the prior revocation stays in the ledger forever.
+ * ConsentRecords — the prior revocation stays in the ledger forever. The
+ * re-grant uses the instrument's full template scope, so it also clears any
+ * per-data-class reduction left by the partial-revocation grid.
  */
 export async function restoreAllConsents(participantId: string): Promise<RevocationReport> {
   const before = await snapshotConsentImpact(participantId);
@@ -262,23 +287,121 @@ export async function restoreAllConsents(participantId: string): Promise<Revocat
     granted.push(state.instrumentType as InstrumentType);
   }
 
-  const [after, ingestProbes, identifiedReadProbe, researchReadProbe] = await Promise.all([
-    snapshotConsentImpact(participantId),
-    probeIngestGates(participantId),
-    probeGatedRead(participantId, "view_identified"),
-    probeGatedRead(participantId, "research_deid"),
-  ]);
+  return finishReport(participantId, "restore", granted, before);
+}
 
-  return {
-    participantId,
-    action: "restore",
-    instruments: granted,
-    before,
-    after,
-    ingestProbes,
-    identifiedReadProbe,
-    researchReadProbe,
-  };
+// ---------------------------------------------------------------------------
+// Partial revocation (per data class) — DEMO.md §3 reserve → working
+// ---------------------------------------------------------------------------
+
+/** Instruments whose template scope covers a data class (grid metadata). */
+export function instrumentsCoveringClass(dataClass: DataClass): InstrumentType[] {
+  return INSTRUMENT_TYPES.filter((instrument) =>
+    INSTRUMENT_SCOPES[instrument].some((grant) => grant.dataClass === dataClass)
+  );
+}
+
+export interface DataClassConsentState {
+  dataClass: DataClass;
+  /** current "collect" grant — scope revisions flip all uses together */
+  granted: boolean;
+  /** instruments with a CURRENT granted record whose template covers the class */
+  revisableInstruments: InstrumentType[];
+}
+
+/** Per-data-class consent state for the console's toggle grid. */
+export async function dataClassConsentStates(
+  participantId: string
+): Promise<DataClassConsentState[]> {
+  const records = await prisma.consentRecord.findMany({ where: { participantId } });
+  const latest = latestRecordsByInstrument(records);
+  const currentInstruments = new Set<InstrumentType>();
+  for (const record of latest.values()) {
+    if (record.status === "granted" && record.revokedAt === null) {
+      currentInstruments.add(record.instrumentType as InstrumentType);
+    }
+  }
+  const grants = await loadGrants(participantId);
+  return DATA_CLASSES.map((dataClass) => ({
+    dataClass,
+    granted: grantSetHas(grants, dataClass, "collect"),
+    revisableInstruments: instrumentsCoveringClass(dataClass).filter((instrument) =>
+      currentInstruments.has(instrument)
+    ),
+  }));
+}
+
+/**
+ * Revokes ONE data class: every currently-granted instrument whose scope
+ * still covers the class gets a NEW record with that class's grants removed
+ * (reviseConsentScope — append-only, the reduced record becomes current).
+ * All other classes keep flowing; the ledger keeps every step.
+ */
+export async function revokeDataClass(
+  participantId: string,
+  dataClass: DataClass
+): Promise<RevocationReport> {
+  const before = await snapshotConsentImpact(participantId);
+  const clock = await getSimClock();
+
+  const latest = latestRecordsByInstrument(
+    await prisma.consentRecord.findMany({ where: { participantId } })
+  );
+  const revised: InstrumentType[] = [];
+  for (const record of latest.values()) {
+    if (record.status !== "granted" || record.revokedAt !== null) continue;
+    const scope = parseScopeJson(record.scope);
+    if (!scope.some((grant) => grant.dataClass === dataClass)) continue;
+    const reduced = scope.filter((grant) => grant.dataClass !== dataClass);
+    const created = await reviseConsentScope(
+      participantId,
+      record.instrumentType as InstrumentType,
+      reduced,
+      { grantedAt: clock }
+    );
+    if (created) revised.push(record.instrumentType as InstrumentType);
+  }
+
+  return finishReport(participantId, "revoke", revised, before, dataClass);
+}
+
+/**
+ * Restores ONE data class: every currently-granted instrument whose TEMPLATE
+ * covers the class gets a NEW record with the class's template grants added
+ * back. A fully revoked instrument is untouched — restoring it is the
+ * all-or-nothing restore button's job.
+ */
+export async function restoreDataClass(
+  participantId: string,
+  dataClass: DataClass
+): Promise<RevocationReport> {
+  const before = await snapshotConsentImpact(participantId);
+  const clock = await getSimClock();
+
+  const latest = latestRecordsByInstrument(
+    await prisma.consentRecord.findMany({ where: { participantId } })
+  );
+  const revised: InstrumentType[] = [];
+  for (const record of latest.values()) {
+    if (record.status !== "granted" || record.revokedAt !== null) continue;
+    const instrument = record.instrumentType as InstrumentType;
+    const templateGrants = INSTRUMENT_SCOPES[instrument].filter(
+      (grant) => grant.dataClass === dataClass
+    );
+    if (templateGrants.length === 0) continue;
+    const scope = parseScopeJson(record.scope);
+    const missing = templateGrants.filter(
+      (grant) =>
+        !scope.some((held) => held.dataClass === grant.dataClass && held.use === grant.use)
+    );
+    if (missing.length === 0) continue; // class already fully granted here
+    const created = await reviseConsentScope(participantId, instrument, [...scope, ...missing], {
+      grantedAt: clock,
+    });
+    if (created) revised.push(instrument);
+  }
+
+  return finishReport(participantId, "restore", revised, before, dataClass);
 }
 
 export interface DataClassRowCounts {

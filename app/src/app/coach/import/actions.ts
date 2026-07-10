@@ -9,6 +9,7 @@ import {
   type ParsedAppleHealth,
 } from "@/lib/imports/appleHealth";
 import { parseAirViewCsv, type ParsedAirView } from "@/lib/imports/airview";
+import { parseDentiTracCsv, type ParsedDentiTrac } from "@/lib/imports/dentitrac";
 import {
   ingestParsedImport,
   type ImportResult,
@@ -169,4 +170,44 @@ export async function confirmImport(
   const result = await ingestParsedImport(participantId, parsed, { alignToSimClock });
   if (!result.blocked) refresh();
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// DentiTrac (pilot integration — PREVIEW ONLY, no ingest path, no DB writes)
+// ---------------------------------------------------------------------------
+
+export interface DentiTracPreview {
+  ok: true;
+  sourceName: string;
+  parsed: ParsedDentiTrac;
+}
+
+/** Parses the bundled DentiTrac fixture — preview only, nothing is written. */
+export async function loadDentiTracSample(): Promise<DentiTracPreview | ImportFailure> {
+  const fileName = "dentitrac-sample.csv";
+  const filePath = path.join(process.cwd(), "public", "demo-fixtures", fileName);
+  try {
+    const { readFile } = await import("node:fs/promises");
+    return { ok: true, sourceName: fileName, parsed: parseDentiTracCsv(await readFile(filePath, "utf8")) };
+  } catch (error) {
+    if (error instanceof ImportParseError) return { ok: false, error: error.message };
+    throw error;
+  }
+}
+
+/** Parses an uploaded DentiTrac CSV — preview only, nothing is written. */
+export async function previewDentiTracUpload(
+  formData: FormData
+): Promise<DentiTracPreview | ImportFailure> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Choose a file to upload" };
+  }
+  if (file.size > MAX_TEXT_UPLOAD_BYTES) return { ok: false, error: TEXT_TOO_LARGE_ERROR };
+  try {
+    return { ok: true, sourceName: file.name, parsed: parseDentiTracCsv(await file.text()) };
+  } catch (error) {
+    if (error instanceof ImportParseError) return { ok: false, error: error.message };
+    throw error;
+  }
 }

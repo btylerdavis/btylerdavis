@@ -23,6 +23,7 @@ import {
   INITIAL_CLOCK_OFFSET_DAYS,
   MARCUS_REED_PARTICIPANT_ID,
   participantIdForIndex,
+  seedScenario,
 } from "../src/lib/synthetic/profiles";
 import { SIM_CLOCK_ID } from "../src/lib/simclock";
 
@@ -37,6 +38,20 @@ import { SIM_CLOCK_ID } from "../src/lib/simclock";
  * records.
  *
  * Run: npm run seed
+ *
+ * Scenario switcher (DEMO.md §3 — the selection-bias conversation):
+ *
+ *   SCENARIO=null npm run seed
+ *
+ * seeds the SAME cohort (identical people, arms, adherence, consents) with
+ * the mattress supine effect ≈ 0 — flagship buyers' 8–15-point supine drop
+ * is remapped into the 0–3-point noise band, so the medium firmness band on
+ * /research/positional reads flat ("what if mattresses do nothing?").
+ * Deterministic per scenario; the Marcus summary line below carries a
+ * "(scenario: null)" suffix so a rehearsal can't mistake which cohort is
+ * loaded. If you advance the time machine afterwards, start the server with
+ * the same SCENARIO so generated nights stay consistent. Default (unset or
+ * SCENARIO=default) is the flagship-effect cohort the demo script uses.
  */
 
 const FLUSH_THRESHOLD = 25_000;
@@ -81,8 +96,12 @@ async function resetDatabase(): Promise<void> {
 async function main() {
   const startedAt = Date.now();
   const clockDate = addDays(DEMO_EPOCH, INITIAL_CLOCK_OFFSET_DAYS);
+  const scenario = seedScenario(); // validates SCENARIO before any writes
 
-  console.log(`Seeding synthetic cohort (${COHORT_SIZE} participants)...`);
+  console.log(
+    `Seeding synthetic cohort (${COHORT_SIZE} participants)...` +
+      (scenario === "null" ? " [scenario: null — mattress supine effect ≈ 0]" : "")
+  );
   await tuneSqliteForBulkLoad();
   await resetDatabase();
 
@@ -170,7 +189,10 @@ async function main() {
   console.log(`  treatment events:  ${written.treatmentEvents} (nightly) + ${enrollment.flatMap((e) => e.treatmentEvents).length} (scheduled)`);
   console.log(`  mattress purchases: ${purchases.length}`);
   console.log(`  sim clock [${SIM_CLOCK_ID}]: ${clockDate.toISOString().slice(0, 10)}`);
-  console.log(`  Marcus Reed: ${MARCUS_REED_PARTICIPANT_ID} (${marcus.arm}, AHI ${marcus.ahi}, supine ${marcus.supineAhi})`);
+  console.log(
+    `  Marcus Reed: ${MARCUS_REED_PARTICIPANT_ID} (${marcus.arm}, AHI ${marcus.ahi}, supine ${marcus.supineAhi})` +
+      (scenario === "null" ? " (scenario: null)" : "")
+  );
 }
 
 main()

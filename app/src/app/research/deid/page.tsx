@@ -316,12 +316,17 @@ export default async function DeidDemoPage() {
                   data leaves only under a signed DUA: the download is gated on the partner DUA
                   acknowledgement and redirects to /partner to sign first. The aggregate
                   brand × severity table above is the published-table release — small cells
-                  suppressed, no DUA needed.
+                  suppressed, no DUA needed. The OMOP bundle is the registry-standard cut of
+                  the same mart: PERSON, OBSERVATION_PERIOD, MEASUREMENT and DEVICE_EXPOSURE
+                  CSVs per TECHNICAL.md §T2.5, zipped, same DUA gate.
                 </p>
               </div>
               <div className="flex flex-col items-stretch gap-2">
                 <ButtonLink href="/research/deid/export" size="lg">
                   Export row-level extract (CSV · DUA required)
+                </ButtonLink>
+                <ButtonLink href="/research/deid/export/omop" variant="outline">
+                  Export OMOP bundle (ZIP · DUA required)
                 </ButtonLink>
                 <ButtonLink href="/research/deid/export/aggregate" variant="purple">
                   Export aggregate table (CSV · suppressed)

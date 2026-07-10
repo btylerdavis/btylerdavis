@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/Button";
 import type { RevocationReport } from "@/lib/compliance/revocation";
-import { restoreAllAction, revokeAllAction, type RevocationOutcome } from "./actions";
+import {
+  restoreAllAction,
+  restoreClassAction,
+  revokeAllAction,
+  revokeClassAction,
+  type RevocationOutcome,
+} from "./actions";
 
 /**
  * The kill-switch console (client): the danger button revokes every consent
@@ -11,23 +17,37 @@ import { restoreAllAction, revokeAllAction, type RevocationOutcome } from "./act
  * — cohort counts dropping, ingest gates throwing, read gates blocking. The
  * purple button is the demo-only reset: it re-grants via NEW records, so the
  * audit trail (server-rendered below) keeps the whole story.
+ *
+ * The per-data-class grid is the partial-revocation console (reserve →
+ * working): each toggle revises ONE class across every covering instrument
+ * — new scope-reduced records, same append-only ledger, same live report.
  */
+
+export interface ClassToggleState {
+  dataClass: string;
+  label: string;
+  granted: boolean;
+  /** false when no currently-granted instrument covers this class */
+  revisable: boolean;
+}
 
 export function RevocationConsole({
   participantId,
   displayLabel,
+  classStates,
 }: {
   participantId: string;
   displayLabel: string;
+  classStates: ClassToggleState[];
 }) {
   const [pending, startTransition] = useTransition();
   const [report, setReport] = useState<RevocationReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const run = (action: (id: string) => Promise<RevocationOutcome>) => {
+  const run = (action: () => Promise<RevocationOutcome>) => {
     setError(null);
     startTransition(async () => {
-      const outcome = await action(participantId);
+      const outcome = await action();
       if (!outcome.ok) {
         setError(outcome.error);
         return;
@@ -39,10 +59,19 @@ export function RevocationConsole({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="danger" size="lg" disabled={pending} onClick={() => run(revokeAllAction)}>
+        <Button
+          variant="danger"
+          size="lg"
+          disabled={pending}
+          onClick={() => run(() => revokeAllAction(participantId))}
+        >
           {pending ? "Working…" : `Revoke all consents — ${displayLabel}`}
         </Button>
-        <Button variant="purple" disabled={pending} onClick={() => run(restoreAllAction)}>
+        <Button
+          variant="purple"
+          disabled={pending}
+          onClick={() => run(() => restoreAllAction(participantId))}
+        >
           Restore consents (demo reset)
         </Button>
         {error && <span className="text-sm font-semibold text-danger">{error}</span>}
@@ -52,6 +81,59 @@ export function RevocationConsole({
         nothing is deleted. Restore issues <span className="font-semibold">new</span> grant
         records; the audit trail below keeps every step forever.
       </p>
+
+      {/* Partial revocation: per-data-class toggle grid */}
+      <div className="rounded-card border border-pale-blue bg-pale-blue/40 p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold text-navy">
+            Partial revocation · per data class
+          </h3>
+          <p className="text-xs text-muted">
+            each toggle appends a scope-revised record — only that class blocks, the rest keeps
+            flowing
+          </p>
+        </div>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {classStates.map((state) => (
+            <li
+              key={state.dataClass}
+              className="flex items-center justify-between gap-2 rounded-card bg-white px-3 py-2"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                    state.granted ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                  }`}
+                >
+                  {state.granted ? "granted" : "revoked"}
+                </span>
+                <span className="truncate text-sm font-semibold text-navy">{state.label}</span>
+              </div>
+              {state.granted ? (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  disabled={pending}
+                  onClick={() => run(() => revokeClassAction(participantId, state.dataClass))}
+                >
+                  Revoke
+                </Button>
+              ) : state.revisable ? (
+                <Button
+                  size="sm"
+                  variant="purple"
+                  disabled={pending}
+                  onClick={() => run(() => restoreClassAction(participantId, state.dataClass))}
+                >
+                  Restore
+                </Button>
+              ) : (
+                <span className="text-[11px] text-muted">no granted instrument</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {report && <ReportPanel report={report} />}
     </div>
@@ -68,7 +150,18 @@ function ReportPanel({ report }: { report: RevocationReport }) {
       }`}
     >
       <p className="text-sm font-semibold text-navy">
-        {revoked ? "Revoked" : "Restored"}:{" "}
+        {revoked ? "Revoked" : "Restored"}
+        {report.dataClass ? (
+          <>
+            {" "}
+            <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-navy">
+              {report.dataClass}
+            </span>{" "}
+            across
+          </>
+        ) : (
+          ":"
+        )}{" "}
         {report.instruments.length > 0 ? report.instruments.join(", ") : "nothing to change"} —
         enforcement re-checked live:
       </p>

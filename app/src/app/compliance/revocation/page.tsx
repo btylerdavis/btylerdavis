@@ -7,6 +7,7 @@ import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { TrendSparkline } from "@/components/charts/ResearchCharts";
 import {
   countRowsByDataClass,
+  dataClassConsentStates,
   snapshotConsentImpact,
 } from "@/lib/compliance/revocation";
 import {
@@ -78,13 +79,14 @@ export default async function RevocationPage({
   ];
   if (!candidateIds.includes(id)) candidateIds.push(id);
 
-  const [names, grants, states, history, rowCounts, snapshot] = await Promise.all([
+  const [names, grants, states, history, rowCounts, snapshot, classStates] = await Promise.all([
     getLinkedDisplayNames([...candidateIds, id]),
     loadGrants(id),
     getConsentStates(id),
     getConsentHistory(id),
     countRowsByDataClass(id),
     snapshotConsentImpact(id),
+    dataClassConsentStates(id),
   ]);
 
   // Identified-tier sparkline: last 30 nights of sleep efficiency.
@@ -247,10 +249,20 @@ export default async function RevocationPage({
           <Card className="border border-danger/30 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">The kill switch</h2>
             <p className="mt-1 mb-4 text-sm text-muted">
-              Revokes Lane A, B and C in one stroke, then re-probes every gate and recounts the
-              cohorts — before and after, on one screen.
+              Revokes Lane A, B and C in one stroke — or just one data class from the grid —
+              then re-probes every gate and recounts the cohorts: before and after, on one
+              screen.
             </p>
-            <RevocationConsole participantId={id} displayLabel={label} />
+            <RevocationConsole
+              participantId={id}
+              displayLabel={label}
+              classStates={classStates.map((state) => ({
+                dataClass: state.dataClass,
+                label: CLASS_LABELS[state.dataClass],
+                granted: state.granted,
+                revisable: state.revisableInstruments.length > 0,
+              }))}
+            />
           </Card>
 
           {/* Audit trail */}

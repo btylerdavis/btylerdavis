@@ -3,14 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
-import { RecommendationCard } from "@/components/RecommendationCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { getLinkedProfile, loadGrants, type DataClass } from "@/lib/consent";
 import { prisma } from "@/lib/db";
 import { formatDay, shortId } from "@/lib/format";
+import { buildNarrative } from "@/lib/recommendations/narrative";
 import { loadRecommendations } from "@/lib/recommendations/queries";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
+import { NarrativeCards } from "./NarrativeCards";
 
 /**
  * AI recommendations (DEMO.md Act 7; SPEC §10). Rules-based, deterministic,
@@ -135,13 +136,13 @@ export default async function RecommendationsPage({
                   </p>
                 </Card>
               ) : (
-                result.recommendations.map((rec) => (
-                  <RecommendationCard
-                    key={rec.ruleId}
-                    recommendation={rec}
-                    series={result.series}
-                  />
-                ))
+                <NarrativeCards
+                  cards={result.recommendations.map((rec) => ({
+                    recommendation: rec,
+                    narrative: buildNarrative(id, rec, result.inputs),
+                  }))}
+                  series={result.series}
+                />
               )}
             </>
           )}

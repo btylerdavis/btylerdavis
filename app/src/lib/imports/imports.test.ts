@@ -12,6 +12,7 @@ import {
   parseAppleDate,
   parseAppleHealthXml,
 } from "./appleHealth";
+import { parseDentiTracCsv } from "./dentitrac";
 import { ingestParsedImport } from "./ingest";
 
 /**
@@ -243,5 +244,45 @@ describe("gated import ingest", () => {
         where: { participantId: id, concept: "cpap_usage_minutes" },
       })
     ).toBe(30);
+  });
+});
+
+describe("DentiTrac wear-time parser (pilot preview — no ingest path)", () => {
+  it("parses the bundled fixture to nights + mean wear hours", async () => {
+    const parsed = parseDentiTracCsv(await fixture("dentitrac-sample.csv"));
+
+    expect(parsed.kind).toBe("dentitrac");
+    expect(parsed.nights).toBe(28);
+    expect(parsed.wornNights).toBe(26); // two 0:00 nights
+    expect(parsed.firstDay).toBe("2026-06-01");
+    expect(parsed.lastDay).toBe("2026-06-28");
+    expect(parsed.deviceSerial).toBe("BRB-2214077");
+    // 10,647 wear minutes over 28 nights (zeros included) / 26 worn nights.
+    expect(parsed.meanWearHoursAllNights).toBe(6.3);
+    expect(parsed.meanWearHoursWornNights).toBe(6.8);
+
+    const june8 = parsed.rows.find((row) => row.day === "2026-06-08");
+    expect(june8).toMatchObject({ wearMinutes: 0, verified: false });
+    const june1 = parsed.rows.find((row) => row.day === "2026-06-01");
+    expect(june1).toMatchObject({ wearMinutes: 444, verified: true }); // 7:24
+  });
+
+  it("reads h:mm and decimal-hour wear values, ISO and US dates", () => {
+    const parsed = parseDentiTracCsv(
+      ["Date,Wear Time", "2026-06-01,7:30", "06/02/2026,6.5"].join("\n")
+    );
+    expect(parsed.nights).toBe(2);
+    expect(parsed.rows.map((row) => row.wearMinutes)).toEqual([450, 390]);
+    expect(parsed.rows.every((row) => row.verified === null)).toBe(true);
+  });
+
+  it("rejects duplicates, out-of-range wear, and non-DentiTrac files", () => {
+    expect(() =>
+      parseDentiTracCsv(["Date,Wear Time", "2026-06-01,7:00", "2026-06-01,6:00"].join("\n"))
+    ).toThrow(/duplicate night/);
+    expect(() =>
+      parseDentiTracCsv(["Date,Wear Time", "2026-06-01,26:00"].join("\n"))
+    ).toThrow(/out of range/);
+    expect(() => parseDentiTracCsv("Nights,Usage\n1,2")).toThrow(/Date.*Wear Time/);
   });
 });
