@@ -13,8 +13,14 @@ import {
   patchedHref,
   type OutcomeSummary,
 } from "@/lib/research/explorer";
+import {
+  filterSummary,
+  listSavedCohorts,
+  normalizeCohortQuery,
+} from "@/lib/research/savedCohorts";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { MATTRESS_CATALOG } from "@/lib/synthetic/catalog";
+import { SavedCohortsCard } from "./SavedCohortsCard";
 
 /**
  * Cohort explorer (DEMO.md Act 5) — server-rendered, URL-param filtered.
@@ -34,13 +40,16 @@ export default async function ResearchExplorerPage({
 }) {
   const params = await searchParams;
   const filters = parseFilters(params);
-  const result = await loadExplorer(filters);
+  const [result, savedCohorts] = await Promise.all([loadExplorer(filters), listSavedCohorts()]);
 
   const brands = [...new Set(MATTRESS_CATALOG.map((entry) => entry.brand))].sort();
   const groups = filterGroups(brands);
   const activeFilterCount = Object.keys(filters).length;
   const clockDate = new Date(`${result.clockIso}T00:00:00Z`);
   const dayNumber = simDayNumber(clockDate);
+  const { query: currentQuery } = normalizeCohortQuery(
+    filtersHref(filters).split("?")[1] ?? ""
+  );
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -144,11 +153,30 @@ export default async function ResearchExplorerPage({
             />
           </div>
 
+          {/* Saved cohorts — demo-prep bookmarks (reserve → working) */}
+          <SavedCohortsCard
+            currentQuery={currentQuery}
+            currentSummary={filterSummary(filters)}
+            matched={result.matched}
+            items={savedCohorts.map((cohort) => ({
+              id: cohort.id,
+              name: cohort.name,
+              href: cohort.href,
+              summary: cohort.summary,
+              matched: cohort.matched,
+              clockLabel: formatDay(cohort.clockDate),
+            }))}
+          />
+
           <p className="pb-2 text-center text-xs text-muted">
             Cohort queries ran in {result.queryMs.toLocaleString("en-US")} ms across ~
             {(800_000).toLocaleString("en-US")} observations · deep-dive:{" "}
             <Link href="/research/positional" className="underline underline-offset-4">
               positional-OSA flagship dashboard
+            </Link>{" "}
+            ·{" "}
+            <Link href="/research/power" className="underline underline-offset-4">
+              power calculator
             </Link>
           </p>
         </div>

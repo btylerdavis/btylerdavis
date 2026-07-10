@@ -79,6 +79,8 @@ async function tuneSqliteForBulkLoad(): Promise<void> {
 
 async function resetDatabase(): Promise<void> {
   // FK-safe delete order.
+  await prisma.deletionRequest.deleteMany();
+  await prisma.savedCohort.deleteMany();
   await prisma.observation.deleteMany();
   await prisma.sleepSession.deleteMany();
   await prisma.proResponse.deleteMany();

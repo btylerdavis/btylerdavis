@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -65,6 +66,14 @@ export default async function PartnerDashboardPage() {
                   other-brand purchasers are visible to this tier as of{" "}
                   {formatDay(dash.clockIso)}.
                 </p>
+                <div className="mt-4">
+                  <ButtonLink href="/partner/proposal" size="sm">
+                    Draft a study proposal
+                  </ButtonLink>
+                  <span className="ml-3 text-xs text-muted">
+                    SPEC §6.3–6.4 presets · live cohort feasibility · §12.4 price band
+                  </span>
+                </div>
               </div>
               <TimeMachineWidget
                 simDateIso={dash.clockIso}

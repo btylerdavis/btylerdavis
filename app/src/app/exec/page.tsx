@@ -6,8 +6,19 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { AdherenceFunnel } from "@/components/charts/AdherenceFunnel";
 import { buttonClasses } from "@/components/Button";
+import { SERIES } from "@/components/charts/theme";
 import { formatDay } from "@/lib/format";
 import { loadExecDashboard, parseAssumptions, TARGETS } from "@/lib/exec/queries";
+import {
+  computeRevenueModel,
+  parseRevenueModelParams,
+  REVENUE_LINES,
+  REVENUE_PARAM_KEYS,
+  MAX_OPERATING_COST,
+  MAX_UNIT_PRICE,
+  type RevenueModelInputs,
+  type RevenueModelResult,
+} from "@/lib/exec/revenue";
 import { MAX_SIM_DAYS } from "@/lib/simclock";
 
 /**
@@ -26,11 +37,29 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export default async function ExecDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ hst?: string | string[]; cpap?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
   const assumptions = parseAssumptions(params);
+  const revenueInputs = parseRevenueModelParams(params);
+  const revenueModel = computeRevenueModel(revenueInputs);
   const dash = await loadExecDashboard(assumptions);
+
+  // Cross-form persistence: each GET form carries the other's params as
+  // hidden inputs, so recomputing one card keeps the other's scenario.
+  const revenueHiddenFields: [string, number][] = [
+    [REVENUE_PARAM_KEYS.studies.count, revenueInputs.studies.count],
+    [REVENUE_PARAM_KEYS.studies.price, revenueInputs.studies.price],
+    [REVENUE_PARAM_KEYS.subscriptions.count, revenueInputs.subscriptions.count],
+    [REVENUE_PARAM_KEYS.subscriptions.price, revenueInputs.subscriptions.price],
+    [REVENUE_PARAM_KEYS.validations.count, revenueInputs.validations.count],
+    [REVENUE_PARAM_KEYS.validations.price, revenueInputs.validations.price],
+    [REVENUE_PARAM_KEYS.operatingCost, revenueInputs.operatingCost],
+  ];
+  const funnelHiddenFields: [string, number][] = [
+    ["hst", assumptions.hstValue],
+    ["cpap", assumptions.cpapValue],
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -89,6 +118,9 @@ export default async function ExecDashboardPage({
                 shareable link.
               </p>
               <form method="get" className="mt-4 space-y-3">
+                {revenueHiddenFields.map(([name, value]) => (
+                  <input key={name} type="hidden" name={name} value={value} />
+                ))}
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">HST reimbursement</span>
                   <span className="text-muted"> · per completed referral</span>
@@ -180,6 +212,13 @@ export default async function ExecDashboardPage({
             </p>
           </Card>
 
+          {/* Revenue-model calculator (reserve → working) */}
+          <RevenueModelCard
+            inputs={revenueInputs}
+            model={revenueModel}
+            hiddenFields={funnelHiddenFields}
+          />
+
           {/* Data-asset tiles */}
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -254,6 +293,190 @@ export default async function ExecDashboardPage({
       </main>
       <Footer />
     </div>
+  );
+}
+
+const SEGMENT_COLORS: Record<string, string> = {
+  studies: SERIES.primary,
+  subscriptions: SERIES.secondary,
+  validations: SERIES.soft,
+};
+
+/**
+ * Revenue-model calculator (SPEC §12.4 lines vs the §3.5 month-36 bar):
+ * URL-param assumptions like the funnel card, a stacked revenue bar drawn on
+ * the same scale as the configurable operating-cost line, and the
+ * self-funding verdict stated exactly as §3.5 states it.
+ */
+function RevenueModelCard({
+  inputs,
+  model,
+  hiddenFields,
+}: {
+  inputs: RevenueModelInputs;
+  model: RevenueModelResult;
+  hiddenFields: [string, number][];
+}) {
+  const axisMax = Math.max(model.totalRevenue, model.operatingCost, 1) * 1.15;
+  const pct = (n: number) => Math.min(100, (n / axisMax) * 100);
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold text-navy">Revenue-model calculator</h2>
+        <p className="text-xs text-muted">
+          SPEC §12.4 lines vs the §3.5 month-36 self-funding bar · assumptions live in the URL
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-5">
+        {/* Assumptions */}
+        <form method="get" className="space-y-3 lg:col-span-2">
+          {hiddenFields.map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
+          {REVENUE_LINES.map((line) => (
+            <div key={line.key} className="text-sm">
+              <span className="font-semibold text-navy">{line.label}</span>
+              <span className="text-muted"> · {line.unit}</span>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <input
+                  type="number"
+                  name={REVENUE_PARAM_KEYS[line.key].count}
+                  min={0}
+                  max={line.maxCount}
+                  step={1}
+                  defaultValue={inputs[line.key].count}
+                  aria-label={`${line.label} per year`}
+                  className="w-16 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                />
+                <span className="text-muted">×&nbsp;$</span>
+                <input
+                  type="number"
+                  name={REVENUE_PARAM_KEYS[line.key].price}
+                  min={0}
+                  max={MAX_UNIT_PRICE}
+                  step={5000}
+                  defaultValue={inputs[line.key].price}
+                  aria-label={`${line.label} price`}
+                  className="w-28 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                />
+              </div>
+              <p className="mt-0.5 text-xs text-muted">
+                band {usd(line.band.min)}–{usd(line.band.max)} · {line.band.basis}
+              </p>
+            </div>
+          ))}
+          <label className="block text-sm">
+            <span className="font-semibold text-navy">Operating cost</span>
+            <span className="text-muted"> · annual, the line to beat</span>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-muted">$</span>
+              <input
+                type="number"
+                name={REVENUE_PARAM_KEYS.operatingCost}
+                min={0}
+                max={MAX_OPERATING_COST}
+                step={25000}
+                defaultValue={inputs.operatingCost}
+                className="w-32 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+              />
+            </div>
+          </label>
+          <button type="submit" className={buttonClasses("outline", "sm")}>
+            Recompute
+          </button>
+        </form>
+
+        {/* Projection vs the §3.5 bar */}
+        <div className="lg:col-span-3">
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                Projected annual partner revenue
+              </p>
+              <p className="mt-1 text-3xl font-semibold text-navy tabular-nums">
+                {usd(model.totalRevenue)}
+              </p>
+            </div>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                model.selfFunding ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+              }`}
+            >
+              {model.selfFunding
+                ? "covers operating costs — the §3.5 month-36 bar"
+                : `${model.coveragePct}% of the way to the §3.5 month-36 bar`}
+            </span>
+          </div>
+
+          {/* Stacked revenue bar with the operating-cost marker */}
+          <div className="mt-4">
+            <div className="relative h-6 rounded-full bg-pale-blue">
+              <div className="absolute inset-0 flex overflow-hidden rounded-full">
+                {model.lines
+                  .filter((line) => line.total > 0)
+                  .map((line) => (
+                    <div
+                      key={line.key}
+                      style={{
+                        width: `${pct(line.total)}%`,
+                        background: SEGMENT_COLORS[line.key],
+                      }}
+                      aria-hidden
+                    />
+                  ))}
+              </div>
+              {/* the operating-cost line */}
+              <div
+                className="absolute inset-y-[-4px] w-0.5 bg-danger"
+                style={{ left: `${pct(model.operatingCost)}%` }}
+                aria-hidden
+              />
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+              {model.lines.map((line) => (
+                <span key={line.key} className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="inline-block h-3 w-3 rounded-[3px]"
+                    style={{ background: SEGMENT_COLORS[line.key] }}
+                  />
+                  {line.label}: {line.count} × {usd(line.price)} = {usd(line.total)}
+                </span>
+              ))}
+              <span className="flex items-center gap-1.5">
+                <span aria-hidden className="inline-block h-3 w-0.5 bg-danger" />
+                Operating cost {usd(model.operatingCost)}
+              </span>
+            </div>
+          </div>
+
+          <p className="mt-3 text-sm text-body">
+            {model.selfFunding ? (
+              <>
+                Surplus of <span className="font-semibold tabular-nums">{usd(model.surplus)}</span>{" "}
+                over the operating-cost line — §3.5&rsquo;s business-engine test (&ldquo;partner
+                revenue covering platform operating costs by month 36&rdquo;) holds under these
+                assumptions.
+              </>
+            ) : (
+              <>
+                Gap of{" "}
+                <span className="font-semibold tabular-nums">{usd(-model.surplus)}</span> to the
+                operating-cost line — §3.5 calls the business engine successful when partner
+                revenue covers operating costs by month 36.
+              </>
+            )}
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            SPEC §12.4&rsquo;s bands are deliberately rough — this is a planning calculator on
+            assumptions, not bookings, and the §12.3 rules of engagement (de-identified, DUA,
+            never raw resale) apply to every line.
+          </p>
+        </div>
+      </div>
+    </Card>
   );
 }
 

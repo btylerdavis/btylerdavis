@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { buttonClasses } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
+import { getParticipantDeletionState } from "@/lib/compliance/deletion";
 import {
   getConsentStates,
   getDevices,
@@ -17,6 +19,7 @@ import {
 import { prisma } from "@/lib/db";
 import { formatDay, shortId } from "@/lib/format";
 import { getSimClock } from "@/lib/simclock";
+import { fileDeletionRequest } from "./actions";
 
 /**
  * Participant snapshot — minimal read-only view (foundation for week 2's
@@ -56,11 +59,80 @@ export default async function ParticipantPage({
   const participant = await prisma.participant.findUnique({ where: { id } });
   if (!participant) notFound();
 
-  const [simDate, consents, grants] = await Promise.all([
+  const [simDate, consents, grants, deletionState] = await Promise.all([
     getSimClock(),
     getConsentStates(id),
     loadGrants(id),
+    getParticipantDeletionState(id),
   ]);
+
+  // Tombstone: an executed deletion removed every identified-tier row; only
+  // the append-only consent ledger and this participant row survive.
+  if (participant.deletedAt !== null) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader variant="site" />
+        <main className="flex-1 bg-pale-blue">
+          <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
+            <Card className="border border-danger/30 p-6 sm:p-8">
+              <p className="text-xs font-semibold tracking-[0.14em] text-danger uppercase">
+                Record deleted
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
+                Participant {shortId(id)}
+              </h1>
+              <p className="mt-2 text-sm text-muted">
+                A deletion request was executed on {formatDay(participant.deletedAt)}: every
+                identified-tier row was hard-deleted and all consents were revoked. This
+                tombstone row and the append-only consent ledger below are all that remain —
+                already-published de-identified mart releases are immutable and cannot be
+                recalled (SPEC §9.4).
+              </p>
+              {deletionState.executed && (
+                <Link
+                  href={`/compliance/deletions/${deletionState.executed.id}/certificate`}
+                  className={`${buttonClasses("outline", "sm")} mt-4`}
+                >
+                  View the deletion certificate
+                </Link>
+              )}
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-navy">
+                Consent ledger (retained, append-only)
+              </h2>
+              {consents.length === 0 ? (
+                <p className="mt-2 text-sm text-muted">No consent records.</p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {consents.map((consent) => (
+                    <li
+                      key={consent.instrumentType}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm"
+                    >
+                      <span className="font-medium text-body">
+                        {LANE_LABELS[consent.instrumentType] ?? consent.instrumentType}
+                      </span>
+                      <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">
+                        {consent.status}
+                        {consent.revokedAt ? ` · ${formatDay(consent.revokedAt)}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 text-xs text-muted">
+                The ledger is a legal record of what was consented, revoked and deleted — it is
+                never deleted itself.
+              </p>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const purchasesAllowed = grantSetHas(grants, "mattress_purchase", "view_identified");
   const [devices, purchases, observations, pros, linked] = await Promise.all([
@@ -319,6 +391,49 @@ export default async function ParticipantPage({
                   </li>
                 ))}
               </ul>
+            )}
+          </Card>
+
+          {/* Data rights: the deletion request (SPEC §9.4) */}
+          <Card className="border border-danger/20 p-6">
+            <h2 className="text-lg font-semibold text-navy">Your data rights</h2>
+            <p className="mt-2 text-sm text-muted">
+              You can withdraw at any time, and you can request deletion — which is stronger:
+              collection stops immediately and your identified data is deleted, not just sealed.
+              The consent ledger is retained as a legal record, and research releases already
+              published in de-identified form cannot be recalled — you were told this up front,
+              in plain language (SPEC §9.4).
+            </p>
+            {deletionState.pending ? (
+              <div className="mt-4 rounded-card bg-warning/10 px-4 py-3 text-sm">
+                <p className="font-semibold text-navy">
+                  Deletion requested on {formatDay(deletionState.pending.requestedAt)} — pending
+                  compliance review.
+                </p>
+                {deletionState.pending.note && (
+                  <p className="mt-1 text-xs text-muted">
+                    Your note: {deletionState.pending.note}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <form action={fileDeletionRequest} className="mt-4 space-y-3">
+                <input type="hidden" name="participantId" value={id} />
+                <label className="block text-sm">
+                  <span className="font-semibold text-navy">Note</span>
+                  <span className="text-muted"> · optional</span>
+                  <textarea
+                    name="note"
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Anything you want the compliance team to know"
+                    className="mt-1 w-full rounded-card border border-pale-blue px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                  />
+                </label>
+                <button type="submit" className={buttonClasses("danger", "sm")}>
+                  Request deletion
+                </button>
+              </form>
             )}
           </Card>
         </div>

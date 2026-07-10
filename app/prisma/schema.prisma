@@ -29,6 +29,11 @@ model Participant {
   sex                  String // "male" | "female"
   enrollmentTouchpoint String // "clinic" | "retail"
   createdAt            DateTime @default(now())
+  /// Tombstone marker (deletion workflow, SPEC §9.4): set when a deletion
+  /// request is executed. The row itself is retained so the append-only
+  /// consent ledger keeps a valid subject reference; every identified-tier
+  /// child row is hard-deleted at the same moment.
+  deletedAt            DateTime?
 
   identity          DemoIdentity?
   consentRecords    ConsentRecord[]
@@ -39,6 +44,7 @@ model Participant {
   sleepSessions     SleepSession[]
   observations      Observation[]
   proResponses      ProResponse[]
+  deletionRequests  DeletionRequest[]
 }
 
 /// Demo-only display fields, split from Participant to mirror the production
@@ -194,6 +200,50 @@ model ProResponse {
   participant Participant @relation(fields: [participantId], references: [id])
 
   @@index([participantId, instrument, administeredAt])
+}
+
+/// Consumer deletion request (SPEC §9.4 withdrawal & deletion; DEMO.md
+/// reserve → working). Deletion is STRONGER than revocation: executing a
+/// request revokes every consent AND hard-deletes the identified-tier rows.
+/// The consent ledger and the tombstoned Participant row survive (append-
+/// only, legally required); already-published de-identified mart releases
+/// are immutable and cannot be recalled.
+model DeletionRequest {
+  id            String    @id @default(uuid())
+  participantId String
+  /// sim-clock date the participant filed the request
+  requestedAt   DateTime
+  status        String // "pending" | "executed" | "declined"
+  note          String?
+  /// sim-clock date the compliance console executed (or declined) it
+  resolvedAt    DateTime?
+  /// JSON string: per-table deleted-row counts recorded at execution
+  /// (feeds the confirmation panel and the printable certificate)
+  deletionCounts String?
+  /// consent-ledger reference at execution: retained-record count + last id
+  ledgerRef     String?
+  createdAt     DateTime  @default(now())
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@index([participantId, status])
+  @@index([status, requestedAt])
+}
+
+/// Saved cohort-explorer filter set (demo-prep bookmarks; DEMO.md reserve →
+/// working). Stores the explorer's URL query string plus a consent-filtered
+/// member-count snapshot taken at save time — no participant ids, ever.
+model SavedCohort {
+  id          String   @id @default(uuid())
+  name        String
+  /// URL query string of validated explorer filters (e.g. "supine=y&firmness=medium")
+  query       String
+  /// consent-filtered matched count at save time (display only; live count on open)
+  matched     Int
+  cohortTotal Int
+  /// sim-clock date at save time
+  clockDate   DateTime
+  createdAt   DateTime @default(now())
 }
 
 /// Singleton row holding the demo "current date" (the time machine's clock).
