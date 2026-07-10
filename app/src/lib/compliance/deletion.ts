@@ -173,6 +173,18 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
     return { ok: false, error: `Request is already ${request.status}` };
   }
 
+  // Atomic claim: only one caller can move pending -> executing. Without this,
+  // a concurrent double-execute passes the status check above, deletes nothing
+  // (rows already gone), and overwrites the stored counts with zeros -
+  // corrupting the certificate.
+  const claimed = await prisma.deletionRequest.updateMany({
+    where: { id: requestId, status: "pending" },
+    data: { status: "executing" },
+  });
+  if (claimed.count === 0) {
+    return { ok: false, error: "Request is already being executed" };
+  }
+
   const clock = await getSimClock();
   const participantId = request.participantId;
 
