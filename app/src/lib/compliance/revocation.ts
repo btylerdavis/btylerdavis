@@ -278,13 +278,20 @@ export async function restoreAllConsents(participantId: string): Promise<Revocat
   const clock = await getSimClock();
 
   const states = await getConsentStates(participantId);
+  const grants = await loadGrants(participantId);
   const granted: InstrumentType[] = [];
   for (const state of states) {
-    if (state.status === "granted") continue; // already current
-    await grantConsent(participantId, state.instrumentType as InstrumentType, {
-      grantedAt: clock,
-    });
-    granted.push(state.instrumentType as InstrumentType);
+    const instrument = state.instrumentType as InstrumentType;
+    // Skip only when the instrument is granted AT FULL TEMPLATE SCOPE — a
+    // granted-but-reduced instrument (partial-revocation grid) must also be
+    // restored, or the demo-reset button silently no-ops.
+    const fullScope = INSTRUMENT_SCOPES[instrument];
+    const atFullScope =
+      state.status === "granted" &&
+      fullScope.every(({ dataClass, use }) => grantSetHas(grants, dataClass, use));
+    if (atFullScope) continue; // already current at full scope
+    await grantConsent(participantId, instrument, { grantedAt: clock });
+    granted.push(instrument);
   }
 
   return finishReport(participantId, "restore", granted, before);
