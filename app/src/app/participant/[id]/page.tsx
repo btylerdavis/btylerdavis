@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   getConsentStates,
+  getDevices,
   getLinkedProfile,
   getObservations,
   getProResponses,
@@ -55,15 +56,17 @@ export default async function ParticipantPage({
   const participant = await prisma.participant.findUnique({ where: { id } });
   if (!participant) notFound();
 
-  const [simDate, consents, devices, grants] = await Promise.all([
+  const [simDate, consents, grants] = await Promise.all([
     getSimClock(),
     getConsentStates(id),
-    prisma.device.findMany({ where: { participantId: id }, orderBy: { assignedAt: "asc" } }),
     loadGrants(id),
   ]);
 
   const purchasesAllowed = grantSetHas(grants, "mattress_purchase", "view_identified");
-  const [purchases, observations, pros, linked] = await Promise.all([
+  const [devices, purchases, observations, pros, linked] = await Promise.all([
+    // Consent-gated device read: revoked classes drop out and surface as
+    // blocked chips exactly like observations/PROs.
+    getDevices(id, { use: "view_identified", grants }),
     purchasesAllowed
       ? prisma.mattressPurchase.findMany({
           where: { participantId: id },
@@ -107,6 +110,7 @@ export default async function ParticipantPage({
     ...new Set([
       ...observations.blockedDataClasses,
       ...pros.blockedDataClasses,
+      ...devices.blockedDataClasses,
       ...(purchasesAllowed ? [] : (["mattress_purchase"] as DataClass[])),
     ]),
   ];
@@ -194,11 +198,17 @@ export default async function ParticipantPage({
           {/* Devices */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-navy">Devices</h2>
-            {devices.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">No devices connected yet.</p>
+            {devices.data.length === 0 ? (
+              devices.blocked ? (
+                <p className="mt-2 text-sm font-semibold text-danger">
+                  Blocked — no current view consent covers device registrations.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-muted">No devices connected yet.</p>
+              )
             ) : (
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {devices.map((device) => (
+                {devices.data.map((device) => (
                   <li key={device.id} className="rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm">
                     <p className="font-semibold text-navy">
                       {device.make} {device.model}

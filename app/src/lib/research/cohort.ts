@@ -1,5 +1,6 @@
 import {
   DATA_CLASSES,
+  getAllGrantedDevices,
   grantSetHas,
   grantsFor,
   loadAllGrants,
@@ -196,9 +197,9 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
   const startedAt = performance.now();
   const clock = await getSimClock();
 
-  const [allGrants, participants, purchases, devices, hstRows, essRows, cpapRows, seffRows, supineRaw] =
+  const allGrants = await loadAllGrants();
+  const [participants, purchases, devices, hstRows, essRows, cpapRows, seffRows, supineRaw] =
     await Promise.all([
-      loadAllGrants(),
       prisma.participant.findMany({
         select: {
           id: true,
@@ -209,9 +210,12 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
         },
       }),
       prisma.mattressPurchase.findMany({ include: { catalogItem: true } }),
-      prisma.device.findMany({
-        where: { deviceClass: { in: ["cpap", "appliance"] } },
-        select: { participantId: true, deviceClass: true },
+      // Consent-gated device read: therapy devices come back only for
+      // participants whose research_deid grant covers the device's class.
+      getAllGrantedDevices({
+        use: "research_deid",
+        classes: ["cpap", "appliance"],
+        grants: allGrants,
       }),
       // Baseline HST values + study date (hst-only concepts, indexed on concept).
       prisma.$queryRaw<HstRow[]>`
@@ -354,8 +358,9 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
       : undefined;
 
     // --- arm derivation --------------------------------------------------------
-    // Therapy devices are clinical-lane records → hst_clinical scope. The
-    // mattress component comes from the (already consent-scoped) purchase.
+    // Device rows arrive pre-gated (cpap → cpap_telemetry, appliance →
+    // hst_clinical); the arm itself is a clinical attribute → hst_clinical
+    // scope. The mattress component comes from the consent-scoped purchase.
     let arm: ArmKey | null = null;
     if (canResearch(pid, "hst_clinical")) {
       const hasCpap = cpapIds.has(pid);

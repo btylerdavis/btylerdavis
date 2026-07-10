@@ -1,60 +1,117 @@
+import { randomUUID } from "node:crypto";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import {
-  getConsentStates,
   getLinkedProfile,
   getObservations,
+  grantConsent,
+  revokeConsent,
 } from "@/lib/consent";
-import { MARCUS_REED_PARTICIPANT_ID } from "@/lib/synthetic/profiles";
 
 /**
- * Foundation verification page: eyeball that the data model, seed, sim clock
- * and consent gates all work. Read-only — never mutates state on render.
+ * Build-status page: sanitized aggregate counts, the sim-clock date, and
+ * pass/fail consent-gate indicators. Deliberately NOT internal: no cohort
+ * participant ids, no identity-linked reads, no raw probe internals — the
+ * consent gates are exercised against a throwaway synthetic probe
+ * participant that is created and deleted within this request.
  */
 export const metadata: Metadata = { title: "Build status" };
 
 export const dynamic = "force-dynamic";
 
+interface ProbeResult {
+  label: string;
+  detail: string;
+  pass: boolean;
+}
+
+/**
+ * Exercises the consent gates end-to-end on a throwaway probe participant
+ * (anonymous by construction — it never carries an identity record and its
+ * id is never rendered). All probe rows are removed before the page renders;
+ * the append-only consent convention is waived for this synthetic probe.
+ */
+async function runConsentGateProbes(): Promise<ProbeResult[]> {
+  const probeId = randomUUID();
+  const probes: ProbeResult[] = [];
+  try {
+    await prisma.participant.create({
+      data: {
+        id: probeId,
+        yearOfBirth: 1980,
+        sex: "female",
+        enrollmentTouchpoint: "clinic",
+      },
+    });
+    await grantConsent(probeId, "LANE_A");
+    await prisma.observation.create({
+      data: {
+        participantId: probeId,
+        source: "airview",
+        concept: "cpap_usage_minutes",
+        valueNumeric: 300,
+        unit: "min",
+        effectiveDate: new Date(),
+        grain: "day",
+        qualityFlags: '["probe"]',
+      },
+    });
+
+    const allowed = await getObservations(probeId, { use: "view_identified" });
+    probes.push({
+      label: "Identified-tier read with a current Lane A grant",
+      pass: !allowed.blocked && allowed.data.length > 0,
+      detail:
+        !allowed.blocked && allowed.data.length > 0
+          ? "rows returned, as expected"
+          : "unexpectedly blocked",
+    });
+
+    const linkage = await getLinkedProfile(probeId, { use: "view_identified" });
+    probes.push({
+      label: "Linkage join without a Lane C grant",
+      pass: linkage.blocked,
+      detail: linkage.blocked ? "refused, as expected" : "unexpectedly allowed",
+    });
+
+    await revokeConsent(probeId, "LANE_A");
+    const revoked = await getObservations(probeId, { use: "view_identified" });
+    const revokedPass = revoked.blocked && revoked.data.length === 0;
+    probes.push({
+      label: "Identified-tier read after revocation",
+      pass: revokedPass,
+      detail: revokedPass ? "blocked, zero rows — as expected" : "unexpectedly allowed",
+    });
+  } finally {
+    await prisma.observation.deleteMany({ where: { participantId: probeId } });
+    await prisma.consentRecord.deleteMany({ where: { participantId: probeId } });
+    await prisma.participant.deleteMany({ where: { id: probeId } });
+  }
+  return probes;
+}
+
 export default async function DevStatusPage() {
-  const [participants, observations, sleepSessions, proResponses, simClock, marcusConsents] =
+  // Counts run BEFORE the probe participant exists, so they stay honest.
+  const [participants, observations, sleepSessions, proResponses, simClock] =
     await Promise.all([
       prisma.participant.count(),
       prisma.observation.count(),
       prisma.sleepSession.count(),
       prisma.proResponse.count(),
       prisma.simClock.findUnique({ where: { id: "singleton" } }),
-      getConsentStates(MARCUS_REED_PARTICIPANT_ID),
     ]);
 
-  // Consent-gate probes (both read-only):
-  // 1. ALLOWED — Marcus holds LANE_A, so an identified-tier CPAP read returns rows.
-  const allowedProbe = await getObservations(MARCUS_REED_PARTICIPANT_ID, {
-    use: "view_identified",
-    concepts: ["cpap_usage_minutes"],
-  });
-
-  // 2. BLOCKED — a participant without Lane C: the linkage join is refused.
-  const noLaneC = await prisma.participant.findFirst({
-    where: { consentRecords: { none: { instrumentType: "LANE_C" } } },
-    select: { id: true },
-  });
-  const blockedProbe = noLaneC
-    ? await getLinkedProfile(noLaneC.id, { use: "view_identified" })
-    : null;
-
-  const marcusLinked = await getLinkedProfile(MARCUS_REED_PARTICIPANT_ID, {
-    use: "view_identified",
-  });
+  const probes = await runConsentGateProbes();
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 font-mono text-sm">
       <p className="mb-6 inline-block rounded bg-amber-100 px-2 py-1 text-xs font-semibold tracking-wide text-amber-800">
         DEMO DATA — synthetic cohort
       </p>
-      <h1 className="mb-8 text-2xl font-bold">/dev/status — foundation check</h1>
+      <h1 className="mb-8 text-2xl font-bold">Build status</h1>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Database</h2>
+        <h2 className="mb-2 text-lg font-semibold">Database (aggregate counts)</h2>
         <table className="w-full border-collapse">
           <tbody>
             <Row label="participants" value={participants.toLocaleString()} />
@@ -70,65 +127,34 @@ export default async function DevStatusPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Marcus Reed — consent states</h2>
-        <p className="mb-2 text-xs text-gray-500">{MARCUS_REED_PARTICIPANT_ID}</p>
-        <table className="w-full border-collapse">
-          <tbody>
-            {marcusConsents.length === 0 && <Row label="(none)" value="NOT SEEDED" />}
-            {marcusConsents.map((c) => (
-              <Row
-                key={c.instrumentType}
-                label={c.instrumentType}
-                value={`${c.status} · granted ${c.grantedAt.toISOString().slice(0, 10)}${
-                  c.revokedAt ? ` · revoked ${c.revokedAt.toISOString().slice(0, 10)}` : ""
-                } · ${c.historyCount} record(s)`}
-                ok={c.status === "granted"}
-              />
-            ))}
-          </tbody>
-        </table>
-        {marcusLinked.blocked ? (
-          <p className="mt-2 text-red-600">Lane C join: BLOCKED — {marcusLinked.blockedReason}</p>
-        ) : (
-          <p className="mt-2 text-emerald-700">
-            Lane C join: OK — identity {marcusLinked.identity?.displayName ?? "n/a"}, mattress{" "}
-            {marcusLinked.retail?.mattressPurchases[0]?.model ?? "none"}, HST obs{" "}
-            {marcusLinked.clinical?.hstObservations.length ?? 0}
-          </p>
-        )}
-      </section>
-
-      <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Consent-gate probes</h2>
-        <table className="w-full border-collapse">
-          <tbody>
-            <Row
-              label="ALLOWED read (Marcus, cpap_usage_minutes, view_identified)"
-              value={
-                allowedProbe.blocked
-                  ? `UNEXPECTEDLY BLOCKED (${allowedProbe.blockedDataClasses.join(", ")})`
-                  : `${allowedProbe.data.length} rows`
-              }
-              ok={!allowedProbe.blocked && allowedProbe.data.length > 0}
-            />
-            <Row
-              label={`BLOCKED read (no-Lane-C participant ${noLaneC ? noLaneC.id.slice(0, 8) : "?"}…, linkage join)`}
-              value={
-                blockedProbe === null
-                  ? "NO PROBE PARTICIPANT FOUND"
-                  : blockedProbe.blocked
-                    ? `refused as expected — ${blockedProbe.blockedReason}`
-                    : "UNEXPECTEDLY ALLOWED"
-              }
-              ok={blockedProbe?.blocked === true}
-            />
-          </tbody>
-        </table>
+        <h2 className="mb-2 text-lg font-semibold">Consent-gate checks</h2>
+        <p className="mb-3 text-xs text-gray-500">
+          Exercised on a throwaway synthetic probe participant, created and deleted for this
+          request — no cohort participant is read or shown here.
+        </p>
+        <ul className="space-y-2">
+          {probes.map((probe) => (
+            <li
+              key={probe.label}
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-2 last:border-0"
+            >
+              <span className="text-gray-600">{probe.label}</span>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                  probe.pass
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {probe.pass ? "PASS" : "FAIL"} · {probe.detail}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <p className="text-xs text-gray-400">
-        Foundation build (Week 1). Seed via <code>npm run seed</code>; advance the time machine via{" "}
-        <code>advanceDays(n)</code> in <code>src/lib/simclock.ts</code>.
+        Seed via <code>npm run seed</code>; advance the demo clock at <code>/timemachine</code>.
       </p>
       <p className="mt-2 text-xs text-gray-400">
         Demonstration environment — synthetic cohort, no real patient data.
@@ -137,13 +163,11 @@ export default async function DevStatusPage() {
   );
 }
 
-function Row({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <tr className="border-b border-gray-200 last:border-0">
       <td className="py-1.5 pr-4 text-gray-600">{label}</td>
-      <td className={`py-1.5 font-semibold ${ok === undefined ? "" : ok ? "text-emerald-700" : "text-red-600"}`}>
-        {value}
-      </td>
+      <td className="py-1.5 font-semibold">{value}</td>
     </tr>
   );
 }

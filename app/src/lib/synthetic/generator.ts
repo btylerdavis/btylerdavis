@@ -60,6 +60,16 @@ export async function buildIngestGate(participantId: string, grants: GrantSet): 
 // Baseline HST
 // ---------------------------------------------------------------------------
 
+/**
+ * Determinism rule (F-series audit): every synthetic observation is stamped
+ * as ingested the morning AFTER its effective date — a constant, so seed
+ * runs and time-machine advances produce byte-identical rows. Runtime paths
+ * (imports, enroll flows) keep the schema's now() default.
+ */
+export function syntheticIngestedAt(effectiveDate: Date): Date {
+  return addDays(effectiveDate, 1);
+}
+
 const HST_UNITS: Record<string, string> = {
   ahi: "events/h",
   supine_ahi: "events/h",
@@ -97,6 +107,7 @@ export function hstObservationRows(
     effectiveDate: studyDate,
     grain: "session",
     qualityFlags: "[]",
+    ingestedAt: syntheticIngestedAt(studyDate),
   }));
 }
 
@@ -161,6 +172,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
         effectiveDate: date,
         grain: "day",
         qualityFlags: JSON.stringify(["device_gap"]),
+        ingestedAt: syntheticIngestedAt(date),
       });
     } else {
       const declineFactor = p.cpapAdherent ? 1 : 1 - 0.8 * ramp(daysOnCpap, p.cpapAbandonAfterDays);
@@ -177,6 +189,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
         effectiveDate: date,
         grain: "day",
         qualityFlags: "[]",
+        ingestedAt: syntheticIngestedAt(date),
       });
       if (!skipped) {
         const residBase = p.cpapAdherent ? 2.0 + p.ahi * 0.02 : 3.5 + p.ahi * 0.05;
@@ -193,6 +206,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
             effectiveDate: date,
             grain: "day",
             qualityFlags: "[]",
+            ingestedAt: syntheticIngestedAt(date),
           },
           {
             id: rng.uuid(),
@@ -205,6 +219,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
             effectiveDate: date,
             grain: "day",
             qualityFlags: leak > 30 ? JSON.stringify(["high_leak"]) : "[]",
+            ingestedAt: syntheticIngestedAt(date),
           }
         );
       }
@@ -263,6 +278,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
         effectiveDate: date,
         grain: "day",
         qualityFlags: flags,
+        ingestedAt: syntheticIngestedAt(date),
       });
     }
   }
@@ -285,6 +301,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
       effectiveDate: date,
       grain: "day",
       qualityFlags: "[]",
+      ingestedAt: syntheticIngestedAt(date),
     });
   }
 

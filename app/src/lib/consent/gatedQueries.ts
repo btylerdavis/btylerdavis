@@ -1,6 +1,6 @@
-import type { Observation, SleepSession, ProResponse, TreatmentEvent } from "@prisma/client";
+import type { Device, Observation, SleepSession, ProResponse, TreatmentEvent } from "@prisma/client";
 import { prisma } from "../db";
-import { grantSetHas, loadGrants, type GrantSet } from "./engine";
+import { grantsFor, grantSetHas, loadAllGrants, loadGrants, type GrantSet } from "./engine";
 import { sourceToDataClass } from "./scopes";
 import { DATA_CLASSES, type ConsentUse, type DataClass } from "./types";
 
@@ -182,6 +182,89 @@ export async function getTreatmentEvents(
     orderBy: { eventDate: "asc" },
   });
   return { data, blocked: false, blockedDataClasses: [] };
+}
+
+/**
+ * Consent policy for device registrations: each device class is gated by the
+ * data class whose payloads the device produces. Appliances are clinic-
+ * provisioned therapy hardware → clinical-lane data (hst_clinical), the same
+ * rule treatment events follow.
+ */
+export const DEVICE_CLASS_TO_DATA_CLASS = {
+  wearable: "wearable_sleep",
+  cpap: "cpap_telemetry",
+  sleep_mat: "sleep_mat",
+  appliance: "hst_clinical",
+} as const satisfies Record<string, DataClass>;
+
+export type DeviceClass = keyof typeof DEVICE_CLASS_TO_DATA_CLASS;
+
+/** Unique data classes the device gate spans (getDevices' fallback set). */
+const DEVICE_DATA_CLASSES = [
+  ...new Set(Object.values(DEVICE_CLASS_TO_DATA_CLASS)),
+] as DataClass[];
+
+/**
+ * Maps a Device.deviceClass to the data class whose consent grant gates it.
+ * Unknown classes map to null and are NEVER readable (fail closed).
+ */
+export function deviceClassToDataClass(deviceClass: string): DataClass | null {
+  return DEVICE_CLASS_TO_DATA_CLASS[deviceClass as DeviceClass] ?? null;
+}
+
+/**
+ * Devices for a participant, filtered by consent grant for the given use —
+ * the device counterpart of getObservations. A device row is visible only
+ * while a current grant covers its mapped data class; with no current grant
+ * this returns data: [] and blocked: true.
+ */
+export async function getDevices(
+  participantId: string,
+  opts: { use: ConsentUse; grants?: GrantSet; classes?: DeviceClass[] }
+): Promise<GatedResult<Device>> {
+  const grants = opts.grants ?? (await loadGrants(participantId));
+  const rows = await prisma.device.findMany({
+    where: {
+      participantId,
+      ...(opts.classes ? { deviceClass: { in: opts.classes } } : {}),
+    },
+    orderBy: { assignedAt: "asc" },
+  });
+  const known = rows.filter((row) => deviceClassToDataClass(row.deviceClass) !== null);
+  const explicit = opts.classes
+    ? [...new Set(opts.classes.map((c) => DEVICE_CLASS_TO_DATA_CLASS[c]))]
+    : undefined;
+  return gateRows(
+    known,
+    (row) => deviceClassToDataClass(row.deviceClass) as DataClass,
+    grants,
+    opts.use,
+    explicit,
+    DEVICE_DATA_CLASSES
+  );
+}
+
+/**
+ * Bulk device reader for cohort-scale aggregates (the loadAllGrants
+ * pattern): ONE table read, then only devices whose participant holds a
+ * current grant for the device's data class under the requested use are
+ * returned. Aggregate callers (coach / research / exec) preload grants once
+ * and pass them in so consent stays a single scan.
+ */
+export async function getAllGrantedDevices(opts: {
+  use: ConsentUse;
+  classes?: DeviceClass[];
+  grants?: Map<string, GrantSet>;
+}): Promise<Device[]> {
+  const grants = opts.grants ?? (await loadAllGrants());
+  const rows = await prisma.device.findMany({
+    where: opts.classes ? { deviceClass: { in: opts.classes } } : undefined,
+  });
+  return rows.filter((row) => {
+    const dataClass = deviceClassToDataClass(row.deviceClass);
+    if (dataClass === null) return false; // unknown class: fail closed
+    return grantSetHas(grantsFor(grants, row.participantId), dataClass, opts.use);
+  });
 }
 
 export interface LinkedProfile {

@@ -62,6 +62,10 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
     instrumentVersion: "1.0-demo",
     status: "granted",
     grantedAt: c.grantedAt,
+    // Determinism rule: seeded consent records are created the moment they
+    // are granted. Runtime flows (enroll actions, revocation console) keep
+    // the schema's now() default — only synthetic writes pin this.
+    createdAt: c.grantedAt,
     scope: JSON.stringify(INSTRUMENT_SCOPES[c.instrumentType]),
   }));
 

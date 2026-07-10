@@ -310,14 +310,23 @@ export default async function DeidDemoPage() {
               <div>
                 <h2 className="text-xl font-semibold">Research extract — the mart moment</h2>
                 <p className="mt-1 max-w-xl text-sm text-white/75">
-                  One de-identified row per consented participant: pseudonym, age band, shifted
-                  dates, exposure and outcome rollups. Exactly what a researcher or partner
-                  receives under a DUA — nothing more.
+                  The full extract is <span className="font-semibold text-white">de-identified
+                  row-level microdata</span> — one row per research-consented participant
+                  (pseudonym, age band, shifted dates, exposure and outcome rollups). Row-level
+                  data leaves only under a signed DUA: the download is gated on the partner DUA
+                  acknowledgement and redirects to /partner to sign first. The aggregate
+                  brand × severity table above is the published-table release — small cells
+                  suppressed, no DUA needed.
                 </p>
               </div>
-              <ButtonLink href="/research/deid/export" size="lg">
-                Export research extract (CSV)
-              </ButtonLink>
+              <div className="flex flex-col items-stretch gap-2">
+                <ButtonLink href="/research/deid/export" size="lg">
+                  Export row-level extract (CSV · DUA required)
+                </ButtonLink>
+                <ButtonLink href="/research/deid/export/aggregate" variant="purple">
+                  Export aggregate table (CSV · suppressed)
+                </ButtonLink>
+              </div>
             </div>
           </Card>
 

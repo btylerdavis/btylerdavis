@@ -1,4 +1,5 @@
 import {
+  getAllGrantedDevices,
   grantSetHas,
   grantsFor,
   loadAllGrants,
@@ -94,9 +95,9 @@ export async function loadExecDashboard(
   const startedAt = performance.now();
   const clock = await getSimClock();
 
-  const [allGrants, participants, screens, hstGroups, therapyEvents, matDevices, nightsRows] =
+  const allGrants = await loadAllGrants();
+  const [participants, screens, hstGroups, therapyEvents, matDevices, nightsRows] =
     await Promise.all([
-      loadAllGrants(),
       prisma.participant.findMany({
         select: { id: true, enrollmentTouchpoint: true },
       }),
@@ -115,9 +116,12 @@ export async function loadExecDashboard(
         },
         select: { participantId: true, type: true },
       }),
-      prisma.device.findMany({
-        where: { deviceClass: "sleep_mat" },
-        select: { participantId: true },
+      // Consent-gated device read: sleep-mat rows only for participants with
+      // a current sleep_mat view grant.
+      getAllGrantedDevices({
+        use: "view_identified",
+        classes: ["sleep_mat"],
+        grants: allGrants,
       }),
       // participant-nights with any day-grain observation (one scan, ≤ ~2k groups)
       prisma.$queryRaw<NightsRow[]>`
@@ -201,11 +205,8 @@ export async function loadExecDashboard(
     if (grantsFor(allGrants, row.pid).size === 0) continue; // revoked: not an asset
     observationNights += Number(row.nights);
   }
-  const instrumented = new Set(
-    matDevices
-      .map((device) => device.participantId)
-      .filter((id) => canView(id, "sleep_mat"))
-  ).size;
+  // matDevices arrive pre-gated on the sleep_mat view grant.
+  const instrumented = new Set(matDevices.map((device) => device.participantId)).size;
 
   return {
     clockIso: toIsoDay(clock),

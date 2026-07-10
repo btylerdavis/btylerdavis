@@ -1,4 +1,7 @@
+import type { ConsentRecord } from "@prisma/client";
 import {
+  evaluateGrants,
+  getAllGrantedDevices,
   grantSetHas,
   grantsFor,
   loadAllGrants,
@@ -108,10 +111,7 @@ export async function loadCoachDashboard(opts: {
     prisma.participant.findMany({
       select: { id: true, createdAt: true, enrollmentTouchpoint: true },
     }),
-    prisma.consentRecord.findMany({
-      where: { instrumentType: "LANE_A" },
-      select: { participantId: true, status: true, grantedAt: true, createdAt: true },
-    }),
+    prisma.consentRecord.findMany({ where: { instrumentType: "LANE_A" } }),
   ]);
 
   const canView = (participantId: string, dataClass: DataClass) =>
@@ -121,20 +121,22 @@ export async function loadCoachDashboard(opts: {
       (dataClass) => canView(participantId, dataClass)
     );
 
-  // --- clinic roster: everyone who ever signed Lane A ------------------------
-  const latestLaneA = new Map<string, { status: string; grantedAt: Date; createdAt: Date }>();
+  // --- clinic roster: everyone with a CURRENT granted Lane A -----------------
+  // Membership uses the consent engine's own evaluation (evaluateGrants) over
+  // the participant's Lane A history: the latest record must be granted and
+  // not revoked. A fully-revoked participant is NOT on the roster and appears
+  // in no coach number; the /compliance/revocation console (which reads the
+  // consent ledger directly) is where revoked participants remain visible.
+  const laneAByParticipant = new Map<string, ConsentRecord[]>();
   for (const record of laneARecords) {
-    const current = latestLaneA.get(record.participantId);
-    if (
-      !current ||
-      record.grantedAt > current.grantedAt ||
-      (record.grantedAt.getTime() === current.grantedAt.getTime() &&
-        record.createdAt > current.createdAt)
-    ) {
-      latestLaneA.set(record.participantId, record);
-    }
+    const list = laneAByParticipant.get(record.participantId) ?? [];
+    list.push(record);
+    laneAByParticipant.set(record.participantId, list);
   }
-  const roster = participants.filter((participant) => latestLaneA.has(participant.id));
+  const roster = participants.filter((participant) => {
+    const records = laneAByParticipant.get(participant.id);
+    return records !== undefined && evaluateGrants(records).size > 0;
+  });
   const rosterIds = new Set(roster.map((participant) => participant.id));
 
   // --- aggregates (all indexed groupBy / one raw scan) -----------------------
@@ -209,7 +211,13 @@ export async function loadCoachDashboard(opts: {
         AND o.effectiveDate > te.eventDate
       GROUP BY o.participantId, te.eventDate
     `,
-    prisma.device.findMany({ select: { participantId: true, deviceClass: true } }),
+    // Consent-gated device read: only devices whose participant holds the
+    // matching view_identified grant come back (F-series audit: no raw reads).
+    getAllGrantedDevices({
+      use: "view_identified",
+      classes: ["wearable", "cpap", "appliance"],
+      grants: allGrants,
+    }),
     prisma.mattressPurchase.findMany({ select: { participantId: true } }),
     prisma.proResponse.findMany({
       where: { instrument: "ESS" },
@@ -226,6 +234,7 @@ export async function loadCoachDashboard(opts: {
   );
   const adherence = new Map<string, number>();
   for (const [participantId, nights] of denominators) {
+    if (!rosterIds.has(participantId)) continue;
     if (nights === 0 || !canView(participantId, "cpap_telemetry")) continue;
     adherence.set(
       participantId,
@@ -242,6 +251,7 @@ export async function loadCoachDashboard(opts: {
 
   const supineByParticipant = new Map<string, { supine?: number; nonsupine?: number }>();
   for (const row of hstRows) {
+    if (!rosterIds.has(row.participantId)) continue;
     if (!canView(row.participantId, "hst_clinical")) continue;
     const entry = supineByParticipant.get(row.participantId) ?? {};
     if (row.concept === "supine_ahi") entry.supine = row.valueNumeric ?? undefined;
@@ -279,6 +289,7 @@ export async function loadCoachDashboard(opts: {
   let eligible90 = 0;
   let adherent90 = 0;
   for (const [participantId, setupDate] of setupByParticipant) {
+    if (!rosterIds.has(participantId)) continue;
     if (!canView(participantId, "cpap_telemetry")) continue;
     stageSetup += 1;
     const row = funnelById.get(participantId);
@@ -322,7 +333,12 @@ export async function loadCoachDashboard(opts: {
   wearableGapIds.sort((a, b) => a.sinceIso.localeCompare(b.sinceIso));
 
   const gapStreakIds = recentGapGroups
-    .filter((group) => group._count._all >= 5 && canView(group.participantId, "cpap_telemetry"))
+    .filter(
+      (group) =>
+        group._count._all >= 5 &&
+        rosterIds.has(group.participantId) &&
+        canView(group.participantId, "cpap_telemetry")
+    )
     .map((group) => group.participantId);
   // Streak start: the night after the last recorded usage (or setup date).
   const lastUsageGroups = gapStreakIds.length
@@ -393,11 +409,9 @@ export async function loadCoachDashboard(opts: {
   for (const row of wearableGapIds) markFlag(row.participantId, "Wearable silent");
   for (const row of therapyGapRows) markFlag(row.participantId, "Therapy gap");
   for (const row of overdueRows) markFlag(row.participantId, "PRO overdue");
-  for (const participant of roster) {
-    if (latestLaneA.get(participant.id)?.status !== "granted") {
-      markFlag(participant.id, "Consent revoked");
-    }
-  }
+  // NOTE: there is intentionally no "Consent revoked" flag — a participant
+  // without a current Lane A grant is not on the roster at all. Revocations
+  // are audited on the /compliance/revocation console instead.
 
   // --- patient list: sort by adherence, page, then hydrate the page ----------
   const sorted = [...roster].sort((a, b) => {

@@ -10,7 +10,11 @@ import { MARCUS_REED_PARTICIPANT_ID } from "@/lib/synthetic/profiles";
 export const dynamic = "force-dynamic";
 
 /** DEMO.md §2 — the 8-act arc as act → route(s), for rehearsal navigation. */
-const DEMO_ACTS: { title: string; links: { label: string; href: string }[] }[] = [
+const DEMO_ACTS: {
+  title: string;
+  links: { label: string; href: string }[];
+  note?: string;
+}[] = [
   {
     title: "The retail door",
     links: [{ label: "STOP-BANG + consumer enrollment", href: "/enroll/retail" }],
@@ -60,7 +64,8 @@ const DEMO_ACTS: { title: string; links: { label: string; href: string }[] }[] =
   },
   {
     title: "The reveal",
-    links: [{ label: "What's real, what's simulated", href: "/dev/status" }],
+    links: [],
+    note: "What's real, what's simulated — told live; the build-status check lives in the footer.",
   },
 ];
 
@@ -183,10 +188,6 @@ export default async function Home() {
             </div>
             <p className="mt-6 text-sm text-muted">
               Under the hood:{" "}
-              <a href="/dev/status" className="font-semibold text-navy underline underline-offset-4">
-                foundation status
-              </a>{" "}
-              ·{" "}
               <a
                 href={`/participant/${MARCUS_REED_PARTICIPANT_ID}`}
                 className="font-semibold text-navy underline underline-offset-4"
@@ -227,6 +228,7 @@ export default async function Home() {
                         {link.label}
                       </a>
                     ))}
+                    {act.note && <span className="text-muted">{act.note}</span>}
                   </p>
                 </div>
               </li>

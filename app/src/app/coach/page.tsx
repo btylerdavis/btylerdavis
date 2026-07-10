@@ -185,11 +185,7 @@ export default async function CoachPortalPage({
                             row.flags.map((flag) => (
                               <span
                                 key={flag}
-                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                  flag === "Consent revoked"
-                                    ? "border border-danger/40 bg-danger/5 text-danger"
-                                    : "bg-warning/10 text-warning"
-                                }`}
+                                className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning"
                               >
                                 {flag}
                               </span>

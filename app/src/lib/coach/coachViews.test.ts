@@ -204,16 +204,24 @@ describe("loadCoachDashboard (small-cohort smoke)", () => {
     );
     expect(second.flags).toContain("Therapy gap");
 
-    // Revoke Ada entirely: she drops out of every consent-filtered number.
+    // Revoke Ada entirely: without a CURRENT Lane A grant she leaves the
+    // roster and appears in NO coach number — tile, funnel, table, or flag.
+    // (Her revocation remains visible on /compliance/revocation, which reads
+    // the consent ledger directly.)
     await revokeConsent(adherent, "LANE_A");
     await revokeConsent(adherent, "LANE_C");
     const after = await loadCoachDashboard({ page: 1, sortDir: "desc" });
+    expect(after.tiles.enrolled).toBe(1); // Gary only
     expect(after.tiles.cpapAdherent).toBe(0);
     expect(after.tiles.linked).toBe(0);
     expect(after.funnel[0].count).toBe(1); // only Gary's telemetry is viewable now
-    const adaRow = after.patients.rows.find((row) => row.participantId === adherent);
-    expect(adaRow?.displayName).toBeNull();
-    expect(adaRow?.adherencePct).toBeNull();
-    expect(adaRow?.flags).toContain("Consent revoked");
+    expect(after.patients.total).toBe(1);
+    expect(after.patients.rows.map((row) => row.participantId)).toEqual([lapsed]);
+    const flagIds = [
+      ...after.flags.wearableGaps,
+      ...after.flags.therapyGaps,
+      ...after.flags.overduePros,
+    ].map((row) => row.participantId);
+    expect(flagIds).not.toContain(adherent);
   });
 });

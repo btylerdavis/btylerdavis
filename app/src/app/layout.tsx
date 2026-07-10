@@ -1,17 +1,28 @@
 import type { Metadata } from "next";
-import { Fredoka, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { DemoWatermark } from "@/components/DemoWatermark";
 
+/**
+ * Self-hosted fonts (no Google-hosted font loader — builds never fetch fonts).
+ * Both files are latin-subset variable woff2 slices vendored into
+ * src/fonts/; the declared weight ranges cover every weight the UI uses
+ * (Fredoka 600/700 headings, Source Sans 3 400/600/700 body).
+ */
+
 /** Headings: bold rounded sans (brand.md visual match for the site). */
-const fredoka = Fredoka({
-  subsets: ["latin"],
+const fredoka = localFont({
+  src: "../fonts/fredoka-latin-wght.woff2",
+  weight: "300 700",
+  style: "normal",
   variable: "--font-fredoka",
 });
 
 /** Body: clean humanist sans. */
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
+const sourceSans = localFont({
+  src: "../fonts/source-sans-3-latin-wght.woff2",
+  weight: "200 900",
+  style: "normal",
   variable: "--font-source-sans",
 });
 

@@ -1,4 +1,5 @@
 import {
+  getDevices,
   getObservations,
   grantSetHas,
   loadGrants,
@@ -113,12 +114,9 @@ export async function loadRecommendations(
       dataClasses: ["hst_clinical"],
       concepts: ["supine_ahi", "nonsupine_ahi"],
     }),
-    canView("cpap_telemetry")
-      ? prisma.device.findMany({
-          where: { participantId, deviceClass: "cpap" },
-          select: { id: true },
-        })
-      : Promise.resolve([]),
+    // Consent-gated device read: without a current cpap_telemetry view grant
+    // this returns data: [] (blocked), so hasCpap can never leak a device.
+    getDevices(participantId, { use: "view_identified", grants, classes: ["cpap"] }),
     // Same consent pattern as the coach portal: purchase facts only with a
     // current mattress_purchase view grant.
     canView("mattress_purchase")
@@ -170,7 +168,7 @@ export async function loadRecommendations(
     supineAhi !== null && nonsupineAhi !== null ? supineAhi >= 2 * nonsupineAhi : null;
 
   // --- CPAP aggregates -----------------------------------------------------------
-  const hasCpap = cpapDevices.length > 0;
+  const hasCpap = cpapDevices.data.length > 0;
   const usage30 = usageRows.filter((row) => row.day < 30);
   const gaps30 = [...gapDays].filter((day) => day < 30);
   const cpapNights30 = usage30.length + gaps30.length;

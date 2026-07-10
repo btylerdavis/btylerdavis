@@ -29,9 +29,12 @@ import { SIM_CLOCK_ID } from "../src/lib/simclock";
 /**
  * Deterministic synthetic-cohort seed (~2,000 participants). Rerunning
  * produces byte-identical data: all ids and values derive from the cohort
- * seed via seeded PRNGs. Every observation/session/PRO/purchase write passes
- * the consent ingest gate (assertIngestAllowed) built from the participant's
- * just-created consent records.
+ * seed via seeded PRNGs, and even the audit timestamps are pinned
+ * (ConsentRecord.createdAt = grantedAt; Observation.ingestedAt =
+ * effectiveDate + 1 day) — see determinism.test.ts. Every
+ * observation/session/PRO/purchase write passes the consent ingest gate
+ * (assertIngestAllowed) built from the participant's just-created consent
+ * records.
  *
  * Run: npm run seed
  */

@@ -24,7 +24,16 @@ import { matchParticipantsByName, type IdentityMatchWithDoor } from "@/lib/ident
  * re-validates it and writes through the consent ingest gate.
  */
 
+/** Streaming (XML) rail: bytes flow through the sax parser, never buffered whole. */
 const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024; // 1 GiB demo rail
+/**
+ * Buffered (CSV/TXT) rail: AirView CSVs parse via file.text(), which holds
+ * the whole file in memory — so cap it well below the streaming rail and
+ * check file.size BEFORE any .text() call.
+ */
+const MAX_TEXT_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
+const TEXT_TOO_LARGE_ERROR =
+  "CSV/TXT file larger than 25 MB — export a shorter date range (only Apple Health XML streams at full size)";
 
 export async function searchImportParticipants(
   query: string
@@ -112,13 +121,15 @@ export async function previewImportUpload(
       return toPreview(await parseAppleHealthXml(streamText(file)), file.name);
     }
     if (name.endsWith(".csv") || name.endsWith(".txt")) {
+      if (file.size > MAX_TEXT_UPLOAD_BYTES) return { ok: false, error: TEXT_TOO_LARGE_ERROR };
       return toPreview(parseAirViewCsv(await file.text()), file.name);
     }
-    // Sniff: XML starts with "<"
+    // Sniff: XML starts with "<" (the 256-byte slice never buffers the file)
     const head = await file.slice(0, 256).text();
     if (head.trimStart().startsWith("<")) {
       return toPreview(await parseAppleHealthXml(streamText(file)), file.name);
     }
+    if (file.size > MAX_TEXT_UPLOAD_BYTES) return { ok: false, error: TEXT_TOO_LARGE_ERROR };
     return toPreview(parseAirViewCsv(await file.text()), file.name);
   } catch (error) {
     if (error instanceof ImportParseError) return { ok: false, error: error.message };
