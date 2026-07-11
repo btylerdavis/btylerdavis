@@ -73,6 +73,45 @@ export function sourceToDataClass(source: string): DataClass | null {
 }
 
 /**
+ * Row-level lineage derivation for batched subject-data writes (audit v2
+ * HIGH fix, prioritized fix 2): the class a batch is authorized under is
+ * derived from the rows' OWN persisted `source` lineage — never from a
+ * caller-supplied operation label. Fail closed on principle:
+ *
+ * - any row with an unknown source → refuse the WHOLE batch ("unknown_source");
+ * - rows spanning more than one class → refuse the WHOLE batch ("mixed_batch").
+ *
+ * No quarantine writes: a refused batch never reaches the primary tables.
+ */
+export function uniformRowDataClass(
+  rows: readonly { source: string }[]
+):
+  | { ok: true; dataClass: DataClass }
+  | { ok: false; code: "empty_batch" | "unknown_source" | "mixed_batch"; detail: string } {
+  if (rows.length === 0) return { ok: false, code: "empty_batch", detail: "no rows in batch" };
+  const classes = new Set<DataClass>();
+  for (const row of rows) {
+    const dataClass = sourceToDataClass(row.source);
+    if (dataClass === null) {
+      return {
+        ok: false,
+        code: "unknown_source",
+        detail: `row source "${row.source}" maps to no data class (fail closed)`,
+      };
+    }
+    classes.add(dataClass);
+  }
+  if (classes.size > 1) {
+    return {
+      ok: false,
+      code: "mixed_batch",
+      detail: `batch spans classes ${[...classes].sort().join(", ")} — refused whole`,
+    };
+  }
+  return { ok: true, dataClass: [...classes][0] };
+}
+
+/**
  * Exhaustive treatment-event classification (audit F-06). Each event type is
  * consent-owned by the data class of the therapy/exposure it records:
  * CPAP lifecycle events under cpap_telemetry, appliance delivery under the

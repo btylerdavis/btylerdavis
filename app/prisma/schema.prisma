@@ -189,11 +189,16 @@ model SleepSession {
   endTs         DateTime
   /// JSON string: stages, efficiency, interruptions, ...
   summary       String
+  /// Import provenance (audit v2 HIGH fix): the ImportBatch receipt this row
+  /// arrived under. NULL for every non-import row (seed, time machine,
+  /// enrollment flows).
+  batchId       String?
 
   participant Participant @relation(fields: [participantId], references: [id])
   device      Device?     @relation(fields: [deviceId], references: [id])
 
   @@index([participantId, startTs])
+  @@index([batchId])
 }
 
 /// Canonical time-series record (T2.3). Adding a source never adds columns.
@@ -211,12 +216,17 @@ model Observation {
   /// JSON string array, e.g. ["short_wear","device_gap"]
   qualityFlags  String
   ingestedAt    DateTime @default(now())
+  /// Import provenance (audit v2 HIGH fix): the ImportBatch receipt this row
+  /// arrived under. NULL for every non-import row (seed, time machine,
+  /// enrollment flows).
+  batchId       String?
 
   participant Participant @relation(fields: [participantId], references: [id])
   device      Device?     @relation(fields: [deviceId], references: [id])
 
   @@index([participantId, concept, effectiveDate])
   @@index([concept, effectiveDate])
+  @@index([batchId])
 }
 
 model ProResponse {
@@ -371,6 +381,68 @@ model SeedInfo {
   cohortSize Int
   /// sim-clock date at seed time (deterministic, pinned)
   clockDate  DateTime
+}
+
+/// Server-owned staged import awaiting confirmation (audit v2 HIGH fix —
+/// the import trust boundary). previewImportUpload/loadSampleImport parse
+/// the file server-side, validate the result against the connector schema,
+/// and store the normalized payload HERE; confirmImport accepts only
+/// (token, participantId, alignToSimClock) and ingests from this server
+/// copy. The parsed payload never round-trips through the browser, so a
+/// forged `kind`/`source`/concept/unit can never reach the ingest gate.
+/// Tokens are single-use (consumedAt claimed atomically) and expire after
+/// ~15 wall-clock minutes (sim-clock-agnostic: staging is operator session
+/// state, not subject-timeline data).
+model PendingImport {
+  id            String    @id @default(uuid())
+  /// single-use opaque confirmation token (256-bit, base64url)
+  token         String    @unique
+  participantId String
+  /// connector kind: "apple_health" | "airview"
+  kind          String
+  /// canonical source from the server-owned connector schema
+  source        String
+  /// JSON string: the normalized ParsedImportPayload (server copy)
+  payload       String
+  /// SHA-256 hex digest of the uploaded file bytes
+  fileDigest    String
+  parserVersion String
+  createdAt     DateTime  @default(now())
+  /// wall-clock expiry (createdAt + ~15 min)
+  expiresAt     DateTime
+  /// set atomically when confirmImport consumes the token (single use)
+  consumedAt    DateTime?
+
+  @@index([participantId])
+  @@index([expiresAt])
+}
+
+/// Import provenance receipt (audit v2 prioritized fix 6): one row per
+/// confirmed import, created INSIDE the same consent-guarded transaction
+/// that admits the batch. Records the connector, canonical source, the data
+/// class the rows were admitted under, parser version, source-file digest,
+/// the PendingImport token id consumed, and the consent event (instrument +
+/// revision) that authorized the collect at admission. Imported
+/// Observation/SleepSession rows link back via their batchId column.
+model ImportBatch {
+  id                String   @id @default(uuid())
+  participantId     String
+  kind              String
+  source            String
+  dataClass         String
+  parserVersion     String
+  fileDigest        String
+  /// PendingImport row id consumed (null: direct in-process ingest, tests)
+  tokenId           String?
+  /// consent event that authorized the admission (e.g. "LANE_B")
+  consentInstrument String
+  /// revision of that consent event at admission time
+  consentRevision   Int
+  observationCount  Int      @default(0)
+  sessionCount      Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  @@index([participantId, createdAt])
 }
 
 /// Singleton row holding the demo "current date" (the time machine's clock).
