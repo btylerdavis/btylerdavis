@@ -23,10 +23,12 @@ Work from `app/` in the repo. Do these in order; total ~10 minutes plus rehearsa
 4. **Warm every route once** (primes caches; also your smoke test — every line must say 200):
    ```
    M=d81a5f64-9c3e-4b7a-8f21-6e0a4c9b5d17
-   for r in / /enroll/retail /enroll/clinic /timemachine /coach /research \
+   for r in / /enroll/retail /enroll/clinic /timemachine /coach /coach/import /research \
      /research/positional /research/compare /research/deid /research/abstract \
-     /compliance/revocation /partner /exec /dev/status \
-     /participant/$M /participant/$M/trends /participant/$M/recommendations; do
+     /research/power /research/robustness /compliance/revocation /compliance/deletions \
+     /compliance/model-log /partner /partner/releases /exec /dev/status \
+     /participant/$M /participant/$M/trends /participant/$M/recommendations \
+     /participant/$M/receipt; do
      curl -s -o /dev/null -w "%{http_code} $r\n" "http://localhost:3000$r"; done
    ```
 5. **Open the bookmark set**, one tab, in this order (the demo is bookmark → click → talk):
@@ -206,6 +208,24 @@ Read the crib (section 4). Close with SPEC/DELIVERY.
 
 Rhythm for every row: *honest one-liner → show what exists → name the build.* Never say
 "that's fake" — say "that's the reserve layer, and here's what it takes."
+
+### The audit-pedigree card ("how do I know it's solid?")
+
+Kevin may ask, in some form, "this is impressive, but how do I know it actually works and
+isn't just a pretty shell?" This is the strongest answer you have, and it's true:
+
+"Before you saw it, this codebase was attacked four separate ways. Two outside auditors — one
+running on Codex, one on ChatGPT — went at it adversarially, plus independent AI reviewers who
+wrote none of the code and were told to *break* the consent and deletion enforcement. Every
+round found something real. Every finding is in the repo with its fix and the evidence that the
+fix holds — `AUDIT-RESPONSE.md` and `AUDIT-RESPONSE-v2.md`. The consent engine got rebuilt from
+the ground up after the second audit: deletion is genuinely irreversible, consent can never be
+restored beyond what a person actually signed, and the partner-facing numbers are banded so no
+one can subtract their way back to an individual. Two hundred and ninety-five automated tests
+run on every change. That paper trail *is* the answer — this isn't 'trust me,' it's 'here's the
+folder.'" (If he wants proof on screen: `/compliance/model-log` for the AI governance trail,
+`/compliance/revocation` for the live per-class enforcement, and the two `AUDIT-RESPONSE` files
+for the pedigree.)
 
 ---
 
