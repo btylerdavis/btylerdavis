@@ -47,6 +47,12 @@ export async function getSimClock(): Promise<Date> {
   return row.currentDate;
 }
 
+/** Missing-safe read for pages that render a "seed first" hint instead. */
+export async function getSimClockOrNull(): Promise<Date | null> {
+  const row = await prisma.simClock.findUnique({ where: { id: SIM_CLOCK_ID } });
+  return row?.currentDate ?? null;
+}
+
 export async function setSimClock(date: Date): Promise<void> {
   await prisma.simClock.upsert({
     where: { id: SIM_CLOCK_ID },
@@ -63,6 +69,9 @@ export interface AdvanceSummary {
   participantsProcessed: number;
   /** participants with at least one data class dropped by the ingest gate */
   participantsConsentLimited: number;
+  /** rows dropped by the per-flush policy revalidation (consent/lifecycle
+   *  changed between generation and commit — audit F-04) */
+  rowsDroppedAtCommit: number;
 }
 
 const FLUSH_THRESHOLD = 20_000;
@@ -84,7 +93,13 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
     );
   }
 
-  const participants = await prisma.participant.findMany({ select: { id: true } });
+  // Terminal lifecycle (audit F-01): tombstoned/deleting participants are
+  // never enumerated for generation — and the per-flush policy revalidation
+  // below re-checks that inside every write transaction anyway.
+  const participants = await prisma.participant.findMany({
+    where: { deletedAt: null, lifecycleState: { in: ["active", "deletion_pending"] } },
+    select: { id: true },
+  });
   const consentByParticipant = new Map<string, ConsentRecord[]>();
   for (const record of await prisma.consentRecord.findMany()) {
     const list = consentByParticipant.get(record.participantId) ?? [];
@@ -94,14 +109,20 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
 
   const written: WriteCounts = { observations: 0, sleepSessions: 0, proResponses: 0, treatmentEvents: 0 };
   let participantsConsentLimited = 0;
+  let rowsDroppedAtCommit = 0;
   let buffer: GeneratedBatch = emptyBatch();
 
+  // Each flush is a policy-guarded transaction: lifecycle + per-class
+  // collect grants are re-validated for every participant in the batch at
+  // commit time, so a revocation or deletion racing the generation loop can
+  // never land rows after the fact (audit F-04).
   const flush = async () => {
     const counts = await writeBatch(buffer);
     written.observations += counts.observations;
     written.sleepSessions += counts.sleepSessions;
     written.proResponses += counts.proResponses;
     written.treatmentEvents += counts.treatmentEvents;
+    rowsDroppedAtCommit += counts.dropped;
     buffer = emptyBatch();
   };
 
@@ -125,6 +146,7 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
     written,
     participantsProcessed: participants.length,
     participantsConsentLimited,
+    rowsDroppedAtCommit,
   };
 }
 

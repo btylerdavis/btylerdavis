@@ -24,6 +24,7 @@ function member(overrides: Partial<ResearchMember>): ResearchMember {
     age: 52,
     door: "retail",
     enrollmentDate: CLOCK,
+    enrollmentAnchor: CLOCK,
     grants: new Set<string>(),
     ahi: null,
     severity: null,

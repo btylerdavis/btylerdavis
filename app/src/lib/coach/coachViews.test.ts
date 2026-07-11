@@ -55,7 +55,10 @@ beforeEach(async () => {
 });
 
 describe("getTreatmentEvents (gated reader)", () => {
-  it("returns events with an hst_clinical grant and refuses without one", async () => {
+  // UPDATED for audit F-06: events are gated per event on their OWN data
+  // class — a cpap_setup is cpap_telemetry-class data, not blanket
+  // hst_clinical (the old rule leaked events across classes).
+  it("returns events with the event's own class granted and refuses without it", async () => {
     const id = await createPatient("Gate Check");
     await prisma.treatmentEvent.create({
       data: {
@@ -63,13 +66,14 @@ describe("getTreatmentEvents (gated reader)", () => {
         type: "cpap_setup",
         eventDate: addDays(SIM_TODAY, -30),
         detail: "{}",
+        dataClass: "cpap_telemetry",
       },
     });
 
     const blocked = await getTreatmentEvents(id, { use: "view_identified" });
     expect(blocked.blocked).toBe(true);
     expect(blocked.data).toHaveLength(0);
-    expect(blocked.blockedDataClasses).toEqual(["hst_clinical"]);
+    expect(blocked.blockedDataClasses).toEqual(["cpap_telemetry"]);
 
     await grantConsent(id, "LANE_A", { grantedAt: SIM_TODAY });
     const open = await getTreatmentEvents(id, { use: "view_identified" });

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import {
   getConsentHistory,
+  getConsentStates,
   getLinkedProfile,
   getObservations,
   grantConsent,
@@ -234,8 +235,10 @@ describe("deletion requests", () => {
     expect(report.totalRows).toBe(totalDeleted(EXPECTED));
     expect(report.revokedInstruments.sort()).toEqual(["LANE_A", "LANE_B", "LANE_C"]);
     expect(report.executedAt).toEqual(SIM_TODAY);
-    expect(report.ledgerRecords).toBe(3);
-    expect(report.ledgerRef).toContain("3 records retained");
+    // Consent v2 (audit F-14): revocation APPENDS immutable revoke events —
+    // 3 signed grants + 3 revoke events survive in the ledger.
+    expect(report.ledgerRecords).toBe(6);
+    expect(report.ledgerRef).toContain("6 records retained");
 
     // --- hard deletion: identified-tier rows are GONE, not sealed --------------
     expect(await countIdentifiedRows(subject)).toEqual({
@@ -254,12 +257,20 @@ describe("deletion requests", () => {
     expect(tombstone).not.toBeNull();
     expect(tombstone!.deletedAt).toEqual(SIM_TODAY);
 
-    // --- the consent ledger SURVIVES, append-only, all revoked -----------------
+    // --- the consent ledger SURVIVES: immutable events, latest = revoked -------
     const ledger = await getConsentHistory(subject);
-    expect(ledger).toHaveLength(3);
+    expect(ledger).toHaveLength(6); // 3 signed grants (untouched) + 3 revoke events
+    expect(ledger.filter((record) => record.eventType === "grant")).toHaveLength(3);
     expect(
-      ledger.every((record) => record.status === "revoked" && record.revokedAt !== null)
-    ).toBe(true);
+      ledger
+        .filter((record) => record.eventType === "grant")
+        .every((record) => record.status === "granted" && record.revokedAt === null)
+    ).toBe(true); // prior facts are IMMUTABLE
+    const states = await getConsentStates(subject);
+    expect(states).toHaveLength(3);
+    expect(
+      states.every((state) => state.status === "revoked" && state.revokedAt !== null)
+    ).toBe(true); // ...but every instrument's CURRENT state is revoked
 
     // --- the request row carries the certificate data --------------------------
     const request = await prisma.deletionRequest.findUniqueOrThrow({
@@ -267,8 +278,13 @@ describe("deletion requests", () => {
     });
     expect(request.status).toBe("executed");
     expect(request.resolvedAt).toEqual(SIM_TODAY);
+    expect(request.activeKey).toBeNull(); // active-request slot released
     expect(parseDeletionCounts(request.deletionCounts)).toEqual(EXPECTED);
     expect(request.ledgerRef).toBe(report.ledgerRef);
+    expect(request.ledgerCount).toBe(6); // certificate snapshot, stored at execution
+
+    // --- terminal lifecycle -----------------------------------------------------
+    expect(tombstone!.lifecycleState).toBe("deleted");
 
     // --- gated surfaces: nothing, anywhere ---------------------------------------
     expect((await loadGrants(subject)).size).toBe(0);

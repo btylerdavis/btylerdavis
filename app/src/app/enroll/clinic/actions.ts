@@ -3,15 +3,20 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { prisma } from "@/lib/db";
 import {
-  assertIngestAllowed,
   ConsentError,
   getLinkedProfile,
   getProResponses,
   grantConsent,
+  LifecycleError,
   loadGrants,
 } from "@/lib/consent";
+import {
+  createEnrolledParticipant,
+  getParticipant,
+  guardedSubjectWriteOrBlocked,
+  isWritableLifecycle,
+} from "@/lib/consent/policyRepo";
 import { CPAP_MODELS, type CpapModelKey } from "@/lib/enrollOptions";
 import { toIsoDay } from "@/lib/format";
 import {
@@ -24,14 +29,16 @@ import {
   parseHst,
   type ParsedHst,
 } from "@/lib/hst/parse";
-import { matchRetailParticipants, registerIdentity, type IdentityMatch } from "@/lib/identity";
+import { matchRetailParticipants, type IdentityMatch } from "@/lib/identity";
 import { getSimClock } from "@/lib/simclock";
 import { stopBangRiskBand, type StopBangRiskBand } from "@/lib/stopbang";
 
 /**
  * Clinic-door (sleep coach) server actions (DEMO.md Act 2). Domain dates
- * come from the sim clock; hst_clinical writes pass the ingest gate; the
- * Lane C join goes through getLinkedProfile only.
+ * come from the sim clock; EVERY subject-data write goes through the policy
+ * repository (lifecycle + collect grant re-checked inside the write
+ * transaction — audit F-03/F-04); the Lane C join goes through
+ * getLinkedProfile only. A tombstoned participant is refused everywhere.
  */
 
 // ---------------------------------------------------------------------------
@@ -72,10 +79,14 @@ export async function enrollClinicPatient(
   let fromRetail = false;
 
   if (intake.mode === "existing") {
-    const participant = await prisma.participant.findUnique({
-      where: { id: intake.participantId },
-    });
+    const participant = await getParticipant(intake.participantId);
     if (!participant) throw new Error("Participant not found");
+    // Terminal lifecycle (audit F-01): a deleted record can never be
+    // re-enrolled — the consent engine would refuse the grant below too,
+    // but we fail with a clear message before touching anything.
+    if (!isWritableLifecycle(participant)) {
+      throw new Error("This record was deleted and cannot be re-enrolled");
+    }
     participantId = participant.id;
     fromRetail = participant.enrollmentTouchpoint === "retail";
   } else {
@@ -97,28 +108,22 @@ export async function enrollClinicPatient(
 
     participantId = randomUUID();
     const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, ".");
-    await prisma.$transaction(async (tx) => {
-      await tx.participant.create({
-        data: {
-          id: participantId,
-          yearOfBirth: intake.yearOfBirth,
-          sex: intake.sex,
-          enrollmentTouchpoint: "clinic",
-          createdAt: now,
-        },
-      });
-      await registerIdentity(
-        participantId,
-        displayName,
-        `${slug}.${participantId.slice(0, 6)}@example.com`,
-        tx
-      );
+    await createEnrolledParticipant({
+      id: participantId,
+      yearOfBirth: intake.yearOfBirth,
+      sex: intake.sex,
+      enrollmentTouchpoint: "clinic",
+      createdAt: now,
+      displayName,
+      email: `${slug}.${participantId.slice(0, 6)}@example.com`,
     });
   }
 
-  // Combined ICF + HIPAA authorization → Lane A (full clinical scope).
-  // The signature bitmap itself is not persisted in the demo (document
-  // vault / e-signature vendor held in reserve); the consent record is real.
+  // Combined ICF + HIPAA authorization → Lane A (full clinical scope). This
+  // is a SIGNED grant event: it extends the participant's authorized-scope
+  // ceiling. The signature bitmap itself is not persisted in the demo
+  // (document vault / e-signature vendor held in reserve); the consent event
+  // is real, and the engine re-checks lifecycle inside the same transaction.
   await grantConsent(participantId, "LANE_A", { grantedAt: now });
 
   return { participantId, fromRetail, laneAGrantedAtIso: toIsoDay(now) };
@@ -213,36 +218,38 @@ export async function confirmHstIntake(
   const valid = assertValidParsedHst(parsed);
   const studyDate = new Date(`${valid.studyDate}T00:00:00Z`);
 
-  // hst_clinical-class write — through the ingest gate, like every write.
-  try {
-    await assertIngestAllowed(participantId, "hst_clinical");
-  } catch (error) {
-    if (error instanceof ConsentError) {
-      return {
-        blocked: true,
-        reason:
-          "No current hst_clinical collect grant — record the Lane A consent first.",
-      };
+  // hst_clinical-class write — lifecycle + collect grant checked INSIDE the
+  // same transaction as the insert (policy repository).
+  const outcome = await guardedSubjectWriteOrBlocked(
+    participantId,
+    ["hst_clinical"],
+    async (tx) => {
+      await tx.observation.createMany({
+        data: HST_CONCEPTS.map((concept) => ({
+          participantId,
+          source: "hst",
+          concept,
+          valueNumeric: valid.values[concept],
+          unit: HST_UNITS[concept],
+          effectiveDate: studyDate,
+          grain: "session",
+          qualityFlags: "[]",
+        })),
+      });
+      return HST_CONCEPTS.length;
     }
-    throw error;
+  );
+  if (!outcome.ok) {
+    return {
+      blocked: true,
+      reason:
+        "No current hst_clinical collect grant — record the Lane A consent first.",
+    };
   }
-
-  await prisma.observation.createMany({
-    data: HST_CONCEPTS.map((concept) => ({
-      participantId,
-      source: "hst",
-      concept,
-      valueNumeric: valid.values[concept],
-      unit: HST_UNITS[concept],
-      effectiveDate: studyDate,
-      grain: "session",
-      qualityFlags: "[]",
-    })),
-  });
 
   return {
     blocked: false,
-    observationsWritten: HST_CONCEPTS.length,
+    observationsWritten: outcome.value,
     studyDateIso: valid.studyDate,
     supinePredominant: isSupinePredominant(valid.values),
   };
@@ -252,12 +259,15 @@ export async function confirmHstIntake(
 // Step 4: CPAP setup
 // ---------------------------------------------------------------------------
 
-export interface CpapSetupResult {
-  deviceId: string;
-  make: string;
-  model: string;
-  setupDateIso: string;
-}
+export type CpapSetupResult =
+  | {
+      blocked: false;
+      deviceId: string;
+      make: string;
+      model: string;
+      setupDateIso: string;
+    }
+  | { blocked: true; reason: string };
 
 export async function recordCpapSetup(
   participantId: string,
@@ -266,52 +276,70 @@ export async function recordCpapSetup(
   const spec = CPAP_MODELS.find((m) => m.key === modelKey);
   if (!spec) throw new Error(`Unknown CPAP model: ${modelKey}`);
 
-  const participant = await prisma.participant.findUnique({
-    where: { id: participantId },
-  });
+  const participant = await getParticipant(participantId);
   if (!participant) throw new Error("Participant not found");
 
   const now = await getSimClock();
   const deviceId = randomUUID();
-  await prisma.$transaction(async (tx) => {
-    await tx.device.create({
-      data: {
-        id: deviceId,
-        participantId,
-        deviceClass: "cpap",
-        make: spec.make,
-        model: spec.model,
-        assignedAt: now,
-      },
-    });
-    await tx.treatmentEvent.create({
-      data: {
-        participantId,
-        type: "cpap_setup",
-        eventDate: now,
-        detail: JSON.stringify({ make: spec.make, model: spec.model, mode: "APAP" }),
-      },
-    });
-    // CPAP setup is the treatment anchor when no episode structure exists
-    // yet — mirror enrollmentRows(): baseline enrollment→anchor, then
-    // open-ended intervention.
-    const existing = await tx.episode.count({ where: { participantId } });
-    if (existing === 0) {
-      await tx.episode.createMany({
-        data: [
-          {
-            participantId,
-            protocolPhase: "baseline",
-            startDate: participant.createdAt,
-            endDate: now,
-          },
-          { participantId, protocolPhase: "intervention", startDate: now, endDate: null },
-        ],
+
+  // Device + treatment event + episodes are cpap_telemetry-class rows
+  // (audit F-03/F-06): the whole setup is one policy-guarded transaction —
+  // lifecycle + collect grant re-checked inside it, lineage stamped on
+  // every row.
+  const outcome = await guardedSubjectWriteOrBlocked(
+    participantId,
+    ["cpap_telemetry"],
+    async (tx) => {
+      await tx.device.create({
+        data: {
+          id: deviceId,
+          participantId,
+          deviceClass: "cpap",
+          make: spec.make,
+          model: spec.model,
+          assignedAt: now,
+          dataClass: "cpap_telemetry",
+        },
       });
+      await tx.treatmentEvent.create({
+        data: {
+          participantId,
+          type: "cpap_setup",
+          eventDate: now,
+          detail: JSON.stringify({ make: spec.make, model: spec.model, mode: "APAP" }),
+          dataClass: "cpap_telemetry",
+        },
+      });
+      // CPAP setup is the treatment anchor when no episode structure exists
+      // yet — mirror enrollmentRows(): baseline enrollment→anchor, then
+      // open-ended intervention.
+      const existing = await tx.episode.count({ where: { participantId } });
+      if (existing === 0) {
+        await tx.episode.createMany({
+          data: [
+            {
+              participantId,
+              protocolPhase: "baseline",
+              startDate: participant.createdAt,
+              endDate: now,
+              dataClass: "cpap_telemetry",
+            },
+            {
+              participantId,
+              protocolPhase: "intervention",
+              startDate: now,
+              endDate: null,
+              dataClass: "cpap_telemetry",
+            },
+          ],
+        });
+      }
     }
-  });
+  );
+  if (!outcome.ok) return { blocked: true, reason: outcome.reason };
 
   return {
+    blocked: false,
     deviceId,
     make: spec.make,
     model: spec.model,
@@ -419,6 +447,15 @@ export async function grantLinkage(
   participantId: string
 ): Promise<{ grantedAtIso: string }> {
   const now = await getSimClock();
-  await grantConsent(participantId, "LANE_C", { grantedAt: now });
+  try {
+    // Signed grant event; the engine re-checks lifecycle inside the tx.
+    await grantConsent(participantId, "LANE_C", { grantedAt: now });
+  } catch (error) {
+    if (error instanceof LifecycleError) {
+      throw new Error("This record was deleted — linkage cannot be granted");
+    }
+    if (error instanceof ConsentError) throw new Error(error.message);
+    throw error;
+  }
   return { grantedAtIso: toIsoDay(now) };
 }

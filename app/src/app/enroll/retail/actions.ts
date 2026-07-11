@@ -1,24 +1,19 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { prisma } from "@/lib/db";
+import { CONSENT_USES, type ConsentScope, type DataClass } from "@/lib/consent";
 import {
-  assertIngestAllowed,
-  ConsentError,
-  CONSENT_USES,
-  grantConsent,
-  grantSetHas,
-  loadGrants,
-  type ConsentScope,
-  type DataClass,
-} from "@/lib/consent";
+  createRetailEnrollment,
+  findCatalogItem,
+  getParticipant,
+  guardedSubjectWriteOrBlocked,
+} from "@/lib/consent/policyRepo";
 import {
   LANE_B_TOGGLEABLE_CLASSES,
   WEARABLE_PROVIDERS,
   type LaneBToggles,
   type WearableProviderKey,
 } from "@/lib/enrollOptions";
-import { registerIdentity } from "@/lib/identity";
 import { getSimClock } from "@/lib/simclock";
 import { addDays } from "@/lib/synthetic/profiles";
 import { toIsoDay } from "@/lib/format";
@@ -33,8 +28,10 @@ import {
 
 /**
  * Retail-door server actions (DEMO.md Act 1). All domain dates come from the
- * sim clock; all class-gated writes go through assertIngestAllowed, exactly
- * like prisma/seed.ts.
+ * sim clock; EVERY subject-data write goes through the policy repository —
+ * lifecycle + the class's collect grant re-checked inside the write
+ * transaction (audit F-03/F-04). Device registration is consent-owned data:
+ * without a wearable_sleep grant NO device row is created.
  */
 
 // ---------------------------------------------------------------------------
@@ -93,9 +90,13 @@ export async function enrollRetail(input: {
   const score = scoreStopBang(input.answers);
   const band = stopBangRiskBand(score);
 
-  // Custom Lane B scope from the toggles: all uses for each toggled class.
-  const scope: ConsentScope = grantedClasses.flatMap((dataClass) =>
-    CONSENT_USES.map((use) => ({ dataClass, use }))
+  // Custom Lane B scope from the toggles: all uses for each toggled class,
+  // plus the base registry record (registry_demographics — audit F-11: the
+  // signed instrument names the demographic fields explicitly). What is NOT
+  // toggled on is NEVER signed: it stays outside the authorized ceiling and
+  // can only be added later through the re-consent flow.
+  const scope: ConsentScope = [...grantedClasses, "registry_demographics" as const].flatMap(
+    (dataClass) => CONSENT_USES.map((use) => ({ dataClass, use }))
   );
 
   // Demo identity: the QR flow only asks for a display name, so demographics
@@ -108,44 +109,25 @@ export async function enrollRetail(input: {
   const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, ".");
   const email = `${slug}.${participantId.slice(0, 6)}@example.com`;
 
-  let screenerStored = false;
-  await prisma.$transaction(async (tx) => {
-    await tx.participant.create({
-      data: {
-        id: participantId,
-        yearOfBirth,
-        sex,
-        enrollmentTouchpoint: "retail",
-        createdAt: now,
-      },
-    });
-    await registerIdentity(participantId, displayName, email, tx);
-    await grantConsent(participantId, "LANE_B", {
-      grantedAt: now,
-      scope,
-      db: tx,
-    });
-
-    // The STOP-BANG response is pro_responses-class data: it must pass the
-    // ingest gate. When the participant declined questionnaires, the gate
-    // drops the payload (T2.6 semantics) — the screener still routed them,
-    // but nothing is stored.
-    try {
-      await assertIngestAllowed(participantId, "pro_responses", { db: tx });
-      await tx.proResponse.create({
-        data: {
-          participantId,
-          instrument: "STOP_BANG",
-          instrumentVersion: "1.0",
-          administeredAt: now,
-          itemScores: JSON.stringify(stopBangItemScores(input.answers)),
-          totalScore: score,
-        },
-      });
-      screenerStored = true;
-    } catch (error) {
-      if (!(error instanceof ConsentError)) throw error;
-    }
+  // One policy-repository transaction: participant + identity + the SIGNED
+  // Lane B grant event, then the STOP-BANG screener gated against the
+  // consent just recorded (T2.6 semantics: a declined questionnaire class
+  // drops the payload — the screener still routed them, nothing is stored).
+  const { screenerStored } = await createRetailEnrollment({
+    id: participantId,
+    yearOfBirth,
+    sex,
+    createdAt: now,
+    displayName,
+    email,
+    laneBScope: scope,
+    screener: {
+      instrument: "STOP_BANG",
+      instrumentVersion: "1.0",
+      administeredAt: now,
+      itemScores: JSON.stringify(stopBangItemScores(input.answers)),
+      totalScore: score,
+    },
   });
 
   return { participantId, score, band, screenerStored, grantedClasses };
@@ -155,31 +137,44 @@ export async function enrollRetail(input: {
 // Step 4: wearable connect (stub — live OAuth in reserve)
 // ---------------------------------------------------------------------------
 
+export type ConnectWearableResult =
+  | { connected: true; deviceId: string; dataConsented: true }
+  | { connected: false; deviceId: null; dataConsented: false; reason: string };
+
+/**
+ * Registers a wearable device — consent-owned data (audit F-03): without a
+ * current wearable_sleep collect grant NO device row is created (the old
+ * behavior registered the device anyway, which left rows behind the gate).
+ */
 export async function connectWearable(
   participantId: string,
   provider: WearableProviderKey
-): Promise<{ deviceId: string; dataConsented: boolean }> {
+): Promise<ConnectWearableResult> {
   const spec = WEARABLE_PROVIDERS.find((p) => p.key === provider);
   if (!spec) throw new Error(`Unknown wearable provider: ${provider}`);
 
   const now = await getSimClock();
-  const device = await prisma.device.create({
-    data: {
-      participantId,
-      deviceClass: "wearable",
-      make: spec.make,
-      model: spec.model,
-      assignedAt: now,
-    },
-  });
-
-  // Device registration itself isn't class-gated (matching seed semantics);
-  // the nightly wearable_sleep payloads are — surface whether they'll flow.
-  const grants = await loadGrants(participantId);
-  return {
-    deviceId: device.id,
-    dataConsented: grantSetHas(grants, "wearable_sleep", "collect"),
-  };
+  const outcome = await guardedSubjectWriteOrBlocked(
+    participantId,
+    ["wearable_sleep"],
+    async (tx) => {
+      const device = await tx.device.create({
+        data: {
+          participantId,
+          deviceClass: "wearable",
+          make: spec.make,
+          model: spec.model,
+          assignedAt: now,
+          dataClass: "wearable_sleep",
+        },
+      });
+      return device.id;
+    }
+  );
+  if (!outcome.ok) {
+    return { connected: false, deviceId: null, dataConsented: false, reason: outcome.reason };
+  }
+  return { connected: true, deviceId: outcome.value, dataConsented: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -206,73 +201,73 @@ export async function recordMattressPurchase(
   participantId: string,
   sku: string
 ): Promise<PurchaseResult> {
-  const catalogItem = await prisma.mattressCatalog.findUnique({ where: { sku } });
+  const catalogItem = await findCatalogItem(sku);
   if (!catalogItem) throw new Error(`Unknown mattress SKU: ${sku}`);
 
-  const participant = await prisma.participant.findUnique({
-    where: { id: participantId },
-  });
+  const participant = await getParticipant(participantId);
   if (!participant) throw new Error("Participant not found");
 
   const now = await getSimClock();
   const deliveryDate = addDays(now, DELIVERY_DEFAULT_DAYS);
 
-  // Purchase rows are mattress_purchase-class data — gate before writing,
-  // exactly like the seed's purchase pass.
-  const grants = await loadGrants(participantId);
-  try {
-    await assertIngestAllowed(participantId, "mattress_purchase", { grants });
-  } catch (error) {
-    if (error instanceof ConsentError) {
-      return {
-        blocked: true,
-        reason:
-          "No current consent for mattress purchase details — the record was not stored.",
-      };
-    }
-    throw error;
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.mattressPurchase.create({
-      data: {
-        participantId,
-        sku,
-        purchaseDate: now,
-        deliveryDate,
-        storeId: STORE_ID,
-      },
-    });
-    await tx.treatmentEvent.create({
-      data: {
-        participantId,
-        type: "mattress_delivery",
-        eventDate: deliveryDate,
-        detail: JSON.stringify({ sku }),
-      },
-    });
-    // First exposure change known → set up the baseline/intervention
-    // episodes the way enrollmentRows() does (delivery is the anchor).
-    const existing = await tx.episode.count({ where: { participantId } });
-    if (existing === 0) {
-      await tx.episode.createMany({
-        data: [
-          {
-            participantId,
-            protocolPhase: "baseline",
-            startDate: participant.createdAt,
-            endDate: deliveryDate,
-          },
-          {
-            participantId,
-            protocolPhase: "intervention",
-            startDate: deliveryDate,
-            endDate: null,
-          },
-        ],
+  // Purchase + delivery event + episodes are mattress_purchase-class rows
+  // (audit F-06: the delivery event's lineage is the purchase, NOT the
+  // clinical lane). One policy-guarded transaction: lifecycle + collect
+  // grant re-checked inside it.
+  const outcome = await guardedSubjectWriteOrBlocked(
+    participantId,
+    ["mattress_purchase"],
+    async (tx) => {
+      await tx.mattressPurchase.create({
+        data: {
+          participantId,
+          sku,
+          purchaseDate: now,
+          deliveryDate,
+          storeId: STORE_ID,
+        },
       });
+      await tx.treatmentEvent.create({
+        data: {
+          participantId,
+          type: "mattress_delivery",
+          eventDate: deliveryDate,
+          detail: JSON.stringify({ sku }),
+          dataClass: "mattress_purchase",
+        },
+      });
+      // First exposure change known → set up the baseline/intervention
+      // episodes the way enrollmentRows() does (delivery is the anchor).
+      const existing = await tx.episode.count({ where: { participantId } });
+      if (existing === 0) {
+        await tx.episode.createMany({
+          data: [
+            {
+              participantId,
+              protocolPhase: "baseline",
+              startDate: participant.createdAt,
+              endDate: deliveryDate,
+              dataClass: "mattress_purchase",
+            },
+            {
+              participantId,
+              protocolPhase: "intervention",
+              startDate: deliveryDate,
+              endDate: null,
+              dataClass: "mattress_purchase",
+            },
+          ],
+        });
+      }
     }
-  });
+  );
+  if (!outcome.ok) {
+    return {
+      blocked: true,
+      reason:
+        "No current consent for mattress purchase details — the record was not stored.",
+    };
+  }
 
   return {
     blocked: false,

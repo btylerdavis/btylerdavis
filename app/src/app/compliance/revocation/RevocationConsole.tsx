@@ -12,22 +12,26 @@ import {
 } from "./actions";
 
 /**
- * The kill-switch console (client): the danger button revokes every consent
- * server-side, and the returned report renders before → after on one screen
- * — cohort counts dropping, ingest gates throwing, read gates blocking. The
- * purple button is the demo-only reset: it re-grants via NEW records, so the
- * audit trail (server-rendered below) keeps the whole story.
+ * The kill-switch console (client): the danger button appends revoke events
+ * for every consent server-side, and the returned report renders before →
+ * after on one screen — cohort counts dropping, ingest gates throwing, read
+ * gates blocking. The purple button is the demo-only reset: it restores via
+ * NEW ceiling-bounded events, so the audit trail (server-rendered below)
+ * keeps the whole story.
  *
- * The per-data-class grid is the partial-revocation console (reserve →
- * working): each toggle revises ONE class across every covering instrument
- * — new scope-reduced records, same append-only ledger, same live report.
+ * The per-data-class grid is the partial-revocation console: each toggle
+ * revises ONE class across every covering instrument — new scope-revision
+ * events, compare-and-swapped, same immutable ledger, same live report.
+ * Three states per class (audit F-02): granted / revoked / never authorized
+ * — a never-signed class cannot be "restored"; it needs the participant-
+ * facing re-consent flow.
  */
 
 export interface ClassToggleState {
   dataClass: string;
   label: string;
-  granted: boolean;
-  /** false when no currently-granted instrument covers this class */
+  state: "granted" | "revoked" | "never_authorized";
+  /** false when no currently-granted instrument's signed scope covers this class */
   revisable: boolean;
 }
 
@@ -77,9 +81,10 @@ export function RevocationConsole({
         {error && <span className="text-sm font-semibold text-danger">{error}</span>}
       </div>
       <p className="text-xs text-muted">
-        Revocation flips the current records to <span className="font-semibold">revoked</span> —
-        nothing is deleted. Restore issues <span className="font-semibold">new</span> grant
-        records; the audit trail below keeps every step forever.
+        Every change is a <span className="font-semibold">new immutable event</span> — nothing
+        is ever updated or deleted. Restore re-enables only what was{" "}
+        <span className="font-semibold">signed</span> (the authorized ceiling); the audit trail
+        below keeps every step forever.
       </p>
 
       {/* Partial revocation: per-data-class toggle grid */}
@@ -101,15 +106,19 @@ export function RevocationConsole({
             >
               <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                    state.granted ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                  className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                    state.state === "granted"
+                      ? "bg-success/10 text-success"
+                      : state.state === "revoked"
+                        ? "bg-danger/10 text-danger"
+                        : "bg-pale-blue text-muted"
                   }`}
                 >
-                  {state.granted ? "granted" : "revoked"}
+                  {state.state === "never_authorized" ? "never authorized" : state.state}
                 </span>
                 <span className="truncate text-sm font-semibold text-navy">{state.label}</span>
               </div>
-              {state.granted ? (
+              {state.state === "granted" ? (
                 <Button
                   size="sm"
                   variant="danger"
@@ -118,17 +127,26 @@ export function RevocationConsole({
                 >
                   Revoke
                 </Button>
-              ) : state.revisable ? (
-                <Button
-                  size="sm"
-                  variant="purple"
-                  disabled={pending}
-                  onClick={() => run(() => restoreClassAction(participantId, state.dataClass))}
-                >
-                  Restore
-                </Button>
+              ) : state.state === "revoked" ? (
+                state.revisable ? (
+                  <Button
+                    size="sm"
+                    variant="purple"
+                    disabled={pending}
+                    onClick={() => run(() => restoreClassAction(participantId, state.dataClass))}
+                  >
+                    Restore
+                  </Button>
+                ) : (
+                  <span className="text-[11px] text-muted">no granted instrument</span>
+                )
               ) : (
-                <span className="text-[11px] text-muted">no granted instrument</span>
+                <a
+                  href={`/participant/${participantId}/reconsent`}
+                  className="text-[11px] font-semibold text-accent-purple underline underline-offset-2"
+                >
+                  requires re-consent →
+                </a>
               )}
             </li>
           ))}

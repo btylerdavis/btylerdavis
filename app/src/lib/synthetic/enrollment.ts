@@ -60,6 +60,10 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
     participantId: p.id,
     instrumentType: c.instrumentType,
     instrumentVersion: "1.0-demo",
+    // Immutable event stream (consent v2): the enrollment signature is a
+    // signed "grant" event at revision 1 of its instrument.
+    eventType: "grant",
+    revision: 1,
     status: "granted",
     grantedAt: c.grantedAt,
     // Determinism rule: seeded consent records are created the moment they
@@ -71,8 +75,14 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
 
   // --- episodes -------------------------------------------------------------
   // Baseline runs from enrollment to the treatment anchor (first exposure
-  // change); intervention is open-ended from there.
+  // change); intervention is open-ended from there. Episodes carry the data
+  // class of their anchoring exposure (consent lineage, audit F-09).
   const anchor = p.hasCpap || p.hasAppliance ? treatmentDate : deliveryDate;
+  const episodeClass = p.hasCpap
+    ? "cpap_telemetry"
+    : p.hasAppliance
+      ? "hst_clinical"
+      : "mattress_purchase";
   const episodes: Prisma.EpisodeCreateManyInput[] = [
     {
       id: rng.uuid(),
@@ -80,6 +90,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       protocolPhase: "baseline",
       startDate: p.enrollmentDate,
       endDate: anchor,
+      dataClass: episodeClass,
     },
     {
       id: rng.uuid(),
@@ -87,10 +98,14 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       protocolPhase: "intervention",
       startDate: anchor,
       endDate: null,
+      dataClass: episodeClass,
     },
   ];
 
   // --- scheduled treatment events --------------------------------------------
+  // Each event carries its consent lineage (audit F-06): CPAP lifecycle →
+  // cpap_telemetry, appliance → clinical lane, mattress delivery → the
+  // purchase record it stems from.
   const treatmentEvents: Prisma.TreatmentEventCreateManyInput[] = [];
   if (p.hasCpap) {
     treatmentEvents.push({
@@ -99,6 +114,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       type: "cpap_setup",
       eventDate: treatmentDate,
       detail: JSON.stringify({ make: p.cpapMake, model: p.cpapModel, mode: "APAP" }),
+      dataClass: "cpap_telemetry",
     });
   }
   if (p.hasAppliance) {
@@ -108,6 +124,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       type: "appliance_delivery",
       eventDate: treatmentDate,
       detail: JSON.stringify({ make: p.applianceMake, model: p.applianceModel }),
+      dataClass: "hst_clinical",
     });
   }
   if (p.hasMattress && p.mattressSku) {
@@ -117,10 +134,13 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       type: "mattress_delivery",
       eventDate: deliveryDate,
       detail: JSON.stringify({ sku: p.mattressSku }),
+      dataClass: "mattress_purchase",
     });
   }
 
   // --- devices ---------------------------------------------------------------
+  // Device registrations are consent-owned rows: each carries the data class
+  // whose grant gates it (audit F-03).
   const devices: Prisma.DeviceCreateManyInput[] = [
     {
       id: p.wearableDeviceId,
@@ -129,6 +149,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       make: p.wearable.make,
       model: p.wearable.model,
       assignedAt: p.enrollmentDate,
+      dataClass: "wearable_sleep",
     },
   ];
   if (p.hasCpap) {
@@ -139,6 +160,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       make: p.cpapMake,
       model: p.cpapModel,
       assignedAt: treatmentDate,
+      dataClass: "cpap_telemetry",
     });
   }
   if (p.hasSleepMat) {
@@ -149,6 +171,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       make: "Withings",
       model: "Sleep Analyzer",
       assignedAt: addDays(p.enrollmentDate, 2),
+      dataClass: "sleep_mat",
     });
   }
   if (p.hasAppliance) {
@@ -159,6 +182,7 @@ export function enrollmentRows(profile: ParticipantProfile): EnrollmentRows {
       make: p.applianceMake,
       model: p.applianceModel,
       assignedAt: treatmentDate,
+      dataClass: "hst_clinical",
     });
   }
 

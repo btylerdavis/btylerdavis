@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
-import { prisma } from "@/lib/db";
+import { gatedRegistryTotals } from "@/lib/consent";
 import { formatDay, toIsoDay } from "@/lib/format";
 import { getSimClock, MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { TimeMachineControl } from "./TimeMachineControl";
@@ -11,19 +11,17 @@ import { TimeMachineControl } from "./TimeMachineControl";
  * The time machine (DEMO.md Act 3) — the demo's engine. The sim clock sits
  * front and center; advancing it generates every participant's newly-elapsed
  * nights through the consent ingest gates and every dashboard recomputes.
+ * The registry totals below are CONSENT-GATED per data class (audit F-07):
+ * a revoked participant — and every row of a revoked class — drops out of
+ * these numbers on the next render.
  */
 export const metadata: Metadata = { title: "Time machine" };
 
 export const dynamic = "force-dynamic";
 
 export default async function TimeMachinePage() {
-  const [simDate, participants, observations, nights, proResponses] = await Promise.all([
-    getSimClock(),
-    prisma.participant.count(),
-    prisma.observation.count(),
-    prisma.sleepSession.count(),
-    prisma.proResponse.count(),
-  ]);
+  const [simDate, totals] = await Promise.all([getSimClock(), gatedRegistryTotals()]);
+  const { participants, observations, sleepSessions: nights, proResponses } = totals;
 
   const dayNumber = simDayNumber(simDate);
   const daysRemaining = Math.max(0, MAX_SIM_DAYS - dayNumber);
@@ -56,15 +54,19 @@ export default async function TimeMachinePage() {
             </div>
           </Card>
 
-          {/* Registry totals — recompute after every advance */}
+          {/* Registry totals — consent-gated, recompute after every advance */}
           <Card className="p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">Registry right now</h2>
             <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Total label="Participants" value={participants} />
+              <Total label="Consented participants" value={participants} />
               <Total label="Observations" value={observations} />
               <Total label="Wearable nights" value={nights} />
               <Total label="Questionnaires" value={proResponses} />
             </dl>
+            <p className="mt-2 text-xs text-muted">
+              Consent-gated counts: rows of a revoked data class — and revoked
+              participants — are excluded here the moment consent changes.
+            </p>
           </Card>
 
           <Card tone="dark" className="p-5 sm:p-6">

@@ -113,7 +113,11 @@ export function memberMatches(member: ResearchMember, filters: CohortFilters): b
   if (filters.firmness && member.firmnessBand !== filters.firmness) return false;
   if (filters.age) {
     const band = AGE_BANDS.find((candidate) => candidate.key === filters.age);
-    if (!band || member.age < band.min || member.age > band.max) return false;
+    // Demographics are registry_demographics-scoped: a member without that
+    // research grant has age === null and never matches an age filter.
+    if (!band || member.age === null || member.age < band.min || member.age > band.max) {
+      return false;
+    }
   }
   if (filters.sex && member.sex !== filters.sex) return false;
   return true;

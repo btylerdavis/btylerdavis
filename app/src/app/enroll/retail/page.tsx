@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
-import { prisma } from "@/lib/db";
+import { listCatalogItems } from "@/lib/consent/policyRepo";
 import { toIsoDay } from "@/lib/format";
 import { getSimClock } from "@/lib/simclock";
 import { RetailFlow } from "./RetailFlow";
@@ -15,12 +15,7 @@ export const metadata: Metadata = { title: "Join at the store" };
 export const dynamic = "force-dynamic";
 
 export default async function RetailEnrollPage() {
-  const [simDate, catalog] = await Promise.all([
-    getSimClock(),
-    prisma.mattressCatalog.findMany({
-      orderBy: [{ brand: "asc" }, { model: "asc" }, { size: "asc" }],
-    }),
-  ]);
+  const [simDate, catalog] = await Promise.all([getSimClock(), listCatalogItems()]);
 
   return (
     <div className="flex min-h-screen flex-col">

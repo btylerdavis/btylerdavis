@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { prisma } from "@/lib/db";
+import { countActiveLast7 } from "@/lib/consent";
 import { toIsoDay } from "@/lib/format";
 import {
   advanceDays,
@@ -51,14 +51,6 @@ export interface AdvanceBlocked {
 
 export type AdvanceOutcome = AdvanceOk | AdvanceBlocked;
 
-async function countActiveLast7(clock: Date): Promise<number> {
-  const groups = await prisma.observation.groupBy({
-    by: ["participantId"],
-    where: { effectiveDate: { gt: addDays(clock, -7), lte: clock } },
-  });
-  return groups.length;
-}
-
 export async function advanceSim(days: number): Promise<AdvanceOutcome> {
   const current = await getSimClock();
   const currentDay = simDayNumber(current);
@@ -87,6 +79,7 @@ export async function advanceSim(days: number): Promise<AdvanceOutcome> {
 
   const startedAt = Date.now();
   const summary = await advanceDays(days);
+  // Consent-aware activity count (audit F-07): classified per data class.
   const participantsActiveLast7 = await countActiveLast7(summary.to);
   const tookMs = Date.now() - startedAt;
   const dayNumber = simDayNumber(summary.to);

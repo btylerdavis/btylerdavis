@@ -1,105 +1,23 @@
-import { randomUUID } from "node:crypto";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/db";
-import {
-  getLinkedProfile,
-  getObservations,
-  grantConsent,
-  revokeConsent,
-} from "@/lib/consent";
+import { internalStorageCounts } from "@/lib/consent";
+import { runConsentGateProbes } from "@/lib/consent/statusProbes";
 
 /**
- * Build-status page: sanitized aggregate counts, the sim-clock date, and
- * pass/fail consent-gate indicators. Deliberately NOT internal: no cohort
- * participant ids, no identity-linked reads, no raw probe internals — the
- * consent gates are exercised against a throwaway synthetic probe
+ * Build-status page: INTERNAL STORAGE counts (raw physical rows, explicitly
+ * labeled — deliberately not consent-filtered, unlike every product
+ * surface), the sim-clock date, and pass/fail consent-gate indicators. No
+ * cohort participant ids, no identity-linked reads, no raw probe internals —
+ * the consent gates are exercised against a throwaway synthetic probe
  * participant that is created and deleted within this request.
  */
 export const metadata: Metadata = { title: "Build status" };
 
 export const dynamic = "force-dynamic";
 
-interface ProbeResult {
-  label: string;
-  detail: string;
-  pass: boolean;
-}
-
-/**
- * Exercises the consent gates end-to-end on a throwaway probe participant
- * (anonymous by construction — it never carries an identity record and its
- * id is never rendered). All probe rows are removed before the page renders;
- * the append-only consent convention is waived for this synthetic probe.
- */
-async function runConsentGateProbes(): Promise<ProbeResult[]> {
-  const probeId = randomUUID();
-  const probes: ProbeResult[] = [];
-  try {
-    await prisma.participant.create({
-      data: {
-        id: probeId,
-        yearOfBirth: 1980,
-        sex: "female",
-        enrollmentTouchpoint: "clinic",
-      },
-    });
-    await grantConsent(probeId, "LANE_A");
-    await prisma.observation.create({
-      data: {
-        participantId: probeId,
-        source: "airview",
-        concept: "cpap_usage_minutes",
-        valueNumeric: 300,
-        unit: "min",
-        effectiveDate: new Date(),
-        grain: "day",
-        qualityFlags: '["probe"]',
-      },
-    });
-
-    const allowed = await getObservations(probeId, { use: "view_identified" });
-    probes.push({
-      label: "Identified-tier read with a current Lane A grant",
-      pass: !allowed.blocked && allowed.data.length > 0,
-      detail:
-        !allowed.blocked && allowed.data.length > 0
-          ? "rows returned, as expected"
-          : "unexpectedly blocked",
-    });
-
-    const linkage = await getLinkedProfile(probeId, { use: "view_identified" });
-    probes.push({
-      label: "Linkage join without a Lane C grant",
-      pass: linkage.blocked,
-      detail: linkage.blocked ? "refused, as expected" : "unexpectedly allowed",
-    });
-
-    await revokeConsent(probeId, "LANE_A");
-    const revoked = await getObservations(probeId, { use: "view_identified" });
-    const revokedPass = revoked.blocked && revoked.data.length === 0;
-    probes.push({
-      label: "Identified-tier read after revocation",
-      pass: revokedPass,
-      detail: revokedPass ? "blocked, zero rows — as expected" : "unexpectedly allowed",
-    });
-  } finally {
-    await prisma.observation.deleteMany({ where: { participantId: probeId } });
-    await prisma.consentRecord.deleteMany({ where: { participantId: probeId } });
-    await prisma.participant.deleteMany({ where: { id: probeId } });
-  }
-  return probes;
-}
-
 export default async function DevStatusPage() {
   // Counts run BEFORE the probe participant exists, so they stay honest.
-  const [participants, observations, sleepSessions, proResponses, simClock] =
-    await Promise.all([
-      prisma.participant.count(),
-      prisma.observation.count(),
-      prisma.sleepSession.count(),
-      prisma.proResponse.count(),
-      prisma.simClock.findUnique({ where: { id: "singleton" } }),
-    ]);
+  const { participants, observations, sleepSessions, proResponses, simClockDate } =
+    await internalStorageCounts();
 
   const probes = await runConsentGateProbes();
 
@@ -111,7 +29,11 @@ export default async function DevStatusPage() {
       <h1 className="mb-8 text-2xl font-bold">Build status</h1>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Database (aggregate counts)</h2>
+        <h2 className="mb-2 text-lg font-semibold">Database (internal storage counts)</h2>
+        <p className="mb-3 text-xs text-gray-500">
+          Raw physical row counts (storage metric) — deliberately NOT
+          consent-filtered; every product surface uses consent-gated counts.
+        </p>
         <table className="w-full border-collapse">
           <tbody>
             <Row label="participants" value={participants.toLocaleString()} />
@@ -120,7 +42,7 @@ export default async function DevStatusPage() {
             <Row label="PRO responses" value={proResponses.toLocaleString()} />
             <Row
               label="sim clock"
-              value={simClock ? simClock.currentDate.toISOString().slice(0, 10) : "NOT SEEDED"}
+              value={simClockDate ? simClockDate.toISOString().slice(0, 10) : "NOT SEEDED"}
             />
           </tbody>
         </table>

@@ -84,12 +84,21 @@ const DAY_MS = 86_400_000;
 
 export interface ResearchMember {
   id: string;
-  sex: string;
-  yearOfBirth: number;
-  /** age at the sim clock */
-  age: number;
-  door: string;
-  enrollmentDate: Date;
+  /**
+   * Demographics are registry_demographics-class data (audit F-11): null
+   * unless the member holds a current research_deid grant on that class — a
+   * linkage-only (or otherwise narrow) grant carries NO demographic fields
+   * into the research tier or its exports.
+   */
+  sex: string | null;
+  yearOfBirth: number | null;
+  /** age at the sim clock (registry_demographics-scoped) */
+  age: number | null;
+  door: string | null;
+  /** enrollment metadata (registry_demographics-scoped in every export) */
+  enrollmentDate: Date | null;
+  /** internal date-shift anchor — never exported directly */
+  enrollmentAnchor: Date;
   grants: GrantSet;
 
   // hst_clinical-scoped
@@ -200,7 +209,11 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
   const allGrants = await loadAllGrants();
   const [participants, purchases, devices, hstRows, essRows, cpapRows, seffRows, supineRaw] =
     await Promise.all([
+      // Tombstones can NEVER be research members, regardless of any grant
+      // residue (audit F-01/F-11) — deletion revokes everything anyway, but
+      // the lifecycle filter is enforced here too, in depth.
       prisma.participant.findMany({
+        where: { deletedAt: null, lifecycleState: { not: "deleted" } },
         select: {
           id: true,
           yearOfBirth: true,
@@ -344,6 +357,11 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
     const pid = participant.id;
     const grants = grantsFor(allGrants, pid);
 
+    // Demographics + enrollment metadata are registry_demographics-class
+    // data (audit F-11): without that research grant they are null here and
+    // absent from every export/filter built on the member.
+    const demographics = canResearch(pid, "registry_demographics");
+
     // --- hst_clinical-scoped -------------------------------------------------
     const hst = canResearch(pid, "hst_clinical") ? hstById.get(pid) : undefined;
     const ahi = hst?.ahi ?? null;
@@ -395,11 +413,12 @@ export async function loadResearchCohort(): Promise<ResearchCohort> {
 
     members.push({
       id: pid,
-      sex: participant.sex,
-      yearOfBirth: participant.yearOfBirth,
-      age: clock.getUTCFullYear() - participant.yearOfBirth,
-      door: participant.enrollmentTouchpoint,
-      enrollmentDate: participant.createdAt,
+      sex: demographics ? participant.sex : null,
+      yearOfBirth: demographics ? participant.yearOfBirth : null,
+      age: demographics ? clock.getUTCFullYear() - participant.yearOfBirth : null,
+      door: demographics ? participant.enrollmentTouchpoint : null,
+      enrollmentDate: demographics ? participant.createdAt : null,
+      enrollmentAnchor: participant.createdAt,
       grants,
       ahi,
       severity: ahi !== null ? severityFromAhi(ahi) : null,
@@ -449,4 +468,61 @@ export function meanOf(values: (number | null)[]): { mean: number | null; n: num
     mean: present.reduce((sum, value) => sum + value, 0) / present.length,
     n: present.length,
   };
+}
+
+// ---------------------------------------------------------------------------
+// OMOP export data access (kept here so the route imports no raw prisma)
+// ---------------------------------------------------------------------------
+
+export interface ExportEpisodeRow {
+  participantId: string;
+  protocolPhase: string;
+  startDate: Date;
+  endDate: Date | null;
+  /** consent lineage — the class whose research grant gates this row (F-09) */
+  dataClass: string | null;
+}
+
+/** Episodes with their lineage class, for OBSERVATION_PERIOD building. */
+export async function loadEpisodesForExport(): Promise<ExportEpisodeRow[]> {
+  return prisma.episode.findMany({
+    select: {
+      participantId: true,
+      protocolPhase: true,
+      startDate: true,
+      endDate: true,
+      dataClass: true,
+    },
+  });
+}
+
+export interface ExportObservationRow {
+  id: string;
+  participantId: string;
+  source: string;
+  concept: string;
+  valueNumeric: number | null;
+  unit: string | null;
+  effectiveDate: Date;
+}
+
+/** One cursor page of observations for MEASUREMENT streaming. */
+export async function pageObservationsForExport(
+  cursor: string | undefined,
+  take: number
+): Promise<ExportObservationRow[]> {
+  return prisma.observation.findMany({
+    take,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    orderBy: { id: "asc" },
+    select: {
+      id: true,
+      participantId: true,
+      source: true,
+      concept: true,
+      valueNumeric: true,
+      unit: true,
+      effectiveDate: true,
+    },
+  });
 }

@@ -1,9 +1,11 @@
 import type { ConsentRecord } from "@prisma/client";
 import {
+  activeParticipantIds,
   evaluateGrants,
   getAllGrantedDevices,
   grantSetHas,
   grantsFor,
+  latestGrantedObservationDates,
   loadAllGrants,
   type DataClass,
 } from "../consent";
@@ -108,7 +110,10 @@ export async function loadCoachDashboard(opts: {
 
   const [allGrants, participants, laneARecords] = await Promise.all([
     loadAllGrants(),
+    // Tombstones never appear in coach numbers (deletion revokes everything
+    // anyway; the lifecycle filter is defense in depth — audit F-01).
     prisma.participant.findMany({
+      where: { deletedAt: null, lifecycleState: { not: "deleted" } },
       select: { id: true, createdAt: true, enrollmentTouchpoint: true },
     }),
     prisma.consentRecord.findMany({ where: { instrumentType: "LANE_A" } }),
@@ -116,10 +121,6 @@ export async function loadCoachDashboard(opts: {
 
   const canView = (participantId: string, dataClass: DataClass) =>
     grantSetHas(grantsFor(allGrants, participantId), dataClass, "view_identified");
-  const canViewAny = (participantId: string) =>
-    (["wearable_sleep", "cpap_telemetry", "sleep_mat", "pro_responses"] as DataClass[]).some(
-      (dataClass) => canView(participantId, dataClass)
-    );
 
   // --- clinic roster: everyone with a CURRENT granted Lane A -----------------
   // Membership uses the consent engine's own evaluation (evaluateGrants) over
@@ -143,7 +144,7 @@ export async function loadCoachDashboard(opts: {
   const [
     denominatorGroups,
     numeratorGroups,
-    activeGroups,
+    activeGranted,
     lastWearableGroups,
     recentGapGroups,
     hstRows,
@@ -170,10 +171,13 @@ export async function loadCoachDashboard(opts: {
       },
       _count: { _all: true },
     }),
-    prisma.observation.groupBy({
-      by: ["participantId"],
-      where: { effectiveDate: { gt: addDays(clock, -7), lte: clock } },
-    }),
+    // Consent-aware activity: each observation is classified into its data
+    // class BEFORE aggregation, so a participant whose only recent rows
+    // belong to a revoked class is NOT "active" (audit F-07).
+    activeParticipantIds(
+      { from: addDays(clock, -7), to: clock },
+      { use: "view_identified", grants: allGrants }
+    ),
     prisma.observation.groupBy({
       by: ["participantId"],
       where: { concept: "sleep_duration_min" },
@@ -244,9 +248,7 @@ export async function loadCoachDashboard(opts: {
 
   // --- funnel tiles -----------------------------------------------------------
   const activeIds = new Set(
-    activeGroups
-      .map((group) => group.participantId)
-      .filter((participantId) => rosterIds.has(participantId) && canViewAny(participantId))
+    [...activeGranted].filter((participantId) => rosterIds.has(participantId))
   );
 
   const supineByParticipant = new Map<string, { supine?: number; nonsupine?: number }>();
@@ -431,19 +433,12 @@ export async function loadCoachDashboard(opts: {
   const pageRows = sorted.slice((page - 1) * COACH_PAGE_SIZE, page * COACH_PAGE_SIZE);
   const pageIds = pageRows.map((participant) => participant.id);
 
-  const [lastDataGroups, pageNames] = await Promise.all([
-    pageIds.length
-      ? prisma.observation.groupBy({
-          by: ["participantId"],
-          where: { participantId: { in: pageIds } },
-          _max: { effectiveDate: true },
-        })
-      : Promise.resolve([]),
+  // Consent-aware "last data": the freshest night among GRANTED classes only
+  // — a sealed class must not leak freshness (audit F-07).
+  const [lastData, pageNames] = await Promise.all([
+    latestGrantedObservationDates(pageIds, { use: "view_identified", grants: allGrants }),
     getLinkedDisplayNames(pageIds, { grants: allGrants }),
   ]);
-  const lastData = new Map(
-    lastDataGroups.map((group) => [group.participantId, group._max.effectiveDate as Date])
-  );
 
   const cpapDeviceIds = new Set(
     devices.filter((device) => device.deviceClass === "cpap").map((device) => device.participantId)
@@ -462,7 +457,7 @@ export async function loadCoachDashboard(opts: {
     if (purchaseIds.has(participant.id) && canView(participant.id, "mattress_purchase")) {
       armBadges.push("Mattress");
     }
-    const last = canViewAny(participant.id) ? lastData.get(participant.id) : undefined;
+    const last = lastData.get(participant.id);
     return {
       participantId: participant.id,
       displayName: pageNames.get(participant.id) ?? null,

@@ -1,8 +1,8 @@
-import type { Device, Episode } from "@prisma/client";
-import { sourceToDataClass, type DataClass } from "../consent";
+import type { Device } from "@prisma/client";
+import { grantSetHas, sourceToDataClass, storedDataClass, type DataClass } from "../consent";
 import { ageBandFromYearOfBirth, pseudonym, shiftDate } from "../deid";
 import { toIsoDay } from "../format";
-import type { ResearchMember } from "./cohort";
+import type { ExportEpisodeRow, ResearchMember } from "./cohort";
 import { csvField } from "./deidExport";
 
 /**
@@ -112,36 +112,60 @@ export const DEVICE_EXPOSURE_HEADER = [
 
 const byPseudonym = (a: string, b: string) => pseudonym(a).localeCompare(pseudonym(b));
 
-/** PERSON: one row per research-cohort member (pseudonym, gender, age band). */
+/**
+ * PERSON: one row per research-cohort member (pseudonym anchor). Gender and
+ * age band are registry_demographics-class fields (audit F-11): a member
+ * without a current research_deid grant on that class exports an anchor row
+ * with NO demographics (gender concept 0, empty source value / age band) —
+ * a linkage-only grant no longer carries demographics into the mart.
+ */
 export function buildPersonCsv(members: ResearchMember[]): string {
   const rows = [...members]
     .sort((a, b) => byPseudonym(a.id, b.id))
-    .map((member) =>
-      [
-        pseudonym(member.id),
-        OMOP_GENDER_CONCEPTS[member.sex] ?? 0,
-        member.sex,
-        ageBandFromYearOfBirth(member.yearOfBirth, member.enrollmentDate),
-      ]
+    .map((member) => {
+      const demographics =
+        grantSetHas(member.grants, "registry_demographics", "research_deid") &&
+        member.sex !== null &&
+        member.yearOfBirth !== null &&
+        member.enrollmentDate !== null;
+      return (
+        demographics
+          ? [
+              pseudonym(member.id),
+              OMOP_GENDER_CONCEPTS[member.sex as string] ?? 0,
+              member.sex,
+              ageBandFromYearOfBirth(member.yearOfBirth as number, member.enrollmentDate as Date),
+            ]
+          : [pseudonym(member.id), 0, "", ""]
+      )
         .map(csvField)
-        .join(",")
-    );
+        .join(",");
+    });
   return [PERSON_HEADER, ...rows].join("\n") + "\n";
 }
-
-type EpisodeRow = Pick<Episode, "participantId" | "protocolPhase" | "startDate" | "endDate">;
 
 /**
  * OBSERVATION_PERIOD: one row per episode of a research-cohort member,
  * date-shifted. Open-ended episodes close at the (shifted) sim clock.
+ *
+ * Per-row consent (audit F-09): every episode carries its lineage data
+ * class, and the row is emitted only when `isExportable` confirms a current
+ * research_deid grant on that class — exactly like MEASUREMENT. An episode
+ * with no/unknown lineage is never exported (fail closed).
  */
 export function buildObservationPeriodCsv(
-  episodes: EpisodeRow[],
+  episodes: ExportEpisodeRow[],
   memberIds: ReadonlySet<string>,
-  clock: Date
+  clock: Date,
+  isExportable: (participantId: string, dataClass: DataClass) => boolean
 ): string {
   const rows = episodes
-    .filter((episode) => memberIds.has(episode.participantId))
+    .filter((episode) => {
+      if (!memberIds.has(episode.participantId)) return false;
+      const dataClass = storedDataClass(episode.dataClass);
+      if (dataClass === null) return false; // unclassified: quarantined
+      return isExportable(episode.participantId, dataClass);
+    })
     .sort(
       (a, b) =>
         byPseudonym(a.participantId, b.participantId) ||
@@ -188,7 +212,9 @@ export function measurementCsvRows(
     if (obs.valueNumeric === null) continue;
     const conceptId = OMOP_MEASUREMENT_CONCEPTS[obs.concept];
     if (conceptId === undefined) continue; // contextual / unmapped concepts stay home
-    if (!isExportable(obs.participantId, sourceToDataClass(obs.source))) continue;
+    const dataClass = sourceToDataClass(obs.source);
+    if (dataClass === null) continue; // unknown source: quarantined (F-10)
+    if (!isExportable(obs.participantId, dataClass)) continue;
     lines.push(
       [
         id,
@@ -273,8 +299,11 @@ export function omopBundleReadme(clockIso: string): string {
     "De-identification: person_id is a deterministic research pseudonym; every",
     "date carries that participant's constant ±30-day shift (intervals are",
     "preserved exactly); ages are 5-year bands. Consent: only research-consented",
-    "participants appear, and every row requires a current research_deid grant",
-    "on its data class — a revoked participant is absent from every table.",
+    "participants appear, and every row in every table — including",
+    "OBSERVATION_PERIOD — requires a current research_deid grant on its own",
+    "data class; PERSON demographics require the registry_demographics grant.",
+    "A revoked participant is absent from every table; rows whose data class",
+    "cannot be established are quarantined and never exported.",
     "",
     `Vocabulary: ${OMOP_VOCAB_VERSION}. Gender uses standard OMOP concepts`,
     "(8507/8532). Concepts with no standard code (position, therapy and mattress",

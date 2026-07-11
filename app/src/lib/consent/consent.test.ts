@@ -97,15 +97,30 @@ describe("consent engine", () => {
     expect(result.blockedDataClasses).toContain("wearable_sleep");
   });
 
-  it("revocation is a status change, never a delete (history preserved)", async () => {
+  // UPDATED for audit F-14: revocation is an APPENDED immutable event, not a
+  // status flip — the original signed grant record is never mutated.
+  it("revocation appends an immutable revoke event; the signed grant is untouched", async () => {
     const pid = await makeParticipant();
-    await grantConsent(pid, "LANE_B", { grantedAt: new Date("2026-04-01") });
+    const grant = await grantConsent(pid, "LANE_B", { grantedAt: new Date("2026-04-01") });
     await revokeConsent(pid, "LANE_B", { revokedAt: new Date("2026-05-01") });
 
-    const records = await prisma.consentRecord.findMany({ where: { participantId: pid } });
-    expect(records).toHaveLength(1);
-    expect(records[0].status).toBe("revoked");
-    expect(records[0].revokedAt?.toISOString().slice(0, 10)).toBe("2026-05-01");
+    const records = await prisma.consentRecord.findMany({
+      where: { participantId: pid },
+      orderBy: { revision: "asc" },
+    });
+    expect(records).toHaveLength(2);
+    // The signed grant event: byte-for-byte immutable.
+    expect(records[0].id).toBe(grant.id);
+    expect(records[0].eventType).toBe("grant");
+    expect(records[0].status).toBe("granted");
+    expect(records[0].revokedAt).toBeNull();
+    expect(records[0].revision).toBe(1);
+    // The revoke event: carries the revoked scope and the revocation time.
+    expect(records[1].eventType).toBe("revoke");
+    expect(records[1].status).toBe("revoked");
+    expect(records[1].revision).toBe(2);
+    expect(records[1].revokedAt?.toISOString().slice(0, 10)).toBe("2026-05-01");
+    expect(JSON.parse(records[1].scope)).toEqual(JSON.parse(records[0].scope));
   });
 
   it("re-grant after revoke works via a new record, history preserved", async () => {
@@ -121,15 +136,19 @@ describe("consent engine", () => {
 
     const records = await prisma.consentRecord.findMany({
       where: { participantId: pid },
-      orderBy: { grantedAt: "asc" },
+      orderBy: { revision: "asc" },
     });
-    expect(records).toHaveLength(2);
-    expect(records[0].status).toBe("revoked"); // history intact
-    expect(records[1].status).toBe("granted");
+    // Consent v2 (audit F-14): grant, revoke EVENT, re-grant — three
+    // immutable records; the whole history stays intact.
+    expect(records).toHaveLength(3);
+    expect(records.map((record) => record.eventType)).toEqual(["grant", "revoke", "grant"]);
+    expect(records[0].status).toBe("granted"); // original grant untouched
+    expect(records[1].status).toBe("revoked");
+    expect(records[2].status).toBe("granted");
 
     const states = await getConsentStates(pid);
     expect(states).toEqual([
-      expect.objectContaining({ instrumentType: "LANE_B", status: "granted", historyCount: 2 }),
+      expect.objectContaining({ instrumentType: "LANE_B", status: "granted", historyCount: 3 }),
     ]);
   });
 

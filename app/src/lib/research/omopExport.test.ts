@@ -89,12 +89,14 @@ async function seedOmopParticipant(id: string, name: string, email: string): Pro
         protocolPhase: "baseline",
         startDate: ENROLLED,
         endDate: addDays(ENROLLED, EPISODE_ANCHOR_OFFSET),
+        dataClass: "hst_clinical", // consent lineage (audit F-09)
       },
       {
         participantId: id,
         protocolPhase: "intervention",
         startDate: addDays(ENROLLED, EPISODE_ANCHOR_OFFSET),
         endDate: null,
+        dataClass: "hst_clinical",
       },
     ],
   });
@@ -162,7 +164,13 @@ async function buildBundle() {
   };
   const [episodes, devices, observations] = await Promise.all([
     prisma.episode.findMany({
-      select: { participantId: true, protocolPhase: true, startDate: true, endDate: true },
+      select: {
+        participantId: true,
+        protocolPhase: true,
+        startDate: true,
+        endDate: true,
+        dataClass: true,
+      },
     }),
     getAllGrantedDevices({ use: "research_deid" }),
     prisma.observation.findMany({ orderBy: { id: "asc" } }),
@@ -170,7 +178,8 @@ async function buildBundle() {
   return {
     cohort,
     person: buildPersonCsv(cohort.members),
-    period: buildObservationPeriodCsv(episodes, memberIds, cohort.clock),
+    // Per-row class predicate, exactly like MEASUREMENT (audit F-09).
+    period: buildObservationPeriodCsv(episodes, memberIds, cohort.clock, isExportable),
     measurement: buildMeasurementCsv(observations, isExportable),
     device: buildDeviceExposureCsv(devices, memberIds),
   };
@@ -262,6 +271,84 @@ describe("OMOP bundle mapping (T2.5)", () => {
     // The revoked participant is absent from EVERY table.
     const all = person + period + measurement + device;
     expect(all).not.toContain(pseudonym(REVOKED));
+  });
+
+  it("revoking the episode's class removes its OBSERVATION_PERIOD rows while other tables keep flowing (audit F-09)", async () => {
+    // Keep unrelated research grants (cohort membership survives), revoke
+    // only hst_clinical — the class the fixture episodes belong to.
+    await revokeDataClass(SUBJECT, "hst_clinical");
+    const { person, period, measurement } = await buildBundle();
+    const periodLines = period.trimEnd().split("\n");
+    expect(periodLines).toHaveLength(1); // header only — the audit's exact repro
+    expect(period).not.toContain(pseudonym(SUBJECT));
+    // Still a member: PERSON row and non-clinical measurements remain.
+    expect(person).toContain(pseudonym(SUBJECT));
+    expect(measurement).toContain("cpap_usage_minutes");
+    expect(measurement).not.toContain(",ahi,"); // hst measurements sealed too
+  });
+
+  it("an episode with no/unknown lineage is quarantined from OBSERVATION_PERIOD (fail closed)", async () => {
+    await prisma.episode.create({
+      data: {
+        participantId: SUBJECT,
+        protocolPhase: "followup",
+        startDate: addDays(ENROLLED, 60),
+        endDate: null,
+        dataClass: null, // unclassified
+      },
+    });
+    await prisma.episode.create({
+      data: {
+        participantId: SUBJECT,
+        protocolPhase: "followup",
+        startDate: addDays(ENROLLED, 61),
+        endDate: null,
+        dataClass: "not_a_real_class",
+      },
+    });
+    const { period } = await buildBundle();
+    expect(period).not.toContain("followup");
+    expect(period.trimEnd().split("\n")).toHaveLength(3); // header + 2 classified episodes
+  });
+
+  it("gates PERSON demographics on registry_demographics: a linkage-only member exports no sex/age (audit F-11)", async () => {
+    // Reduce the subject to a linkage-only research grant: revoke A and B
+    // entirely; Lane C (linkage) remains → still a cohort member.
+    await revokeConsent(SUBJECT, "LANE_A");
+    await revokeConsent(SUBJECT, "LANE_B");
+    const { cohort, person, period, measurement, device } = await buildBundle();
+    expect(cohort.byId.has(SUBJECT)).toBe(true); // member via linkage grant
+    const line = person
+      .trimEnd()
+      .split("\n")
+      .find((row) => row.startsWith(pseudonym(SUBJECT)));
+    expect(line).toBe(`${pseudonym(SUBJECT)},0,,`); // anchor row, NO demographics
+    expect(person).not.toContain("male");
+    // And no data rows anywhere else either (no data-class grants remain).
+    expect(period).not.toContain(pseudonym(SUBJECT));
+    expect(measurement).not.toContain(pseudonym(SUBJECT));
+    expect(device).not.toContain(pseudonym(SUBJECT));
+  });
+
+  it("quarantines unknown observation sources from MEASUREMENT (audit F-10 repro: 'airveiw')", async () => {
+    await prisma.observation.create({
+      data: {
+        participantId: SUBJECT,
+        source: "airveiw", // misspelled connector
+        concept: "residual_ahi",
+        valueNumeric: 9.9,
+        unit: "events/h",
+        effectiveDate: addDays(ENROLLED, 44),
+        grain: "day",
+        qualityFlags: "[]",
+      },
+    });
+    // Even revoking CPAP leaves wearable granted — the typo'd source must
+    // not fail open into the wearable class.
+    await revokeDataClass(SUBJECT, "cpap_telemetry");
+    const { measurement } = await buildBundle();
+    expect(measurement).not.toContain("9.9");
+    expect(measurement).not.toContain("residual_ahi");
   });
 
   it("partial revocation drops exactly that class from MEASUREMENT", async () => {

@@ -119,7 +119,13 @@ async function seedFullParticipant(name: string, sku: string): Promise<string> {
 
   // CPAP telemetry: 10 adherent nights inside the coach's 30-day window.
   await prisma.treatmentEvent.create({
-    data: { participantId: id, type: "cpap_setup", eventDate: addDays(enrolled, 14), detail: "{}" },
+    data: {
+      participantId: id,
+      type: "cpap_setup",
+      eventDate: addDays(enrolled, 14),
+      detail: "{}",
+      dataClass: "cpap_telemetry", // consent lineage (audit F-06)
+    },
   });
   await prisma.observation.createMany({
     data: Array.from({ length: 10 }, (_, i) => ({
@@ -283,7 +289,10 @@ describe("full revocation seals every product surface", () => {
         expect(result.data).toHaveLength(0);
       }
       expect(pros.blockedDataClasses).toEqual(["pro_responses"]);
-      expect(events.blockedDataClasses).toEqual(["hst_clinical"]);
+      // UPDATED for audit F-06: the participant's only event is a
+      // cpap_setup, which is cpap_telemetry-class data — the old blanket
+      // "all events are hst_clinical" rule was the bug.
+      expect(events.blockedDataClasses).toEqual(["cpap_telemetry"]);
       expect([...devices.blockedDataClasses].sort()).toEqual([
         "cpap_telemetry",
         "hst_clinical",
@@ -368,8 +377,11 @@ describe("full revocation seals every product surface", () => {
     expect(await prisma.device.count({ where: { participantId: subject } })).toBe(4);
     expect(await prisma.mattressPurchase.count({ where: { participantId: subject } })).toBe(1);
     const ledger = await prisma.consentRecord.findMany({ where: { participantId: subject } });
-    expect(ledger).toHaveLength(3); // append-only: flipped, never deleted
-    expect(ledger.every((record) => record.status === "revoked" && record.revokedAt !== null)).toBe(true);
+    // Consent v2 (audit F-14): revocation APPENDS revoke events — 3 signed
+    // grants survive untouched next to 3 revoke events.
+    expect(ledger).toHaveLength(6);
+    expect(ledger.filter((r) => r.eventType === "grant").every((r) => r.status === "granted")).toBe(true);
+    expect(ledger.filter((r) => r.eventType === "revoke")).toHaveLength(3);
   });
 });
 

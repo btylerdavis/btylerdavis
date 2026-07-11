@@ -19,7 +19,8 @@ import {
 
 export interface ArmMemberInput {
   arm: ArmKey;
-  age: number;
+  /** null when registry_demographics is not research-granted (audit F-11) */
+  age: number | null;
   severity: SeverityBand | null;
   ahi: number | null;
   /** ESS at day 90 − baseline (negative = improvement) */

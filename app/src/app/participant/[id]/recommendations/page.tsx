@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { getLinkedProfile, loadGrants, type DataClass } from "@/lib/consent";
-import { prisma } from "@/lib/db";
+import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId } from "@/lib/format";
 import { buildNarrative } from "@/lib/recommendations/narrative";
 import { loadRecommendations } from "@/lib/recommendations/queries";
@@ -39,7 +39,7 @@ export default async function RecommendationsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const participant = await prisma.participant.findUnique({ where: { id } });
+  const participant = await getParticipant(id);
   if (!participant) notFound();
 
   const grants = await loadGrants(id);

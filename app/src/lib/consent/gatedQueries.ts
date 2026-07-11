@@ -1,7 +1,19 @@
-import type { Device, Observation, SleepSession, ProResponse, TreatmentEvent } from "@prisma/client";
+import type {
+  Device,
+  MattressCatalog,
+  MattressPurchase,
+  Observation,
+  ProResponse,
+  SleepSession,
+  TreatmentEvent,
+} from "@prisma/client";
 import { prisma } from "../db";
 import { grantsFor, grantSetHas, loadAllGrants, loadGrants, type GrantSet } from "./engine";
-import { sourceToDataClass } from "./scopes";
+import {
+  sourceToDataClass,
+  storedDataClass,
+  treatmentEventTypeToDataClass,
+} from "./scopes";
 import { DATA_CLASSES, type ConsentUse, type DataClass } from "./types";
 
 /**
@@ -9,6 +21,10 @@ import { DATA_CLASSES, type ConsentUse, type DataClass } from "./types";
  * that surfaces participant data goes through these: rows whose data class
  * lacks a current grant for the requested use are filtered out, and the
  * result carries a `blocked` marker naming the refused data classes.
+ *
+ * FAIL CLOSED (audit F-10): a row whose source/type/lineage cannot be
+ * classified into a known data class is NEVER returned, on any tier — it is
+ * counted in `unclassifiedRows` so operators can see quarantined data.
  *
  * NOTE (identity split): none of these helpers join DemoIdentity. The only
  * identity join in the codebase is getLinkedProfile, an explicitly
@@ -20,9 +36,13 @@ export interface GatedResult<T> {
   /** true when at least one requested data class had no current grant */
   blocked: boolean;
   blockedDataClasses: DataClass[];
+  /** rows quarantined because their source/lineage is unclassified (F-10) */
+  unclassifiedRows: number;
 }
 
-const OBSERVATION_DATA_CLASSES = DATA_CLASSES.filter((c) => c !== "linkage");
+const OBSERVATION_DATA_CLASSES = DATA_CLASSES.filter(
+  (c) => c !== "linkage" && c !== "registry_demographics"
+);
 
 interface GatedReadOptions {
   use: ConsentUse;
@@ -52,6 +72,7 @@ function splitGranted(
 /**
  * Applies the read gate to fetched rows.
  *
+ * Rows whose class is null (unclassifiable) are quarantined outright.
  * "Requested" classes are either the explicit opts.dataClasses or the classes
  * actually present in the fetched rows; any requested class without a current
  * grant marks the result blocked and its rows are filtered out. When nothing
@@ -61,14 +82,18 @@ function splitGranted(
  */
 function gateRows<T>(
   rows: T[],
-  classOf: (row: T) => DataClass,
+  classOf: (row: T) => DataClass | null,
   grants: GrantSet,
   use: ConsentUse,
   explicit: DataClass[] | undefined,
   fallbackClasses: DataClass[]
 ): GatedResult<T> {
-  const inScope = explicit ? rows.filter((row) => explicit.includes(classOf(row))) : rows;
-  const encountered = [...new Set(inScope.map(classOf))];
+  const classified = rows.filter((row) => classOf(row) !== null);
+  const unclassifiedRows = rows.length - classified.length;
+  const inScope = explicit
+    ? classified.filter((row) => explicit.includes(classOf(row) as DataClass))
+    : classified;
+  const encountered = [...new Set(inScope.map((row) => classOf(row) as DataClass))];
   const requested = explicit ?? encountered;
   const { granted, blocked } = splitGranted(grants, requested, use);
 
@@ -77,14 +102,15 @@ function gateRows<T>(
     // grant exists for this use.
     const anyGrant = fallbackClasses.some((dc) => grantSetHas(grants, dc, use));
     return anyGrant
-      ? { data: [], blocked: false, blockedDataClasses: [] }
-      : { data: [], blocked: true, blockedDataClasses: fallbackClasses };
+      ? { data: [], blocked: false, blockedDataClasses: [], unclassifiedRows }
+      : { data: [], blocked: true, blockedDataClasses: fallbackClasses, unclassifiedRows };
   }
 
   return {
-    data: inScope.filter((row) => granted.has(classOf(row))),
+    data: inScope.filter((row) => granted.has(classOf(row) as DataClass)),
     blocked: blocked.length > 0,
     blockedDataClasses: blocked,
+    unclassifiedRows,
   };
 }
 
@@ -149,7 +175,7 @@ export async function getProResponses(
 ): Promise<GatedResult<ProResponse>> {
   const grants = opts.grants ?? (await loadGrants(participantId));
   if (!grantSetHas(grants, "pro_responses", opts.use)) {
-    return { data: [], blocked: true, blockedDataClasses: ["pro_responses"] };
+    return { data: [], blocked: true, blockedDataClasses: ["pro_responses"], unclassifiedRows: 0 };
   }
   const data = await prisma.proResponse.findMany({
     where: {
@@ -158,30 +184,54 @@ export async function getProResponses(
     },
     orderBy: { administeredAt: "asc" },
   });
-  return { data, blocked: false, blockedDataClasses: [] };
+  return { data, blocked: false, blockedDataClasses: [], unclassifiedRows: 0 };
+}
+
+/** Classes treatment events can carry (getTreatmentEvents' fallback set). */
+const TREATMENT_EVENT_CLASSES: DataClass[] = [
+  "cpap_telemetry",
+  "hst_clinical",
+  "mattress_purchase",
+];
+
+/**
+ * The data class gating a treatment-event ROW: the persisted lineage column,
+ * validated; rows written before lineage landed fall back to the exhaustive
+ * per-type mapping. Unknown either way → null (never readable).
+ */
+export function treatmentEventRowDataClass(
+  row: Pick<TreatmentEvent, "type" | "dataClass">
+): DataClass | null {
+  return storedDataClass(row.dataClass) ?? treatmentEventTypeToDataClass(row.type);
 }
 
 /**
- * Treatment events (cpap_setup, mattress_delivery, therapy_stop, ...) are
- * clinical-lane data, gated on hst_clinical — the same rule getLinkedProfile
- * applies. Refused outright without a current grant for the requested use.
+ * Treatment events, gated PER EVENT on the event's own data class (audit
+ * F-06): cpap_setup/titration_change/therapy_stop under cpap_telemetry,
+ * appliance_delivery under hst_clinical, mattress_delivery under
+ * mattress_purchase. Revoking one class seals exactly that class's events;
+ * an event with no/unknown lineage is quarantined (fail closed).
  */
 export async function getTreatmentEvents(
   participantId: string,
   opts: { use: ConsentUse; types?: string[]; grants?: GrantSet }
 ): Promise<GatedResult<TreatmentEvent>> {
   const grants = opts.grants ?? (await loadGrants(participantId));
-  if (!grantSetHas(grants, "hst_clinical", opts.use)) {
-    return { data: [], blocked: true, blockedDataClasses: ["hst_clinical"] };
-  }
-  const data = await prisma.treatmentEvent.findMany({
+  const rows = await prisma.treatmentEvent.findMany({
     where: {
       participantId,
       ...(opts.types ? { type: { in: opts.types } } : {}),
     },
     orderBy: { eventDate: "asc" },
   });
-  return { data, blocked: false, blockedDataClasses: [] };
+  return gateRows(
+    rows,
+    treatmentEventRowDataClass,
+    grants,
+    opts.use,
+    undefined,
+    TREATMENT_EVENT_CLASSES
+  );
 }
 
 /**
@@ -213,10 +263,19 @@ export function deviceClassToDataClass(deviceClass: string): DataClass | null {
 }
 
 /**
+ * The data class gating a device ROW: the persisted lineage column,
+ * validated; rows written before lineage landed fall back to the class map.
+ * Unknown either way → null (unreadable).
+ */
+export function deviceRowDataClass(row: Pick<Device, "deviceClass" | "dataClass">): DataClass | null {
+  return storedDataClass(row.dataClass) ?? deviceClassToDataClass(row.deviceClass);
+}
+
+/**
  * Devices for a participant, filtered by consent grant for the given use —
  * the device counterpart of getObservations. A device row is visible only
- * while a current grant covers its mapped data class; with no current grant
- * this returns data: [] and blocked: true.
+ * while a current grant covers its data class; with no current grant this
+ * returns data: [] and blocked: true.
  */
 export async function getDevices(
   participantId: string,
@@ -230,18 +289,10 @@ export async function getDevices(
     },
     orderBy: { assignedAt: "asc" },
   });
-  const known = rows.filter((row) => deviceClassToDataClass(row.deviceClass) !== null);
   const explicit = opts.classes
     ? [...new Set(opts.classes.map((c) => DEVICE_CLASS_TO_DATA_CLASS[c]))]
     : undefined;
-  return gateRows(
-    known,
-    (row) => deviceClassToDataClass(row.deviceClass) as DataClass,
-    grants,
-    opts.use,
-    explicit,
-    DEVICE_DATA_CLASSES
-  );
+  return gateRows(rows, deviceRowDataClass, grants, opts.use, explicit, DEVICE_DATA_CLASSES);
 }
 
 /**
@@ -261,10 +312,36 @@ export async function getAllGrantedDevices(opts: {
     where: opts.classes ? { deviceClass: { in: opts.classes } } : undefined,
   });
   return rows.filter((row) => {
-    const dataClass = deviceClassToDataClass(row.deviceClass);
+    const dataClass = deviceRowDataClass(row);
     if (dataClass === null) return false; // unknown class: fail closed
     return grantSetHas(grantsFor(grants, row.participantId), dataClass, opts.use);
   });
+}
+
+/**
+ * Mattress purchases (with catalog facts), gated on the mattress_purchase
+ * class — the purchase counterpart of getObservations, so pages never read
+ * the purchase table raw.
+ */
+export async function getMattressPurchases(
+  participantId: string,
+  opts: { use: ConsentUse; grants?: GrantSet }
+): Promise<GatedResult<MattressPurchase & { catalogItem: MattressCatalog }>> {
+  const grants = opts.grants ?? (await loadGrants(participantId));
+  if (!grantSetHas(grants, "mattress_purchase", opts.use)) {
+    return {
+      data: [],
+      blocked: true,
+      blockedDataClasses: ["mattress_purchase"],
+      unclassifiedRows: 0,
+    };
+  }
+  const data = await prisma.mattressPurchase.findMany({
+    where: { participantId },
+    include: { catalogItem: true },
+    orderBy: { purchaseDate: "asc" },
+  });
+  return { data, blocked: false, blockedDataClasses: [], unclassifiedRows: 0 };
 }
 
 export interface LinkedProfile {
@@ -292,7 +369,8 @@ export interface LinkedProfile {
 /**
  * Lane C join: the ONE place retail-originated and clinic-originated data
  * (and, for identified-tier views, the DemoIdentity display record) are
- * combined. Refused outright without a current linkage grant.
+ * combined. Refused outright without a current linkage grant. Treatment
+ * events are gated per event on their own data class (audit F-06).
  */
 export async function getLinkedProfile(
   participantId: string,
@@ -320,10 +398,8 @@ export async function getLinkedProfile(
           orderBy: { effectiveDate: "asc" },
         })
       : Promise.resolve([]),
-    // Treatment events are clinical-lane data: gated on hst_clinical like HST rows.
-    grantSetHas(grants, "hst_clinical", opts.use)
-      ? prisma.treatmentEvent.findMany({ where: { participantId }, orderBy: { eventDate: "asc" } })
-      : Promise.resolve([]),
+    // Per-event class gating: each event needs a current grant on ITS class.
+    getTreatmentEvents(participantId, { use: opts.use, grants }),
     // Identity join is allowed ONLY in the identified tier.
     opts.use === "view_identified"
       ? prisma.demoIdentity.findUnique({ where: { participantId } })
@@ -350,7 +426,7 @@ export async function getLinkedProfile(
         valueNumeric: o.valueNumeric,
         effectiveDate: o.effectiveDate,
       })),
-      treatmentEvents: events.map((e) => ({ type: e.type, eventDate: e.eventDate })),
+      treatmentEvents: events.data.map((e) => ({ type: e.type, eventDate: e.eventDate })),
     },
   };
 }

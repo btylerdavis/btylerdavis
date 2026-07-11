@@ -162,8 +162,9 @@ describe("revocation kill switch", () => {
     expect(report.researchReadProbe.blocked).toBe(true);
 
     // Rows at rest are quarantined, NOT deleted.
-    const counts = await countRowsByDataClass(marcus);
-    const cpapRow = counts.find((row) => row.dataClass === "cpap_telemetry")!;
+    const atRest = await countRowsByDataClass(marcus);
+    expect(atRest.unclassifiedRows).toBe(0);
+    const cpapRow = atRest.rows.find((row) => row.dataClass === "cpap_telemetry")!;
     expect(cpapRow.rows).toBe(10);
     expect(cpapRow.viewIdentified).toBe(false);
     expect(cpapRow.researchDeid).toBe(false);
@@ -181,19 +182,32 @@ describe("revocation kill switch", () => {
     expect(restore.identifiedReadProbe.blocked).toBe(false);
     expect(restore.identifiedReadProbe.rowsReturned).toBeGreaterThan(0);
 
-    // Audit trail: re-grant created NEW records; history preserves the arc.
+    // Audit trail (consent v2, audit F-14): every step is a NEW immutable
+    // event — grant, revoke, restore — so each instrument has THREE events
+    // and the original signed grant is untouched (never flipped in place).
     const states = await getConsentStates(marcus);
     for (const state of states) {
       expect(state.status).toBe("granted");
-      expect(state.historyCount).toBe(2); // original + re-grant
+      expect(state.historyCount).toBe(3); // grant + revoke event + restore event
     }
     const history = await getConsentHistory(marcus);
-    expect(history).toHaveLength(6); // 3 instruments × (grant, re-grant); revocation flipped in place
-    const laneA = history.filter((record) => record.instrumentType === "LANE_A");
-    expect(laneA[0].status).toBe("revoked"); // the original grant, revoked in place
-    expect(laneA[0].revokedAt).not.toBeNull();
-    expect(laneA[1].status).toBe("granted"); // the demo-reset re-grant
-    expect(laneA[1].revokedAt).toBeNull();
+    expect(history).toHaveLength(9); // 3 instruments × (grant, revoke, restore)
+    const laneA = history
+      .filter((record) => record.instrumentType === "LANE_A")
+      .sort((a, b) => a.revision - b.revision);
+    expect(laneA.map((record) => record.eventType)).toEqual([
+      "grant",
+      "revoke",
+      "scope_revision",
+    ]);
+    expect(laneA[0].status).toBe("granted"); // the original signed grant, IMMUTABLE
+    expect(laneA[0].revokedAt).toBeNull();
+    expect(laneA[1].status).toBe("revoked"); // the revoke EVENT
+    expect(laneA[1].revokedAt).not.toBeNull();
+    expect(laneA[2].status).toBe("granted"); // the ceiling-bounded restore event
+    expect(laneA[2].revokedAt).toBeNull();
+    // Restore stayed inside the signed ceiling: same scope as the signature.
+    expect(new Set(JSON.parse(laneA[2].scope))).toEqual(new Set(JSON.parse(laneA[0].scope)));
   });
 
   it("restore is a no-op for instruments still granted", async () => {

@@ -1,13 +1,20 @@
 import type { Prisma } from "@prisma/client";
-import { assertIngestAllowed, ConsentError, type DataClass } from "../consent";
-import { prisma } from "../db";
+import {
+  assertIngestAllowed,
+  ConsentError,
+  LifecycleError,
+  type DataClass,
+} from "../consent";
+import { guardedSubjectWrite } from "../consent/policyRepo";
 import { getSimClock } from "../simclock";
-import { createManyChunked } from "../synthetic/generator";
 import type { ImportObservationRow, ImportSessionRow } from "./appleHealth";
 
 /**
- * Gated writes for real-file imports. EVERY imported row passes
- * assertIngestAllowed for its data class first — a participant whose
+ * Gated writes for real-file imports. EVERY imported chunk is written
+ * through the policy repository: lifecycle + the class's collect grant are
+ * re-checked INSIDE each chunk's write transaction (audit F-04 — an import
+ * spans many writes, so a revocation or deletion landing mid-import stops
+ * the remaining chunks cold instead of racing them). A participant whose
  * consent doesn't cover the class gets a blocked result and zero rows, the
  * same behavior as every other write path.
  */
@@ -36,9 +43,10 @@ export type ImportResult =
       /** days the rows were shifted forward to land on the sim clock (0 = none) */
       shiftedDays: number;
     }
-  | { blocked: true; reason: string };
+  | { blocked: true; reason: string; observationsWritten: number; sessionsWritten: number };
 
 const MAX_ROWS = 100_000;
+const CHUNK_ROWS = 2000;
 const DAY_MS = 86_400_000;
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -67,21 +75,33 @@ function utcMidnight(day: string): Date {
   return new Date(`${day}T00:00:00Z`);
 }
 
+function chunks<T>(rows: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
 /**
- * Writes a parsed import for a participant, through the ingest gate.
- * `alignToSimClock` shifts every row forward by whole days so the newest
- * night lands on the sim "today" — a real 2025 Apple Health export then
- * shows up immediately in the 90-day trend window (the shift is reported
- * and the rows are flagged "imported").
+ * Writes a parsed import for a participant, through the per-chunk policy
+ * gate. `alignToSimClock` shifts every row forward by whole days so the
+ * newest night lands on the sim "today" — a real 2025 Apple Health export
+ * then shows up immediately in the 90-day trend window (the shift is
+ * reported and the rows are flagged "imported").
+ *
+ * `onChunkWritten` is a test hook: it runs between chunk transactions so
+ * race tests can revoke/delete mid-import and assert the remaining chunks
+ * are refused.
  */
 export async function ingestParsedImport(
   participantId: string,
   parsed: ParsedImportPayload,
-  opts: { alignToSimClock?: boolean } = {}
+  opts: { alignToSimClock?: boolean; onChunkWritten?: () => Promise<void> } = {}
 ): Promise<ImportResult> {
   assertSanePayload(parsed);
   const dataClass = IMPORT_DATA_CLASS[parsed.kind];
 
+  // Advisory pre-check for a friendly refusal before any work; the
+  // authoritative checks run inside each chunk's transaction below.
   try {
     await assertIngestAllowed(participantId, dataClass);
   } catch (error) {
@@ -89,6 +109,8 @@ export async function ingestParsedImport(
       return {
         blocked: true,
         reason: `No current "${dataClass}" collect consent — the ingest gate refused this import.`,
+        observationsWritten: 0,
+        sessionsWritten: 0,
       };
     }
     throw error;
@@ -127,12 +149,40 @@ export async function ingestParsedImport(
     })
   );
 
-  const observationsWritten = await createManyChunked(observationRows, (chunk) =>
-    prisma.observation.createMany({ data: chunk })
-  );
-  const sessionsWritten = await createManyChunked(sessionRows, (chunk) =>
-    prisma.sleepSession.createMany({ data: chunk })
-  );
+  let observationsWritten = 0;
+  let sessionsWritten = 0;
+  try {
+    for (const chunk of chunks(observationRows, CHUNK_ROWS)) {
+      // Lifecycle + collect grant re-validated inside THIS chunk's tx.
+      observationsWritten += await guardedSubjectWrite(
+        participantId,
+        [dataClass],
+        async (tx) => (await tx.observation.createMany({ data: chunk })).count
+      );
+      if (opts.onChunkWritten) await opts.onChunkWritten();
+    }
+    for (const chunk of chunks(sessionRows, CHUNK_ROWS)) {
+      sessionsWritten += await guardedSubjectWrite(
+        participantId,
+        [dataClass],
+        async (tx) => (await tx.sleepSession.createMany({ data: chunk })).count
+      );
+      if (opts.onChunkWritten) await opts.onChunkWritten();
+    }
+  } catch (error) {
+    if (error instanceof ConsentError || error instanceof LifecycleError) {
+      return {
+        blocked: true,
+        reason:
+          `Consent or lifecycle changed mid-import — remaining rows refused ` +
+          `(${observationsWritten} observation(s), ${sessionsWritten} session(s) were written before the change): ` +
+          error.message,
+        observationsWritten,
+        sessionsWritten,
+      };
+    }
+    throw error;
+  }
 
   return {
     blocked: false,

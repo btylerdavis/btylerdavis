@@ -58,7 +58,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
 
   // Step 4 — CPAP
   const [cpapChoice, setCpapChoice] = useState<CpapModelKey | null>(null);
-  const [cpap, setCpap] = useState<CpapSetupResult | null>(null);
+  const [cpap, setCpap] = useState<Extract<CpapSetupResult, { blocked: false }> | null>(null);
 
   // Step 5 — Lane C
   const [refusal, setRefusal] = useState<LinkedView | null>(null);
@@ -535,7 +535,12 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                     const choice = cpapChoice;
                     if (!choice) return;
                     run(async () => {
-                      setCpap(await recordCpapSetup(enrollment.participantId, choice));
+                      const result = await recordCpapSetup(enrollment.participantId, choice);
+                      if (result.blocked) {
+                        setError(result.reason);
+                        return;
+                      }
+                      setCpap(result);
                     });
                   }}
                 >

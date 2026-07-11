@@ -7,6 +7,7 @@ import {
   type DataClass,
   type GrantSet,
 } from "../consent";
+import { writeGeneratedBatchGuarded } from "../consent/policyRepo";
 import { Rng } from "./prng";
 import { addDays, COHORT_SEED, dayIso, type ParticipantProfile } from "./profiles";
 
@@ -334,6 +335,7 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
       type: "therapy_stop",
       eventDate: date,
       detail: JSON.stringify({ therapy: "cpap", reason: "adherence_decline" }),
+      dataClass: "cpap_telemetry", // consent lineage (audit F-06)
     });
   }
 
@@ -492,28 +494,18 @@ export interface WriteCounts {
   treatmentEvents: number;
 }
 
-/** Client surface writeBatch needs (shared client or a seed-tuned one). */
-export type BatchWriter = Pick<
-  typeof prisma,
-  "observation" | "sleepSession" | "proResponse" | "treatmentEvent"
->;
-
-/** Batched createMany for a generated batch. */
-export async function writeBatch(batch: GeneratedBatch, db: BatchWriter = prisma): Promise<WriteCounts> {
-  return {
-    observations: await createManyChunked(batch.observations, (data) =>
-      db.observation.createMany({ data })
-    ),
-    sleepSessions: await createManyChunked(batch.sleepSessions, (data) =>
-      db.sleepSession.createMany({ data })
-    ),
-    proResponses: await createManyChunked(batch.proResponses, (data) =>
-      db.proResponse.createMany({ data })
-    ),
-    treatmentEvents: await createManyChunked(batch.treatmentEvents, (data) =>
-      db.treatmentEvent.createMany({ data })
-    ),
-  };
+/**
+ * Batched, policy-guarded write for a generated batch: delegates to the
+ * policy repository, which re-validates lifecycle + per-class collect grants
+ * for every participant in the batch INSIDE the write transaction and drops
+ * rows whose consent changed since generation (audit F-03/F-04). All bulk
+ * generation writes — seed and time machine alike — go through this.
+ */
+export async function writeBatch(
+  batch: GeneratedBatch,
+  db: Parameters<typeof writeGeneratedBatchGuarded>[1] = prisma
+): Promise<WriteCounts & { dropped: number }> {
+  return writeGeneratedBatchGuarded(batch, db);
 }
 
 export function mergeBatch(target: GeneratedBatch, source: GeneratedBatch): void {

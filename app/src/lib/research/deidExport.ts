@@ -1,3 +1,4 @@
+import { grantSetHas } from "../consent";
 import {
   ageBandFromYearOfBirth,
   buildSuppressedTable,
@@ -63,12 +64,20 @@ export function csvField(value: string | number | boolean | null): string {
 
 export function deidExportRow(member: ResearchMember): string {
   const shifted = (date: Date | null) => (date ? toIsoDay(shiftDate(member.id, date)) : null);
+  // Demographics + enrollment metadata are registry_demographics-class
+  // fields (audit F-11): exported only under that research grant.
+  const demographics =
+    grantSetHas(member.grants, "registry_demographics", "research_deid") &&
+    member.yearOfBirth !== null &&
+    member.enrollmentDate !== null;
   return [
     pseudonym(member.id),
-    ageBandFromYearOfBirth(member.yearOfBirth, member.enrollmentDate),
-    member.sex,
-    member.door,
-    shifted(member.enrollmentDate),
+    demographics
+      ? ageBandFromYearOfBirth(member.yearOfBirth as number, member.enrollmentDate as Date)
+      : null,
+    demographics ? member.sex : null,
+    demographics ? member.door : null,
+    demographics ? shifted(member.enrollmentDate) : null,
     member.severity,
     member.ahi,
     member.supinePredominant,

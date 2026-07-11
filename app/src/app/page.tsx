@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StepLabel } from "@/components/Stepper";
 import { formatDay } from "@/lib/format";
-import { prisma } from "@/lib/db";
+import { getSimClockOrNull } from "@/lib/simclock";
 import { MARCUS_REED_PARTICIPANT_ID } from "@/lib/synthetic/profiles";
 
 export const dynamic = "force-dynamic";
@@ -70,9 +70,7 @@ const DEMO_ACTS: {
 ];
 
 export default async function Home() {
-  const simClock = await prisma.simClock.findUnique({
-    where: { id: "singleton" },
-  });
+  const simClock = await getSimClockOrNull();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -107,7 +105,7 @@ export default async function Home() {
               </div>
               {simClock && (
                 <p className="mt-6 text-xs text-white/50">
-                  Demo clock: today is {formatDay(simClock.currentDate)}
+                  Demo clock: today is {formatDay(simClock)}
                 </p>
               )}
             </Card>

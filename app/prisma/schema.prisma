@@ -29,8 +29,15 @@ model Participant {
   sex                  String // "male" | "female"
   enrollmentTouchpoint String // "clinic" | "retail"
   createdAt            DateTime @default(now())
+  /// Terminal lifecycle invariant (audit F-01): "active" |
+  /// "deletion_pending" | "deleting" | "deleted". Every consent mutation and
+  /// every subject-data write re-checks this INSIDE its own transaction
+  /// (assertActiveParticipant); "deleted" is terminal — no grant, scope
+  /// revision, restore, enrollment, device/event/episode registration,
+  /// import, or simulated night can ever be recorded against a tombstone.
+  lifecycleState       String   @default("active")
   /// Tombstone marker (deletion workflow, SPEC §9.4): set when a deletion
-  /// request is executed. The row itself is retained so the append-only
+  /// request is executed. The row itself is retained so the immutable
   /// consent ledger keeps a valid subject reference; every identified-tier
   /// child row is hard-deleted at the same moment.
   deletedAt            DateTime?
@@ -59,9 +66,13 @@ model DemoIdentity {
 }
 
 // ---------------------------------------------------------------------------
-// Consent (T2.6). Append-only by convention: revocation flips status and sets
-// revokedAt on the existing record; re-grant creates a NEW record. Rows are
-// never deleted, so full history is preserved.
+// Consent (T2.6), consent-state-machine v2 (audit F-02/F-05/F-14): rows are
+// IMMUTABLE EVENTS. A grant, a revocation, and a scope revision each append a
+// new record; existing records are never updated or deleted, so the ledger is
+// literally append-only. The current state of an instrument is projected from
+// its highest-revision event; the per-instrument `revision` is monotonic and
+// database-unique, which gives every revision a compare-and-swap anchor
+// (concurrent revisions cannot silently overwrite each other).
 // ---------------------------------------------------------------------------
 
 model ConsentRecord {
@@ -69,6 +80,12 @@ model ConsentRecord {
   participantId     String
   instrumentType    String // "LANE_A" | "LANE_B" | "LANE_C"
   instrumentVersion String
+  /// "grant" (participant-signed; contributes to the authorized-scope
+  /// ceiling) | "revoke" | "scope_revision" (administrative revision, must
+  /// stay inside the signed ceiling)
+  eventType         String    @default("grant")
+  /// Monotonic per (participant, instrument) event sequence — the CAS anchor.
+  revision          Int       @default(0)
   status            String // "granted" | "revoked" | "expired"
   grantedAt         DateTime
   revokedAt         DateTime?
@@ -78,6 +95,7 @@ model ConsentRecord {
 
   participant Participant @relation(fields: [participantId], references: [id])
 
+  @@unique([participantId, instrumentType, revision])
   @@index([participantId, instrumentType])
 }
 
@@ -87,6 +105,11 @@ model Episode {
   protocolPhase String // "baseline" | "intervention" | "followup"
   startDate     DateTime
   endDate       DateTime?
+  /// Consent lineage (audit F-09): the data class whose grant gates this
+  /// episode — set from the treatment anchor at creation and validated by
+  /// the policy repository. NULL/unknown reads as unclassified and is NEVER
+  /// readable or exportable (fail closed).
+  dataClass     String?
 
   participant Participant @relation(fields: [participantId], references: [id])
 
@@ -100,6 +123,10 @@ model TreatmentEvent {
   eventDate     DateTime
   /// JSON string
   detail        String
+  /// Consent lineage (audit F-06): cpap_setup/titration_change/therapy_stop
+  /// → cpap_telemetry; appliance_delivery → hst_clinical; mattress_delivery
+  /// → mattress_purchase. NULL/unknown is unreadable (fail closed).
+  dataClass     String?
 
   participant Participant @relation(fields: [participantId], references: [id])
 
@@ -114,6 +141,11 @@ model Device {
   model         String
   assignedAt    DateTime
   returnedAt    DateTime?
+  /// Consent lineage (audit F-03): the data class whose grant gates this
+  /// registration (wearable → wearable_sleep, cpap → cpap_telemetry,
+  /// sleep_mat → sleep_mat, appliance → hst_clinical). NULL/unknown is
+  /// unreadable (fail closed).
+  dataClass     String?
 
   participant  Participant   @relation(fields: [participantId], references: [id])
   sleepSession SleepSession[]
@@ -213,8 +245,12 @@ model DeletionRequest {
   participantId String
   /// sim-clock date the participant filed the request
   requestedAt   DateTime
-  status        String // "pending" | "executed" | "declined"
+  status        String // "pending" | "executing" | "executed" | "declined"
   note          String?
+  /// Database-enforced one-active-request-per-participant invariant (audit
+  /// F-08): set to participantId while the request is pending/executing,
+  /// NULL once resolved — the unique index rejects a concurrent duplicate.
+  activeKey     String?   @unique
   /// sim-clock date the compliance console executed (or declined) it
   resolvedAt    DateTime?
   /// JSON string: per-table deleted-row counts recorded at execution
@@ -222,6 +258,9 @@ model DeletionRequest {
   deletionCounts String?
   /// consent-ledger reference at execution: retained-record count + last id
   ledgerRef     String?
+  /// Ledger record count captured atomically at execution — the certificate
+  /// renders ONLY from this stored snapshot, never from a live query.
+  ledgerCount   Int?
   createdAt     DateTime  @default(now())
 
   participant Participant @relation(fields: [participantId], references: [id])

@@ -29,7 +29,7 @@ import {
   type DataClass,
 } from "@/lib/consent";
 import { GuardrailBadge } from "@/components/RecommendationCard";
-import { prisma } from "@/lib/db";
+import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId, toIsoDay } from "@/lib/format";
 import { loadRecommendations } from "@/lib/recommendations/queries";
 import { getSimClock, MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
@@ -56,6 +56,7 @@ const CLASS_LABELS: Record<DataClass, string> = {
   sleep_mat: "Under-mattress sensor",
   pro_responses: "Questionnaires",
   linkage: "Record linkage",
+  registry_demographics: "Registry demographics",
 };
 
 const ARM_BADGES: Record<string, string> = {
@@ -71,7 +72,7 @@ export default async function ParticipantTrendsPage({
 }) {
   const { id } = await params;
 
-  const participant = await prisma.participant.findUnique({ where: { id } });
+  const participant = await getParticipant(id);
   if (!participant) notFound();
 
   const [simDate, grants] = await Promise.all([getSimClock(), loadGrants(id)]);
@@ -197,11 +198,17 @@ export default async function ParticipantTrendsPage({
                   {displayName
                     ? "Identified view via Lane C linkage"
                     : "Pseudonymous — identity stays sealed without a Lane C grant"}{" "}
-                  · enrolled through the{" "}
-                  <span className="font-semibold text-navy">
-                    {participant.enrollmentTouchpoint}
-                  </span>{" "}
-                  door {formatDay(participant.createdAt)}
+                  {grantSetHas(grants, "registry_demographics", "view_identified") ? (
+                    <>
+                      {" "}· enrolled through the{" "}
+                      <span className="font-semibold text-navy">
+                        {participant.enrollmentTouchpoint}
+                      </span>{" "}
+                      door {formatDay(participant.createdAt)}
+                    </>
+                  ) : (
+                    <> · registry demographics sealed by consent</>
+                  )}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {armBadges.map((badge) => (

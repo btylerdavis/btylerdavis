@@ -85,10 +85,20 @@ describe("retail door", () => {
       where: { participantId: result.participantId, instrumentType: "LANE_B" },
     });
     expect(consent?.status).toBe("granted");
+    expect(consent?.eventType).toBe("grant"); // SIGNED event — extends the ceiling
+    expect(consent?.revision).toBe(1);
     expect(consent?.grantedAt).toEqual(SIM_TODAY);
     const scope = JSON.parse(consent?.scope ?? "[]") as { dataClass: string }[];
+    // The signed Lane B scope names the toggled classes PLUS the base
+    // registry record (registry_demographics — audit F-11).
     expect(new Set(scope.map((s) => s.dataClass))).toEqual(
-      new Set(["wearable_sleep", "sleep_mat", "mattress_purchase", "pro_responses"])
+      new Set([
+        "wearable_sleep",
+        "sleep_mat",
+        "mattress_purchase",
+        "pro_responses",
+        "registry_demographics",
+      ])
     );
 
     const pro = await prisma.proResponse.findFirst({
@@ -151,16 +161,37 @@ describe("retail door", () => {
     ).toBe(0);
   });
 
-  it("registers a wearable device and reports whether data will flow", async () => {
+  // UPDATED for audit F-03: device registration is consent-owned data. The
+  // old behavior (register the device anyway, just refuse its payloads)
+  // bypassed the ingest gate — now NO device row is created without a
+  // wearable_sleep collect grant.
+  it("refuses the wearable device registration itself without wearable consent", async () => {
     const enrolled = await enrollRetail({
       displayName: "Watch Wanda",
       answers: MARCUS_ANSWERS,
       toggles: { ...ALL_ON, wearable_sleep: false },
     });
     const connection = await connectWearable(enrolled.participantId, "apple");
+    expect(connection.connected).toBe(false);
     expect(connection.dataConsented).toBe(false);
-    const device = await prisma.device.findUnique({ where: { id: connection.deviceId } });
+    expect(connection.deviceId).toBeNull();
+    expect(
+      await prisma.device.count({ where: { participantId: enrolled.participantId } })
+    ).toBe(0);
+
+    // With the grant, the registration flows and carries its lineage class.
+    const consented = await enrollRetail({
+      displayName: "Watch Wendy",
+      answers: MARCUS_ANSWERS,
+      toggles: ALL_ON,
+    });
+    const ok = await connectWearable(consented.participantId, "apple");
+    expect(ok.connected).toBe(true);
+    expect(ok.dataConsented).toBe(true);
+    if (!ok.connected) return;
+    const device = await prisma.device.findUnique({ where: { id: ok.deviceId } });
     expect(device?.deviceClass).toBe("wearable");
+    expect(device?.dataClass).toBe("wearable_sleep");
     expect(device?.assignedAt).toEqual(SIM_TODAY);
   });
 });
@@ -205,10 +236,16 @@ describe("clinic door + the Lane C blocked → linked beat", () => {
     });
     expect(hstRows).toHaveLength(7);
 
-    // CPAP setup recorded.
+    // CPAP setup recorded (policy-guarded write, cpap_telemetry lineage).
     const cpap = await recordCpapSetup(clinic.participantId, "airsense11");
+    expect(cpap.blocked).toBe(false);
+    if (cpap.blocked) return;
     expect(cpap.model).toBe("AirSense 11 AutoSet");
     expect(cpap.setupDateIso).toBe("2026-06-30");
+    const cpapEvent = await prisma.treatmentEvent.findFirst({
+      where: { participantId: clinic.participantId, type: "cpap_setup" },
+    });
+    expect(cpapEvent?.dataClass).toBe("cpap_telemetry");
 
     // THE BEAT, part 1: the joined view is REFUSED — no Lane C.
     const before = await linkedView(clinic.participantId);

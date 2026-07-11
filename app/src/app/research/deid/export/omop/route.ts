@@ -1,9 +1,12 @@
 import { cookies } from "next/headers";
 import { DUA_COOKIE } from "@/app/partner/dua";
 import { getAllGrantedDevices, grantSetHas, type DataClass } from "@/lib/consent";
-import { prisma } from "@/lib/db";
 import { toIsoDay } from "@/lib/format";
-import { loadResearchCohort } from "@/lib/research/cohort";
+import {
+  loadEpisodesForExport,
+  loadResearchCohort,
+  pageObservationsForExport,
+} from "@/lib/research/cohort";
 import {
   buildDeviceExposureCsv,
   buildObservationPeriodCsv,
@@ -15,12 +18,14 @@ import {
 import { zipStream } from "@/lib/research/zip";
 
 /**
- * OMOP bundle export (DEMO.md §3 reserve → working; TECHNICAL.md §T2.5).
- * Streams a ZIP of PERSON / OBSERVATION_PERIOD / MEASUREMENT /
- * DEVICE_EXPOSURE CSVs mapped from the DE-IDENTIFIED research tier only:
- * pseudonym ids, per-participant constant date shifts, 5-year age bands,
- * per-row research_deid consent — a revoked participant is absent from
- * every table.
+ * OMOP bundle export (TECHNICAL.md §T2.5). Streams a ZIP of PERSON /
+ * OBSERVATION_PERIOD / MEASUREMENT / DEVICE_EXPOSURE CSVs mapped from the
+ * DE-IDENTIFIED research tier only: pseudonym ids, per-participant constant
+ * date shifts, 5-year age bands, per-row research_deid consent on EVERY
+ * table (episodes carry their own lineage class — audit F-09), PERSON
+ * demographics gated on registry_demographics (audit F-11) — a revoked
+ * participant is absent from every table, and unclassifiable rows are
+ * quarantined (audit F-10).
  *
  * Row-level microdata leaves only under the partner DUA: without the DUA
  * acknowledgement cookie the request redirects (307) to /partner to sign,
@@ -52,11 +57,9 @@ export async function GET(request: Request): Promise<Response> {
     return member !== undefined && grantSetHas(member.grants, dataClass, "research_deid");
   };
 
-  // Episodes are small (2/participant): fetch once, filter to members in JS.
+  // Episodes are small (2/participant): fetch once, gate per row in JS.
   const [episodes, devices] = await Promise.all([
-    prisma.episode.findMany({
-      select: { participantId: true, protocolPhase: true, startDate: true, endDate: true },
-    }),
+    loadEpisodesForExport(),
     // Consent-gated device reader (research tier) — same gate the cohort uses.
     getAllGrantedDevices({ use: "research_deid" }),
   ]);
@@ -68,20 +71,7 @@ export async function GET(request: Request): Promise<Response> {
     let cursor: string | undefined;
     let nextId = 1;
     for (;;) {
-      const page = await prisma.observation.findMany({
-        take: MEASUREMENT_PAGE_ROWS,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        orderBy: { id: "asc" },
-        select: {
-          id: true,
-          participantId: true,
-          source: true,
-          concept: true,
-          valueNumeric: true,
-          unit: true,
-          effectiveDate: true,
-        },
-      });
+      const page = await pageObservationsForExport(cursor, MEASUREMENT_PAGE_ROWS);
       if (page.length === 0) break;
       const mapped = measurementCsvRows(page, isExportable, nextId);
       nextId = mapped.nextId;
@@ -97,7 +87,7 @@ export async function GET(request: Request): Promise<Response> {
       { name: "PERSON.csv", data: buildPersonCsv(cohort.members) },
       {
         name: "OBSERVATION_PERIOD.csv",
-        data: buildObservationPeriodCsv(episodes, memberIds, cohort.clock),
+        data: buildObservationPeriodCsv(episodes, memberIds, cohort.clock, isExportable),
       },
       { name: "MEASUREMENT.csv", data: () => measurementChunks() },
       { name: "DEVICE_EXPOSURE.csv", data: buildDeviceExposureCsv(devices, memberIds) },

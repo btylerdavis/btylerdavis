@@ -10,13 +10,14 @@ import {
   getConsentStates,
   getDevices,
   getLinkedProfile,
+  getMattressPurchases,
   getObservations,
   getProResponses,
   grantSetHas,
   loadGrants,
   type DataClass,
 } from "@/lib/consent";
-import { prisma } from "@/lib/db";
+import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId } from "@/lib/format";
 import { getSimClock } from "@/lib/simclock";
 import { fileDeletionRequest } from "./actions";
@@ -47,6 +48,7 @@ const CLASS_LABELS: Record<DataClass, string> = {
   sleep_mat: "Under-mattress sensor",
   pro_responses: "Questionnaires",
   linkage: "Record linkage",
+  registry_demographics: "Registry demographics",
 };
 
 export default async function ParticipantPage({
@@ -56,7 +58,7 @@ export default async function ParticipantPage({
 }) {
   const { id } = await params;
 
-  const participant = await prisma.participant.findUnique({ where: { id } });
+  const participant = await getParticipant(id);
   if (!participant) notFound();
 
   const [simDate, consents, grants, deletionState] = await Promise.all([
@@ -135,21 +137,18 @@ export default async function ParticipantPage({
   }
 
   const purchasesAllowed = grantSetHas(grants, "mattress_purchase", "view_identified");
-  const [devices, purchases, observations, pros, linked] = await Promise.all([
+  const demographicsAllowed = grantSetHas(grants, "registry_demographics", "view_identified");
+  const [devices, purchaseRead, observations, pros, linked] = await Promise.all([
     // Consent-gated device read: revoked classes drop out and surface as
     // blocked chips exactly like observations/PROs.
     getDevices(id, { use: "view_identified", grants }),
-    purchasesAllowed
-      ? prisma.mattressPurchase.findMany({
-          where: { participantId: id },
-          include: { catalogItem: true },
-          orderBy: { purchaseDate: "asc" },
-        })
-      : Promise.resolve([]),
+    // Consent-gated purchase read (mattress_purchase class).
+    getMattressPurchases(id, { use: "view_identified", grants }),
     getObservations(id, { use: "view_identified", grants }),
     getProResponses(id, { use: "view_identified", grants }),
     getLinkedProfile(id, { use: "view_identified", grants }),
   ]);
+  const purchases = purchaseRead.data;
 
   // Summarize observations per concept: count, latest value, date range.
   const byConcept = new Map<
@@ -184,6 +183,7 @@ export default async function ParticipantPage({
       ...pros.blockedDataClasses,
       ...devices.blockedDataClasses,
       ...(purchasesAllowed ? [] : (["mattress_purchase"] as DataClass[])),
+      ...(demographicsAllowed ? [] : (["registry_demographics"] as DataClass[])),
     ]),
   ];
 
@@ -216,12 +216,18 @@ export default async function ParticipantPage({
               ) : (
                 <>Pseudonymous — identity stays sealed without a Lane C grant · </>
               )}
-              enrolled through the{" "}
-              <span className="font-semibold text-navy">
-                {participant.enrollmentTouchpoint}
-              </span>{" "}
-              door · born {participant.yearOfBirth} · as of{" "}
-              {formatDay(simDate)}
+              {demographicsAllowed ? (
+                <>
+                  enrolled through the{" "}
+                  <span className="font-semibold text-navy">
+                    {participant.enrollmentTouchpoint}
+                  </span>{" "}
+                  door · born {participant.yearOfBirth} ·{" "}
+                </>
+              ) : (
+                <>registry demographics sealed by consent · </>
+              )}
+              as of {formatDay(simDate)}
             </p>
             {blockedClasses.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -404,7 +410,14 @@ export default async function ParticipantPage({
               published in de-identified form cannot be recalled — you were told this up front,
               in plain language (SPEC §9.4).
             </p>
-            {deletionState.pending ? (
+            {deletionState.executing ? (
+              <div className="mt-4 rounded-card bg-warning/10 px-4 py-3 text-sm">
+                <p className="font-semibold text-navy">
+                  Deletion requested on {formatDay(deletionState.executing.requestedAt)} — being
+                  executed right now. This page will show the tombstone once it completes.
+                </p>
+              </div>
+            ) : deletionState.pending ? (
               <div className="mt-4 rounded-card bg-warning/10 px-4 py-3 text-sm">
                 <p className="font-semibold text-navy">
                   Deletion requested on {formatDay(deletionState.pending.requestedAt)} — pending

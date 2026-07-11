@@ -8,6 +8,7 @@ import { TrendSparkline } from "@/components/charts/ResearchCharts";
 import {
   countRowsByDataClass,
   dataClassConsentStates,
+  listLinkageCandidates,
   snapshotConsentImpact,
 } from "@/lib/compliance/revocation";
 import {
@@ -17,7 +18,7 @@ import {
   loadGrants,
   type DataClass,
 } from "@/lib/consent";
-import { prisma } from "@/lib/db";
+import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId, toIsoDay } from "@/lib/format";
 import { getLinkedDisplayNames } from "@/lib/identity";
 import { getSimClock, MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
@@ -44,6 +45,7 @@ const CLASS_LABELS: Record<DataClass, string> = {
   sleep_mat: "Under-mattress sensor",
   pro_responses: "Questionnaires",
   linkage: "Record linkage",
+  registry_demographics: "Registry demographics",
 };
 
 export default async function RevocationPage({
@@ -53,33 +55,21 @@ export default async function RevocationPage({
 }) {
   const params = await searchParams;
   const requested = params.participant ?? MARCUS_REED_PARTICIPANT_ID;
-  const exists = await prisma.participant.findUnique({
-    where: { id: requested },
-    select: { id: true },
-  });
+  const exists = await getParticipant(requested);
   const id = exists ? requested : MARCUS_REED_PARTICIPANT_ID;
 
   const clock = await getSimClock();
   const dayNumber = simDayNumber(clock);
 
   // Participant picker: Marcus + a handful of Lane-C-linked participants.
-  const linkedRecords = await prisma.consentRecord.findMany({
-    where: { instrumentType: "LANE_C" },
-    select: { participantId: true },
-    distinct: ["participantId"],
-    take: 6,
-    orderBy: { grantedAt: "asc" },
-  });
+  const linkedIds = await listLinkageCandidates(6);
   const candidateIds = [
     MARCUS_REED_PARTICIPANT_ID,
-    ...linkedRecords
-      .map((record) => record.participantId)
-      .filter((pid) => pid !== MARCUS_REED_PARTICIPANT_ID)
-      .slice(0, 4),
+    ...linkedIds.filter((pid) => pid !== MARCUS_REED_PARTICIPANT_ID).slice(0, 4),
   ];
   if (!candidateIds.includes(id)) candidateIds.push(id);
 
-  const [names, grants, states, history, rowCounts, snapshot, classStates] = await Promise.all([
+  const [names, grants, states, history, atRest, snapshot, classStates] = await Promise.all([
     getLinkedDisplayNames([...candidateIds, id]),
     loadGrants(id),
     getConsentStates(id),
@@ -103,7 +93,8 @@ export default async function RevocationPage({
   }));
 
   const label = names.get(id) ?? shortId(id);
-  const totalRows = rowCounts.reduce((sum, row) => sum + row.rows, 0);
+  const rowCounts = atRest.rows;
+  const totalRows = rowCounts.reduce((sum, row) => sum + row.rows, 0) + atRest.unclassifiedRows;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -210,6 +201,12 @@ export default async function RevocationPage({
                   ))}
                 </tbody>
               </table>
+              {atRest.unclassifiedRows > 0 && (
+                <p className="mt-2 text-xs font-semibold text-danger">
+                  {atRest.unclassifiedRows.toLocaleString("en-US")} row(s) have no known data
+                  class — quarantined, never readable (fail closed).
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted">
                 Revocation never deletes rows — it seals them behind the read gates.
               </p>
@@ -259,7 +256,7 @@ export default async function RevocationPage({
               classStates={classStates.map((state) => ({
                 dataClass: state.dataClass,
                 label: CLASS_LABELS[state.dataClass],
-                granted: state.granted,
+                state: state.state,
                 revisable: state.revisableInstruments.length > 0,
               }))}
             />
@@ -269,11 +266,12 @@ export default async function RevocationPage({
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">
-                Audit trail · append-only consent ledger
+                Audit trail · immutable consent event ledger
               </h2>
               <p className="text-xs text-muted">
-                {history.length} record{history.length === 1 ? "" : "s"} — revocations flip in
-                place, re-grants append; nothing is ever deleted
+                {history.length} event{history.length === 1 ? "" : "s"} — every grant,
+                revocation and scope revision is a NEW record; nothing is ever updated or
+                deleted
               </p>
             </div>
             <div className="mt-3 overflow-x-auto">
@@ -282,6 +280,7 @@ export default async function RevocationPage({
                   <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
                     <th className="py-2 pr-4 font-semibold">#</th>
                     <th className="py-2 pr-4 font-semibold">Instrument</th>
+                    <th className="py-2 pr-4 font-semibold">Event</th>
                     <th className="py-2 pr-4 font-semibold">Version</th>
                     <th className="py-2 pr-4 font-semibold">Granted</th>
                     <th className="py-2 pr-4 font-semibold">Revoked</th>
@@ -294,6 +293,12 @@ export default async function RevocationPage({
                       <td className="py-2 pr-4 tabular-nums text-muted">{index + 1}</td>
                       <td className="py-2 pr-4 font-semibold text-navy">
                         {record.instrumentType}
+                        <span className="ml-1 text-xs font-normal text-muted">
+                          r{record.revision}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-muted">
+                        {record.eventType.replace(/_/g, " ")}
                       </td>
                       <td className="py-2 pr-4 text-muted">{record.instrumentVersion}</td>
                       <td className="py-2 pr-4 whitespace-nowrap text-body">

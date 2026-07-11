@@ -1,5 +1,6 @@
 import {
   getDevices,
+  getMattressPurchases,
   getObservations,
   grantSetHas,
   loadGrants,
@@ -7,7 +8,6 @@ import {
   type DataClass,
   type GrantSet,
 } from "../consent";
-import { prisma } from "../db";
 import { toIsoDay } from "../format";
 import { getSimClock } from "../simclock";
 import { addDays } from "../synthetic/profiles";
@@ -93,7 +93,7 @@ export async function loadRecommendations(
   const windowFrom = addDays(clock, -(WINDOW_DAYS - 1));
 
   // Consent-gated reads: nightly window + baseline HST + device/purchase facts.
-  const [windowObs, hstObs, cpapDevices, purchases] = await Promise.all([
+  const [windowObs, hstObs, cpapDevices, purchaseRead] = await Promise.all([
     getObservations(participantId, {
       use: "view_identified",
       grants,
@@ -117,16 +117,11 @@ export async function loadRecommendations(
     // Consent-gated device read: without a current cpap_telemetry view grant
     // this returns data: [] (blocked), so hasCpap can never leak a device.
     getDevices(participantId, { use: "view_identified", grants, classes: ["cpap"] }),
-    // Same consent pattern as the coach portal: purchase facts only with a
-    // current mattress_purchase view grant.
-    canView("mattress_purchase")
-      ? prisma.mattressPurchase.findMany({
-          where: { participantId },
-          include: { catalogItem: true },
-          orderBy: { purchaseDate: "asc" },
-        })
-      : Promise.resolve([]),
+    // Consent-gated purchase reader: facts only with a current
+    // mattress_purchase view grant.
+    getMattressPurchases(participantId, { use: "view_identified", grants }),
   ]);
+  const purchases = purchaseRead.data;
 
   // --- bucket nightly values by day offset from the clock ---------------------
   // day 0 = tonight (the clock date), day 13 = 14 nights ago, etc.

@@ -4,22 +4,18 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
-import {
-  DELETION_TABLES,
-  parseDeletionCounts,
-  totalDeleted,
-} from "@/lib/compliance/deletion";
+import { DELETION_TABLES, getDeletionCertificate } from "@/lib/compliance/deletion";
 import { pseudonym } from "@/lib/deid";
-import { prisma } from "@/lib/db";
 import { formatDay } from "@/lib/format";
 
 /**
- * Printable deletion certificate (DEMO.md reserve → working). Rendered from
- * the executed DeletionRequest record itself — the per-table counts and the
- * ledger reference were captured atomically at execution, so this page needs
- * no live participant data (there is none left to read). The print
- * stylesheet strips the chrome exactly like the abstract page: browser
- * Print → PDF yields the one-pager, watermark included.
+ * Printable deletion certificate. Rendered ONLY from the stored execution
+ * snapshot on the DeletionRequest record — per-table counts, ledger record
+ * count and ledger reference were all captured atomically inside the
+ * execution transaction (audit F-01: no certificate fact is ever recomputed
+ * live, so nothing that happens after execution can change this page). The
+ * print stylesheet strips the chrome exactly like the abstract page:
+ * browser Print → PDF yields the one-pager, watermark included.
  */
 export const metadata: Metadata = { title: "Deletion certificate" };
 
@@ -31,17 +27,11 @@ export default async function DeletionCertificatePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const request = await prisma.deletionRequest.findUnique({
-    where: { id },
-    include: { participant: { select: { id: true, deletedAt: true } } },
-  });
-  if (!request || request.status !== "executed" || !request.resolvedAt) notFound();
+  const certificate = await getDeletionCertificate(id);
+  const resolvedAt = certificate?.request.resolvedAt;
+  if (!certificate || !resolvedAt) notFound();
 
-  const counts = parseDeletionCounts(request.deletionCounts);
-  const total = totalDeleted(counts);
-  const ledgerRecords = await prisma.consentRecord.count({
-    where: { participantId: request.participantId },
-  });
+  const { request, counts, totalRows: total, ledgerCount: ledgerRecords } = certificate;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -94,11 +84,11 @@ export default async function DeletionCertificatePage({
                 />
                 <CertField label="Registry participant id" value={request.participantId} mono />
                 <CertField label="Deletion requested" value={formatDay(request.requestedAt)} />
-                <CertField label="Deletion executed" value={formatDay(request.resolvedAt)} />
+                <CertField label="Deletion executed" value={formatDay(resolvedAt)} />
                 <CertField label="Certificate reference" value={`DEL-${request.id.slice(0, 8).toUpperCase()}`} mono />
                 <CertField
-                  label="Consent ledger reference"
-                  value={request.ledgerRef ?? `LEDGER/${ledgerRecords} records retained`}
+                  label="Consent ledger reference (stored at execution)"
+                  value={certificate.ledgerRef}
                   mono
                 />
               </dl>
@@ -140,9 +130,10 @@ export default async function DeletionCertificatePage({
                   instant and all read gates now refuse this subject&rsquo;s data.
                 </li>
                 <li>
-                  The append-only consent ledger ({ledgerRecords.toLocaleString("en-US")}{" "}
-                  records) is retained as a legal record of what was consented, revoked, and
-                  deleted, and when. No ledger record is ever deleted.
+                  The immutable consent event ledger ({ledgerRecords.toLocaleString("en-US")}{" "}
+                  records at execution, captured in this certificate&apos;s snapshot) is retained
+                  as a legal record of what was consented, revoked, and deleted, and when. No
+                  ledger record is ever updated or deleted.
                 </li>
                 <li>
                   Research-mart releases published before execution are immutable:
@@ -153,9 +144,9 @@ export default async function DeletionCertificatePage({
               </ul>
 
               <p className="mt-6 border-t border-pale-blue pt-3 text-xs text-muted">
-                Issued {formatDay(request.resolvedAt)} (simulation clock) by the registry
+                Issued {formatDay(resolvedAt)} (simulation clock) by the registry
                 compliance console. Deletion executed atomically with consent revocation;
-                per-table counts recorded at execution time.
+                every figure on this certificate is the stored execution snapshot.
               </p>
             </article>
           </Card>

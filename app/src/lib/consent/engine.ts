@@ -2,22 +2,40 @@ import type { ConsentRecord, Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import { INSTRUMENT_SCOPES } from "./scopes";
 import {
+  ConsentConflictError,
   ConsentError,
+  CONSENT_USES,
+  DATA_CLASSES,
+  LifecycleError,
+  ScopeCeilingError,
+  type ConsentEventType,
   type ConsentScope,
   type ConsentStatus,
   type DataClass,
   type ConsentUse,
   type InstrumentType,
+  type ScopeGrant,
 } from "./types";
 
 /**
- * Consent engine (TECHNICAL.md §T2.6).
+ * Consent engine (TECHNICAL.md §T2.6) — consent state machine v2.
  *
- * Records are append-only by convention: revocation flips `status` and sets
- * `revokedAt` on the existing record (never deletes); a re-grant creates a
- * new record, preserving history. The *current* state of an instrument is
- * its most recent record (by grantedAt, then createdAt); grants only flow
- * from a current record whose status is "granted".
+ * The ledger is EVENT-SOURCED AND IMMUTABLE: a grant, a revocation, and a
+ * scope revision each append a NEW ConsentRecord event; no record is ever
+ * updated or deleted, so "append-only" is literally true. The *current*
+ * state of an instrument is projected from its highest-revision event;
+ * grants only flow from a current event whose status is "granted".
+ *
+ * Invariants enforced here, inside the SAME transaction as every mutation:
+ * - lifecycle: a deleted participant can never receive a consent event
+ *   (audit F-01);
+ * - monotonic per-instrument revisions with a database unique constraint —
+ *   the compare-and-swap anchor that makes concurrent revisions safe
+ *   (audit F-05);
+ * - the signed-scope ceiling: administrative scope revisions (partial
+ *   revocation console, restores) can only carry grants the participant
+ *   proved in a SIGNED grant event; expansion requires a fresh signature
+ *   via the re-consent flow (audit F-02).
  */
 
 /** Set of effective "dataClass|use" grant keys for one participant. */
@@ -26,6 +44,36 @@ export type GrantSet = ReadonlySet<string>;
 const grantKey = (dataClass: DataClass, use: ConsentUse) => `${dataClass}|${use}`;
 
 type Db = Prisma.TransactionClient | typeof prisma;
+
+/** Runs fn transactionally: reuses an ambient transaction client if given. */
+async function withTx<T>(
+  db: Db,
+  fn: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<T> {
+  if ("$transaction" in db) return db.$transaction(fn);
+  return fn(db);
+}
+
+/**
+ * Lifecycle guard (audit F-01): every consent mutation and subject-data
+ * write calls this INSIDE its own transaction. Tombstoned ("deleted") and
+ * mid-deletion ("deleting") participants are terminal — nothing may be
+ * granted, revised, restored, or written for them, ever.
+ */
+export async function assertActiveParticipant(
+  participantId: string,
+  db: Db = prisma
+): Promise<void> {
+  const participant = await db.participant.findUnique({
+    where: { id: participantId },
+    select: { lifecycleState: true, deletedAt: true },
+  });
+  if (!participant) throw new LifecycleError(participantId, "missing");
+  const state = participant.lifecycleState;
+  const alive =
+    participant.deletedAt === null && (state === "active" || state === "deletion_pending");
+  if (!alive) throw new LifecycleError(participantId, participant.deletedAt ? "deleted" : state);
+}
 
 /** Parses a ConsentRecord.scope JSON string; malformed scopes read as empty (fail closed). */
 export function parseScopeJson(scope: string): ConsentScope {
@@ -41,10 +89,25 @@ function parseScope(record: ConsentRecord): ConsentScope {
   return parseScopeJson(record.scope);
 }
 
+/** Rejects scope payloads with unknown classes/uses (fail closed at write). */
+function assertValidScope(scope: ConsentScope): void {
+  for (const grant of scope) {
+    if (
+      !(DATA_CLASSES as readonly string[]).includes(grant.dataClass) ||
+      !(CONSENT_USES as readonly string[]).includes(grant.use)
+    ) {
+      throw new Error(
+        `Invalid consent scope entry: ${JSON.stringify(grant)} — unknown data class or use`
+      );
+    }
+  }
+}
+
 /**
- * Latest record per instrument (by grantedAt, then createdAt) — the record
- * that defines an instrument's *current* state. Shared by evaluateGrants and
- * the partial-revocation console (which needs the current scope to revise).
+ * Latest event per instrument — the event that defines an instrument's
+ * *current* state. Ordered by the monotonic `revision`; the legacy
+ * (grantedAt, createdAt) ordering only breaks ties for pre-v2 rows that
+ * share a revision.
  */
 export function latestRecordsByInstrument(records: ConsentRecord[]): Map<string, ConsentRecord> {
   const latestByInstrument = new Map<string, ConsentRecord>();
@@ -52,9 +115,11 @@ export function latestRecordsByInstrument(records: ConsentRecord[]): Map<string,
     const current = latestByInstrument.get(record.instrumentType);
     if (
       !current ||
-      record.grantedAt > current.grantedAt ||
-      (record.grantedAt.getTime() === current.grantedAt.getTime() &&
-        record.createdAt > current.createdAt)
+      record.revision > current.revision ||
+      (record.revision === current.revision &&
+        (record.grantedAt > current.grantedAt ||
+          (record.grantedAt.getTime() === current.grantedAt.getTime() &&
+            record.createdAt > current.createdAt)))
     ) {
       latestByInstrument.set(record.instrumentType, record);
     }
@@ -62,7 +127,7 @@ export function latestRecordsByInstrument(records: ConsentRecord[]): Map<string,
   return latestByInstrument;
 }
 
-/** Pure evaluation of a participant's consent history into effective grants. */
+/** Pure evaluation of a participant's consent event stream into effective grants. */
 export function evaluateGrants(records: ConsentRecord[]): GrantSet {
   const latestByInstrument = latestRecordsByInstrument(records);
 
@@ -74,6 +139,50 @@ export function evaluateGrants(records: ConsentRecord[]): GrantSet {
     }
   }
   return grants;
+}
+
+/**
+ * The SIGNED-SCOPE CEILING (audit F-02): every grant the participant has
+ * ever proven with a signature. Signed "grant" events define it directly;
+ * "revoke" events carry the scope that was in force (always a subset of what
+ * was signed), which keeps pre-v2 flipped-in-place rows counted. Purely
+ * administrative "scope_revision" events NEVER extend the ceiling.
+ */
+export function signedScopeCeiling(records: ConsentRecord[]): GrantSet {
+  const ceiling = new Set<string>();
+  for (const record of records) {
+    if ((record.eventType as ConsentEventType) === "scope_revision") continue;
+    for (const { dataClass, use } of parseScope(record)) {
+      ceiling.add(grantKey(dataClass, use));
+    }
+  }
+  return ceiling;
+}
+
+/** Per-instrument signed ceilings (restore-all restores to these, never the template). */
+export function signedScopeCeilingByInstrument(
+  records: ConsentRecord[]
+): Map<InstrumentType, GrantSet> {
+  const ceilings = new Map<InstrumentType, Set<string>>();
+  for (const record of records) {
+    if ((record.eventType as ConsentEventType) === "scope_revision") continue;
+    const instrument = record.instrumentType as InstrumentType;
+    const ceiling = ceilings.get(instrument) ?? new Set<string>();
+    for (const { dataClass, use } of parseScope(record)) {
+      ceiling.add(grantKey(dataClass, use));
+    }
+    ceilings.set(instrument, ceiling);
+  }
+  return ceilings;
+}
+
+export function ceilingHas(ceiling: GrantSet, dataClass: DataClass, use: ConsentUse): boolean {
+  return ceiling.has(grantKey(dataClass, use));
+}
+
+/** true when the class appears in the ceiling under ANY use. */
+export function ceilingCoversClass(ceiling: GrantSet, dataClass: DataClass): boolean {
+  return CONSENT_USES.some((use) => ceiling.has(grantKey(dataClass, use)));
 }
 
 /**
@@ -132,8 +241,10 @@ export async function hasGrant(
 
 /**
  * Ingest gate. EVERY data-write path (synthetic generator, time machine,
- * future ingestion connectors) must call this before writing rows of the
- * given data class. Throws ConsentError when no current "collect" grant.
+ * ingestion connectors, enrollment flows) must call this before writing rows
+ * of the given data class — and re-check it (plus the lifecycle guard)
+ * inside the write transaction via the policy repository. Throws
+ * ConsentError when no current "collect" grant.
  */
 export async function assertIngestAllowed(
   participantId: string,
@@ -145,9 +256,82 @@ export async function assertIngestAllowed(
   }
 }
 
+interface AppendEventInput {
+  eventType: ConsentEventType;
+  status: ConsentStatus;
+  grantedAt: Date;
+  revokedAt: Date | null;
+  scope: ConsentScope;
+  instrumentVersion: string;
+  /** CAS precondition: the latest revision the caller derived its change from. */
+  expectedRevision?: number;
+}
+
 /**
- * Records a (re-)grant as a NEW ConsentRecord — history is preserved.
- * Scope defaults to the instrument's template (INSTRUMENT_SCOPES).
+ * The single event-append primitive. Runs inside the caller's transaction:
+ * lifecycle guard, CAS against the instrument's latest revision, then an
+ * insert at revision+1 (the DB unique constraint backstops any race the
+ * in-transaction read misses).
+ */
+async function appendConsentEvent(
+  tx: Prisma.TransactionClient,
+  participantId: string,
+  instrumentType: InstrumentType,
+  input: AppendEventInput
+): Promise<ConsentRecord> {
+  await assertActiveParticipant(participantId, tx);
+  assertValidScope(input.scope);
+
+  const latest = await tx.consentRecord.findFirst({
+    where: { participantId, instrumentType },
+    orderBy: { revision: "desc" },
+    select: { revision: true },
+  });
+  const current = latest?.revision ?? 0;
+  if (input.expectedRevision !== undefined && input.expectedRevision !== current) {
+    throw new ConsentConflictError(participantId, instrumentType, input.expectedRevision, current);
+  }
+
+  return tx.consentRecord.create({
+    data: {
+      participantId,
+      instrumentType,
+      instrumentVersion: input.instrumentVersion,
+      eventType: input.eventType,
+      revision: current + 1,
+      status: input.status,
+      grantedAt: input.grantedAt,
+      revokedAt: input.revokedAt,
+      scope: JSON.stringify(input.scope),
+    },
+  });
+}
+
+/** Retries fn on CAS conflicts / unique-revision races (audit F-05). */
+export async function withConsentRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const conflict =
+        error instanceof ConsentConflictError ||
+        (typeof error === "object" &&
+          error !== null &&
+          (error as { code?: string }).code === "P2002");
+      if (!conflict) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Records a SIGNED (re-)grant as a NEW immutable grant event. Signed grants
+ * are the only events that extend the authorized-scope ceiling, so this must
+ * only be called from flows that capture a participant signature (enrollment
+ * doors, the re-consent flow) — administrative restores go through
+ * restoreConsentScope instead. Scope defaults to the instrument's template.
  */
 export async function grantConsent(
   participantId: string,
@@ -159,88 +343,148 @@ export async function grantConsent(
     db?: Db;
   } = {}
 ): Promise<ConsentRecord> {
-  const db = opts.db ?? prisma;
-  return db.consentRecord.create({
-    data: {
-      participantId,
-      instrumentType,
-      instrumentVersion: opts.instrumentVersion ?? "1.0-demo",
+  const grantedAt = opts.grantedAt ?? new Date();
+  return withTx(opts.db ?? prisma, (tx) =>
+    appendConsentEvent(tx, participantId, instrumentType, {
+      eventType: "grant",
       status: "granted" satisfies ConsentStatus,
-      grantedAt: opts.grantedAt ?? new Date(),
-      scope: JSON.stringify(opts.scope ?? INSTRUMENT_SCOPES[instrumentType]),
-    },
-  });
+      grantedAt,
+      revokedAt: null,
+      scope: opts.scope ?? INSTRUMENT_SCOPES[instrumentType],
+      instrumentVersion: opts.instrumentVersion ?? "1.0-demo",
+    })
+  );
 }
 
 /**
- * Revokes the current grant for an instrument: flips status to "revoked" and
- * sets revokedAt on the existing record (append-only convention — no delete).
- * All data classes scoped to that instrument immediately fail ingest gates
- * and read gates, unless another still-granted instrument also covers them.
- * Returns the updated record, or null when there is no current grant.
+ * Revokes the current grant for an instrument by APPENDING an immutable
+ * revoke event (the prior grant record is never touched). The event carries
+ * the scope that was in force, so the ledger reads as a self-contained
+ * story. All data classes scoped to that instrument immediately fail ingest
+ * gates and read gates, unless another still-granted instrument also covers
+ * them. Returns the new revoke event, or null when there is no current
+ * grant.
  */
 export async function revokeConsent(
   participantId: string,
   instrumentType: InstrumentType,
   opts: { revokedAt?: Date; db?: Db } = {}
 ): Promise<ConsentRecord | null> {
-  const db = opts.db ?? prisma;
-  const current = await db.consentRecord.findFirst({
-    where: { participantId, instrumentType, status: "granted", revokedAt: null },
-    orderBy: [{ grantedAt: "desc" }, { createdAt: "desc" }],
-  });
-  if (!current) return null;
-  return db.consentRecord.update({
-    where: { id: current.id },
-    data: { status: "revoked" satisfies ConsentStatus, revokedAt: opts.revokedAt ?? new Date() },
+  const revokedAt = opts.revokedAt ?? new Date();
+  return withTx(opts.db ?? prisma, async (tx) => {
+    const records = await tx.consentRecord.findMany({
+      where: { participantId, instrumentType },
+    });
+    const current = latestRecordsByInstrument(records).get(instrumentType);
+    if (!current || current.status !== "granted" || current.revokedAt !== null) return null;
+    return appendConsentEvent(tx, participantId, instrumentType, {
+      eventType: "revoke",
+      status: "revoked" satisfies ConsentStatus,
+      grantedAt: current.grantedAt,
+      revokedAt,
+      scope: parseScope(current),
+      instrumentVersion: current.instrumentVersion,
+      expectedRevision: current.revision,
+    });
   });
 }
 
+/** The grants in `scope` that exceed the instrument's signed ceiling. */
+function grantsBeyondCeiling(scope: ConsentScope, ceiling: GrantSet): ScopeGrant[] {
+  return scope.filter((grant) => !ceiling.has(grantKey(grant.dataClass, grant.use)));
+}
+
 /**
- * Partial revocation (DEMO.md §3, reserve → working): revises an
- * instrument's scope by appending a NEW granted record carrying the reduced
- * (or re-expanded) scope. Nothing is flipped or deleted — the prior record
- * stays in the ledger untouched, and the new record, being latest, becomes
- * the instrument's current state, so every ingest/read gate re-evaluates
- * against the revised scope immediately.
+ * Partial revocation / administrative revision (DEMO.md §3): revises an
+ * instrument's scope by appending a NEW scope_revision event carrying the
+ * reduced (or re-expanded) scope. The prior event stays in the ledger
+ * untouched; the new event, being the highest revision, becomes the
+ * instrument's current state, so every ingest/read gate re-evaluates against
+ * the revised scope immediately.
+ *
+ * Guardrails:
+ * - CAS: pass `expectedRevision` (the latest revision the new scope was
+ *   derived from); a concurrent revision raises ConsentConflictError instead
+ *   of silently reinstating a just-revoked class (audit F-05).
+ * - Ceiling: the revised scope must stay inside the participant's SIGNED
+ *   ceiling for the instrument — a revision can never grant what was never
+ *   signed (audit F-02).
  *
  * Returns null when the instrument has no current granted record: a fully
- * revoked instrument is restored via grantConsent (a fresh grant), not by
- * scope revision.
+ * revoked instrument is re-enabled via restoreConsentScope (administrative,
+ * ceiling-bounded) or a fresh signed grant.
  */
 export async function reviseConsentScope(
   participantId: string,
   instrumentType: InstrumentType,
   scope: ConsentScope,
-  opts: { grantedAt?: Date; db?: Db } = {}
+  opts: { grantedAt?: Date; db?: Db; expectedRevision?: number } = {}
 ): Promise<ConsentRecord | null> {
-  const db = opts.db ?? prisma;
-  const current = await db.consentRecord.findFirst({
-    where: { participantId, instrumentType, status: "granted", revokedAt: null },
-    orderBy: [{ grantedAt: "desc" }, { createdAt: "desc" }],
-  });
-  if (!current) return null;
-  // The revision must become the instrument's latest record: never let a
-  // caller-supplied grantedAt (e.g. the sim clock) sort before the current
-  // record — equal grantedAt is fine, createdAt breaks the tie.
-  const requestedAt = opts.grantedAt ?? new Date();
-  const grantedAt = requestedAt < current.grantedAt ? current.grantedAt : requestedAt;
-  return db.consentRecord.create({
-    data: {
-      participantId,
-      instrumentType,
-      instrumentVersion: current.instrumentVersion,
+  const grantedAt = opts.grantedAt ?? new Date();
+  return withTx(opts.db ?? prisma, async (tx) => {
+    const records = await tx.consentRecord.findMany({
+      where: { participantId, instrumentType },
+    });
+    const current = latestRecordsByInstrument(records).get(instrumentType);
+    if (!current || current.status !== "granted" || current.revokedAt !== null) return null;
+
+    const ceiling = signedScopeCeilingByInstrument(records).get(instrumentType) ?? NO_GRANTS;
+    const denied = grantsBeyondCeiling(scope, ceiling);
+    if (denied.length > 0) throw new ScopeCeilingError(participantId, instrumentType, denied);
+
+    return appendConsentEvent(tx, participantId, instrumentType, {
+      eventType: "scope_revision",
       status: "granted" satisfies ConsentStatus,
       grantedAt,
-      scope: JSON.stringify(scope),
-    },
+      revokedAt: null,
+      scope,
+      instrumentVersion: current.instrumentVersion,
+      expectedRevision: opts.expectedRevision ?? current.revision,
+    });
   });
 }
 
 /**
- * Full append-only consent ledger for a participant, oldest first — the
- * audit trail the revocation console renders (grant → revoke → re-grant all
- * stay visible; nothing is ever deleted).
+ * Administrative RESTORE of a fully revoked instrument: appends a
+ * scope_revision event that re-enables a scope the participant already
+ * proved with a signature — never more (the ceiling check refuses
+ * expansion; audit F-02). Returns null when the instrument was never signed
+ * or is currently granted (revise instead).
+ */
+export async function restoreConsentScope(
+  participantId: string,
+  instrumentType: InstrumentType,
+  scope: ConsentScope,
+  opts: { grantedAt?: Date; db?: Db; expectedRevision?: number } = {}
+): Promise<ConsentRecord | null> {
+  const grantedAt = opts.grantedAt ?? new Date();
+  return withTx(opts.db ?? prisma, async (tx) => {
+    const records = await tx.consentRecord.findMany({
+      where: { participantId, instrumentType },
+    });
+    const current = latestRecordsByInstrument(records).get(instrumentType);
+    if (!current || current.status === "granted") return null;
+
+    const ceiling = signedScopeCeilingByInstrument(records).get(instrumentType) ?? NO_GRANTS;
+    const denied = grantsBeyondCeiling(scope, ceiling);
+    if (denied.length > 0) throw new ScopeCeilingError(participantId, instrumentType, denied);
+
+    return appendConsentEvent(tx, participantId, instrumentType, {
+      eventType: "scope_revision",
+      status: "granted" satisfies ConsentStatus,
+      grantedAt,
+      revokedAt: null,
+      scope,
+      instrumentVersion: current.instrumentVersion,
+      expectedRevision: opts.expectedRevision ?? current.revision,
+    });
+  });
+}
+
+/**
+ * Full immutable consent ledger for a participant, oldest first — the audit
+ * trail the revocation console renders (grant → revoke → revision events all
+ * stay visible; nothing is ever updated or deleted).
  */
 export async function getConsentHistory(
   participantId: string,
@@ -248,11 +492,11 @@ export async function getConsentHistory(
 ): Promise<ConsentRecord[]> {
   return db.consentRecord.findMany({
     where: { participantId },
-    orderBy: [{ grantedAt: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ createdAt: "asc" }, { instrumentType: "asc" }, { revision: "asc" }],
   });
 }
 
-/** Latest record per instrument — for status/audit views. */
+/** Latest event per instrument — for status/audit views. */
 export async function getConsentStates(
   participantId: string,
   db: Db = prisma
@@ -266,24 +510,20 @@ export async function getConsentStates(
     historyCount: number;
   }[]
 > {
-  const records = await db.consentRecord.findMany({
-    where: { participantId },
-    orderBy: [{ grantedAt: "asc" }, { createdAt: "asc" }],
-  });
-  const byInstrument = new Map<string, { latest: ConsentRecord; count: number }>();
+  const records = await db.consentRecord.findMany({ where: { participantId } });
+  const latest = latestRecordsByInstrument(records);
+  const counts = new Map<string, number>();
   for (const record of records) {
-    const entry = byInstrument.get(record.instrumentType);
-    byInstrument.set(record.instrumentType, {
-      latest: record,
-      count: (entry?.count ?? 0) + 1,
-    });
+    counts.set(record.instrumentType, (counts.get(record.instrumentType) ?? 0) + 1);
   }
-  return [...byInstrument.entries()].map(([instrumentType, { latest, count }]) => ({
-    instrumentType,
-    status: latest.status,
-    grantedAt: latest.grantedAt,
-    revokedAt: latest.revokedAt,
-    instrumentVersion: latest.instrumentVersion,
-    historyCount: count,
-  }));
+  return [...latest.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([instrumentType, record]) => ({
+      instrumentType,
+      status: record.status,
+      grantedAt: record.grantedAt,
+      revokedAt: record.revokedAt,
+      instrumentVersion: record.instrumentVersion,
+      historyCount: counts.get(instrumentType) ?? 0,
+    }));
 }

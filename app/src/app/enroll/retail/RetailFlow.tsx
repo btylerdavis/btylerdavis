@@ -88,6 +88,7 @@ export function RetailFlow({
   const [connected, setConnected] = useState<{
     provider: WearableProviderKey;
     dataConsented: boolean;
+    reason?: string;
   } | null>(null);
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [purchase, setPurchase] = useState<PurchaseResult | null>(null);
@@ -432,6 +433,7 @@ export function RetailFlow({
                         setConnected({
                           provider: provider.key,
                           dataConsented: result.dataConsented,
+                          ...(result.connected ? {} : { reason: result.reason }),
                         });
                       })
                     }
@@ -445,7 +447,11 @@ export function RetailFlow({
                       {provider.label}
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      {isConnected ? "Connected ✓" : "Tap to connect"}
+                      {isConnected
+                        ? connected?.dataConsented
+                          ? "Connected ✓"
+                          : "Refused by consent gate"
+                        : "Tap to connect"}
                     </p>
                   </button>
                 );
@@ -456,9 +462,9 @@ export function RetailFlow({
             </p>
             {connected && !connected.dataConsented && (
               <p className="mt-3 rounded-card bg-pale-blue/60 p-3 text-xs text-body">
-                Device registered — but you didn’t opt into wearable sleep
-                sharing, so its nightly data is refused by the consent gate
-                until you do.
+                Not registered — you didn&rsquo;t opt into wearable sleep sharing, so
+                the consent gate refused the device registration itself (no
+                record was created). Opt in via re-consent to connect it.
               </p>
             )}
             {error && <p className="mt-3 text-sm font-semibold text-danger">{error}</p>}

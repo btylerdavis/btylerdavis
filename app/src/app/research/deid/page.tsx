@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { getConsentStates, getLinkedProfile, loadGrants } from "@/lib/consent";
-import { prisma } from "@/lib/db";
+import { getParticipant } from "@/lib/consent/policyRepo";
 import {
   ageBandFromYearOfBirth,
   buildSuppressedTable,
@@ -37,7 +37,7 @@ const DAY_MS = 86_400_000;
 export default async function DeidDemoPage() {
   const id = MARCUS_REED_PARTICIPANT_ID;
   const [participant, grants, cohort] = await Promise.all([
-    prisma.participant.findUnique({ where: { id } }),
+    getParticipant(id),
     loadGrants(id),
     loadResearchCohort(),
   ]);

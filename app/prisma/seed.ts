@@ -1,7 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient, type Prisma } from "@prisma/client";
-import { assertIngestAllowed, evaluateGrants } from "../src/lib/consent";
+import { PrismaClient } from "@prisma/client";
+import { evaluateGrants } from "../src/lib/consent";
+import {
+  writeEnrollmentArtifactsGuarded,
+  writeGeneratedBatchGuarded,
+  writeMattressPurchasesGuarded,
+} from "../src/lib/consent/policyRepo";
 import { MATTRESS_CATALOG } from "../src/lib/synthetic/catalog";
 import { enrollmentRows } from "../src/lib/synthetic/enrollment";
 import {
@@ -11,7 +16,6 @@ import {
   emptyBatch,
   generateWindow,
   mergeBatch,
-  writeBatch,
   type GeneratedBatch,
   type WriteCounts,
 } from "../src/lib/synthetic/generator";
@@ -32,10 +36,10 @@ import { SIM_CLOCK_ID } from "../src/lib/simclock";
  * produces byte-identical data: all ids and values derive from the cohort
  * seed via seeded PRNGs, and even the audit timestamps are pinned
  * (ConsentRecord.createdAt = grantedAt; Observation.ingestedAt =
- * effectiveDate + 1 day) — see determinism.test.ts. Every
- * observation/session/PRO/purchase write passes the consent ingest gate
- * (assertIngestAllowed) built from the participant's just-created consent
- * records.
+ * effectiveDate + 1 day) — see determinism.test.ts. EVERY subject-data write
+ * — episodes, scheduled events, devices, purchases, and all nightly rows —
+ * goes through the policy repository, which re-checks lifecycle + the row's
+ * data-class collect grant inside the write transaction (audit F-03/F-04).
  *
  * Run: npm run seed
  *
@@ -110,8 +114,9 @@ async function main() {
   // 1. Reference data.
   await prisma.mattressCatalog.createMany({ data: MATTRESS_CATALOG });
 
-  // 2. Profiles + enrollment-time rows (participants, identities, consents,
-  //    episodes, scheduled events, devices).
+  // 2. Profiles + enrollment-time identity/consent rows (participants,
+  //    identities, consent events). Consent records land BEFORE any
+  //    subject-data row so every gate evaluates against a real history.
   const profiles = Array.from({ length: COHORT_SIZE }, (_, i) => buildProfile(participantIdForIndex(i)));
   const enrollment = profiles.map(enrollmentRows);
 
@@ -124,17 +129,26 @@ async function main() {
   await createManyChunked(enrollment.flatMap((e) => e.consentRecords), (data) =>
     prisma.consentRecord.createMany({ data })
   );
-  await createManyChunked(enrollment.flatMap((e) => e.episodes), (data) =>
-    prisma.episode.createMany({ data })
-  );
-  await createManyChunked(enrollment.flatMap((e) => e.treatmentEvents), (data) =>
-    prisma.treatmentEvent.createMany({ data })
-  );
-  await createManyChunked(enrollment.flatMap((e) => e.devices), (data) =>
-    prisma.device.createMany({ data })
-  );
 
-  // 3. Consent gates (from the records just written), then gated writes.
+  // 3. Enrollment-time subject-data artifacts (episodes, scheduled events,
+  //    devices) — through the policy repository, which re-checks lifecycle +
+  //    each row's own lineage class against the consent records just
+  //    written (audit F-03: no seed write bypasses the gate).
+  const artifactCounts = await writeEnrollmentArtifactsGuarded(
+    {
+      episodes: enrollment.flatMap((e) => e.episodes),
+      treatmentEvents: enrollment.flatMap((e) => e.treatmentEvents),
+      devices: enrollment.flatMap((e) => e.devices),
+    },
+    prisma
+  );
+  if (artifactCounts.dropped > 0) {
+    throw new Error(
+      `Seed integrity: ${artifactCounts.dropped} enrollment artifact(s) failed the consent gate — ` +
+        `the deterministic cohort must be fully self-consistent`
+    );
+  }
+
   const consentByParticipant = new Map<string, Awaited<ReturnType<typeof prisma.consentRecord.findMany>>>();
   for (const record of await prisma.consentRecord.findMany()) {
     const list = consentByParticipant.get(record.participantId) ?? [];
@@ -142,23 +156,24 @@ async function main() {
     consentByParticipant.set(record.participantId, list);
   }
 
-  // Mattress purchases (gated on mattress_purchase "collect").
-  const purchases: Prisma.MattressPurchaseCreateManyInput[] = [];
-  for (let i = 0; i < profiles.length; i++) {
-    const purchase = enrollment[i].mattressPurchase;
-    if (!purchase) continue;
-    const grants = evaluateGrants(consentByParticipant.get(profiles[i].id) ?? []);
-    await assertIngestAllowed(profiles[i].id, "mattress_purchase", { grants });
-    purchases.push(purchase);
+  // Mattress purchases: policy-guarded bulk insert (lifecycle +
+  // mattress_purchase "collect" re-checked inside the write transaction).
+  const purchaseResult = await writeMattressPurchasesGuarded(
+    enrollment.flatMap((e) => (e.mattressPurchase ? [e.mattressPurchase] : [])),
+    prisma
+  );
+  if (purchaseResult.droppedParticipants.length > 0) {
+    throw new Error(
+      `Seed integrity: ${purchaseResult.droppedParticipants.length} mattress purchase(s) failed the consent gate`
+    );
   }
-  await createManyChunked(purchases, (data) => prisma.mattressPurchase.createMany({ data }));
 
   // 4. Longitudinal data: (enrollment - 1d, clock] per participant, streamed
-  //    in batched createMany writes.
+  //    in policy-guarded batched writes (per-flush revalidation).
   const written: WriteCounts = { observations: 0, sleepSessions: 0, proResponses: 0, treatmentEvents: 0 };
   let buffer: GeneratedBatch = emptyBatch();
   const flush = async () => {
-    const counts = await writeBatch(buffer, prisma);
+    const counts = await writeGeneratedBatchGuarded(buffer, prisma);
     written.observations += counts.observations;
     written.sleepSessions += counts.sleepSessions;
     written.proResponses += counts.proResponses;
@@ -188,8 +203,8 @@ async function main() {
   console.log(`  observations:      ${written.observations}`);
   console.log(`  sleep sessions:    ${written.sleepSessions}`);
   console.log(`  PRO responses:     ${written.proResponses}`);
-  console.log(`  treatment events:  ${written.treatmentEvents} (nightly) + ${enrollment.flatMap((e) => e.treatmentEvents).length} (scheduled)`);
-  console.log(`  mattress purchases: ${purchases.length}`);
+  console.log(`  treatment events:  ${written.treatmentEvents} (nightly) + ${artifactCounts.treatmentEvents} (scheduled)`);
+  console.log(`  mattress purchases: ${purchaseResult.written}`);
   console.log(`  sim clock [${SIM_CLOCK_ID}]: ${clockDate.toISOString().slice(0, 10)}`);
   console.log(
     `  Marcus Reed: ${MARCUS_REED_PARTICIPANT_ID} (${marcus.arm}, AHI ${marcus.ahi}, supine ${marcus.supineAhi})` +

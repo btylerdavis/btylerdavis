@@ -1,8 +1,10 @@
 import {
   getAllGrantedDevices,
+  grantedObservationNights,
   grantSetHas,
   grantsFor,
   loadAllGrants,
+  treatmentEventRowDataClass,
   type DataClass,
 } from "../consent";
 import { prisma } from "../db";
@@ -84,11 +86,6 @@ export interface ExecDashboard {
   queryMs: number;
 }
 
-interface NightsRow {
-  pid: string;
-  nights: bigint | number;
-}
-
 export async function loadExecDashboard(
   assumptions: RevenueAssumptions = { ...DEFAULT_ASSUMPTIONS }
 ): Promise<ExecDashboard> {
@@ -96,9 +93,11 @@ export async function loadExecDashboard(
   const clock = await getSimClock();
 
   const allGrants = await loadAllGrants();
-  const [participants, screens, hstGroups, therapyEvents, matDevices, nightsRows] =
+  const [participants, screens, hstGroups, therapyEvents, matDevices, grantedNights] =
     await Promise.all([
+      // Tombstones drop out of every stage/tile (defense in depth — F-01).
       prisma.participant.findMany({
+        where: { deletedAt: null, lifecycleState: { not: "deleted" } },
         select: { id: true, enrollmentTouchpoint: true },
       }),
       prisma.proResponse.findMany({
@@ -114,7 +113,7 @@ export async function loadExecDashboard(
           type: { in: ["cpap_setup", "appliance_delivery"] },
           eventDate: { lte: clock },
         },
-        select: { participantId: true, type: true },
+        select: { participantId: true, type: true, dataClass: true },
       }),
       // Consent-gated device read: sleep-mat rows only for participants with
       // a current sleep_mat view grant.
@@ -123,17 +122,21 @@ export async function loadExecDashboard(
         classes: ["sleep_mat"],
         grants: allGrants,
       }),
-      // participant-nights with any day-grain observation (one scan, ≤ ~2k groups)
-      prisma.$queryRaw<NightsRow[]>`
-        SELECT participantId AS pid, COUNT(DISTINCT effectiveDate) AS nights
-        FROM "Observation"
-        WHERE grain = 'day'
-        GROUP BY participantId
-      `,
+      // Consent-aware nights: classified per source class BEFORE counting,
+      // so a revoked class contributes zero nights (audit F-07).
+      grantedObservationNights({ use: "view_identified", grants: allGrants }),
     ]);
 
   const canView = (participantId: string, dataClass: DataClass) =>
     grantSetHas(grantsFor(allGrants, participantId), dataClass, "view_identified");
+
+  // Treatment events are gated per event on their OWN lineage class (audit
+  // F-06): cpap_setup under cpap_telemetry, appliance_delivery under
+  // hst_clinical. Unknown lineage is quarantined.
+  const grantedEvents = therapyEvents.filter((event) => {
+    const dataClass = treatmentEventRowDataClass(event);
+    return dataClass !== null && canView(event.participantId, dataClass);
+  });
 
   // --- the retail → clinic referral funnel -----------------------------------
   const retailIds = new Set(
@@ -160,15 +163,13 @@ export async function loadExecDashboard(
   );
   const hstDone = new Set([...atRisk].filter((id) => hstIds.has(id)));
 
-  // Treatment events are clinical-lane data → hst_clinical gate (the
-  // gatedQueries convention).
+  // CPAP setups count ONLY under a current cpap_telemetry grant (audit F-07:
+  // the revenue tile must not price a revoked class).
   const cpapSetupIds = new Set(
-    therapyEvents.filter((event) => event.type === "cpap_setup").map((e) => e.participantId)
+    grantedEvents.filter((event) => event.type === "cpap_setup").map((e) => e.participantId)
   );
-  const therapyIds = new Set(therapyEvents.map((event) => event.participantId));
-  const converted = new Set(
-    [...hstDone].filter((id) => therapyIds.has(id) && canView(id, "hst_clinical"))
-  );
+  const therapyIds = new Set(grantedEvents.map((event) => event.participantId));
+  const converted = new Set([...hstDone].filter((id) => therapyIds.has(id)));
   const cpapSetupCount = [...hstDone].filter((id) => cpapSetupIds.has(id)).length;
 
   const pct = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : 0);
@@ -200,11 +201,10 @@ export async function loadExecDashboard(
   ).length;
 
   // --- data-asset tiles -----------------------------------------------------------
+  // Consent-aware nights: per-class classification happened upstream — a
+  // revoked class contributes nothing here (audit F-07).
   let observationNights = 0;
-  for (const row of nightsRows) {
-    if (grantsFor(allGrants, row.pid).size === 0) continue; // revoked: not an asset
-    observationNights += Number(row.nights);
-  }
+  for (const nights of grantedNights.values()) observationNights += nights;
   // matDevices arrive pre-gated on the sleep_mat view grant.
   const instrumented = new Set(matDevices.map((device) => device.participantId)).size;
 
