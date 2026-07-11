@@ -2,16 +2,23 @@ import { describe, expect, it } from "vitest";
 import { SMALL_CELL_THRESHOLD } from "../deid";
 import type { ResearchMember } from "../research/cohort";
 import {
+  bandMidpoint,
   buildPartnerDashboard,
+  dashboardReleaseRecords,
   partnerLineOf,
   PARTNER_BRAND,
 } from "./queries";
 
 /**
  * Partner-portal aggregation: everything Tempur-Sealy sees must come out of
- * the research-tier members (already research_deid-filtered upstream) with
- * k-anonymity suppression applied to every released count — rows and cells
- * under k=11 are withheld, and means are withheld with them.
+ * the research-tier members (already research_deid-filtered upstream)
+ * released through the disclosure-control layer (audit F-12): rows and cells
+ * under k=11 are withheld (means withheld with them), and every released
+ * count is a BAND — never an exact number.
+ *
+ * NOTE (stage-2 assertion changes, justified): the pre-fix versions asserted
+ * exact released displays ("12") — the release shape F-12 refutes. They now
+ * assert the released band.
  */
 
 const CLOCK = new Date(Date.UTC(2026, 5, 30));
@@ -89,7 +96,8 @@ describe("buildPartnerDashboard suppression", () => {
 
     const proAdapt = dash.modelRows.find((row) => row.line === "ProAdapt");
     expect(proAdapt?.n.suppressed).toBe(false);
-    expect(proAdapt?.n.display).toBe("12");
+    // 12 releases as its band, never the exact count (F-12).
+    expect(proAdapt?.n.display).toBe("11–20");
     expect(proAdapt?.meanSupineChange).toBe(-12);
     expect(proAdapt?.meanEssChange).toBe(-3);
 
@@ -159,9 +167,69 @@ describe("buildPartnerDashboard suppression", () => {
       ...Array.from({ length: 30 }, () => member({ supineChange: -10 })),
     ];
     const dash = buildPartnerDashboard(members, CLOCK, 1);
-    expect(dash.partnerPurchasers.display).toBe("12");
+    // Released as bands (F-12) — the 30 null-brand members contribute nowhere.
+    expect(dash.partnerPurchasers.display).toBe("11–20");
     expect(dash.otherPurchasers.display).toBe("0");
     // the null-brand members contribute to NO tile
-    expect(dash.tiles[1].supineChange.n.display).toBe("12");
+    expect(dash.tiles[1].supineChange.n.display).toBe("11–20");
+  });
+
+  it("never releases an exact non-zero count anywhere on the dashboard (F-12)", () => {
+    const members = [
+      ...Array.from({ length: 37 }, () => partnerMember("TEMPUR-ProAdapt Medium", -12, -3)),
+      ...Array.from({ length: 3 }, () => partnerMember("TEMPUR-LuxeAdapt Firm", -20, -6)),
+      ...Array.from({ length: 250 }, () => otherMember(-2, -1)),
+    ];
+    const dash = buildPartnerDashboard(members, CLOCK, 1);
+    const releasedDisplays = [
+      dash.partnerPurchasers,
+      dash.otherPurchasers,
+      ...dash.tiles.flatMap((tile) => [tile.supineChange.n, tile.essChange.n]),
+      ...dash.distribution.flatMap((cell) => [cell.partner, cell.others]),
+      ...dash.modelRows.map((row) => row.n),
+    ].map((cell) => cell.display);
+    const allowed = /^(0|<11 \(suppressed\)|11–20|21–50|51–200|>200|withheld \(complementary suppression\))$/;
+    for (const display of releasedDisplays) {
+      expect(display).toMatch(allowed);
+    }
+    // Spot-check the band edges: 40 partner purchasers → 21–50; 250 others → >200.
+    expect(dash.partnerPurchasers.display).toBe("21–50");
+    expect(dash.otherPurchasers.display).toBe(">200");
+  });
+
+  it("computes distribution shares from band midpoints — approximate by design", () => {
+    const members = [
+      ...Array.from({ length: 14 }, () => partnerMember("TEMPUR-ProAdapt Medium", -12, null)),
+      ...Array.from({ length: 30 }, () => partnerMember("TEMPUR-ProAdapt Medium", -2, null)),
+    ];
+    const dash = buildPartnerDashboard(members, CLOCK, 1);
+    const bucket10 = dash.distribution.find((cell) => cell.bucket === "−15 to −10 pp");
+    const bucket0 = dash.distribution.find((cell) => cell.bucket === "−5 to 0 pp");
+    // 14 → band 11–20 (midpoint 15.5); 30 → band 21–50 (midpoint 35.5).
+    expect(bandMidpoint(bucket10!.partner)).toBe(15.5);
+    expect(bandMidpoint(bucket0!.partner)).toBe(35.5);
+    // Shares derive from the midpoints, NOT the raw 14/44 vs 30/44.
+    expect(bucket10?.partnerPct).toBe(30.4); // 15.5 / 51 — not 31.8 (=14/44)
+    expect(bucket0?.partnerPct).toBe(69.6); // 35.5 / 51 — not 68.2 (=30/44)
+  });
+
+  it("shapes one release-ledger record per released count (manifest linkage)", () => {
+    const members = [
+      ...Array.from({ length: 12 }, () => partnerMember("TEMPUR-ProAdapt Medium", -12, -3)),
+      ...Array.from({ length: 15 }, () => otherMember(-2, -1)),
+    ];
+    const dash = buildPartnerDashboard(members, CLOCK, 1);
+    const records = dashboardReleaseRecords(dash, CLOCK);
+    // 2 purchaser counts + 2 tiles × 2 + 5 buckets × 2 + 3 model rows = 19.
+    expect(records).toHaveLength(19);
+    for (const record of records) {
+      expect(record.surface).toBe("partner_dashboard");
+      expect(record.clockDate).toBe(CLOCK);
+      // Bands only — never an exact non-zero count.
+      expect(record.band).toMatch(
+        /^(0|<11 \(suppressed\)|11–20|21–50|51–200|>200|withheld \(complementary suppression\))$/
+      );
+    }
+    expect(records.map((record) => record.metric)).toContain("model:ProAdapt:n");
   });
 });

@@ -8,13 +8,14 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { SERIES } from "@/components/charts/theme";
 import { formatDay } from "@/lib/format";
+import Link from "next/link";
 import {
   loadPartnerDashboard,
   CATEGORY_LABEL,
   PARTNER_BRAND,
   type SuppressedStat,
 } from "@/lib/partner/queries";
-import type { SuppressedCell } from "@/lib/deid";
+import type { ReleasedCount } from "@/lib/disclosure";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { leaveDua } from "../actions";
 import { DUA_COOKIE } from "../dua";
@@ -54,8 +55,11 @@ export default async function PartnerDashboardPage() {
                   Tempur-Pedic outcomes vs category
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted">
-                  Research-tier aggregates only (research_deid consent scope), small cells
-                  suppressed at k&nbsp;&lt;&nbsp;{dash.threshold}.{" "}
+                  Research-tier aggregates only (research_deid consent scope). Every count is
+                  released as a <span className="font-semibold text-navy">band</span> (11–20 ·
+                  21–50 · 51–200 · &gt;200), never an exact number, with small cells suppressed
+                  at k&nbsp;&lt;&nbsp;{dash.threshold} — so released numbers cannot be
+                  differenced against each other.{" "}
                   <span className="font-semibold text-navy tabular-nums">
                     {dash.partnerPurchasers.display}
                   </span>{" "}
@@ -64,7 +68,11 @@ export default async function PartnerDashboardPage() {
                     {dash.otherPurchasers.display}
                   </span>{" "}
                   other-brand purchasers are visible to this tier as of{" "}
-                  {formatDay(dash.clockIso)}.
+                  {formatDay(dash.clockIso)}. Every released count is logged in the{" "}
+                  <Link href="/partner/releases" className="font-semibold underline underline-offset-4">
+                    release ledger
+                  </Link>
+                  .
                 </p>
                 <div className="mt-4">
                   <ButtonLink href="/partner/proposal" size="sm">
@@ -160,9 +168,10 @@ export default async function PartnerDashboardPage() {
               ))}
             </div>
             <p className="mt-3 text-xs text-muted">
-              Bars are shares of each group&apos;s released participants (negative = less supine
-              time). Cells with 1–{dash.threshold - 1} participants are withheld and excluded
-              from the shares — suppression is applied before percentages, so nothing leaks.
+              Cell counts are released as bands; bars are APPROXIMATE shares computed from band
+              midpoints (negative = less supine time), so a share can never be inverted into an
+              exact count. Cells with 1–{dash.threshold - 1} participants are withheld and
+              excluded from the shares entirely.
             </p>
           </Card>
 
@@ -242,10 +251,12 @@ export default async function PartnerDashboardPage() {
                 </p>
               </li>
               <li className="rounded-card bg-white/10 p-4">
-                <p className="font-semibold">Small cells</p>
+                <p className="font-semibold">Small cells — or exact counts at all</p>
                 <p className="mt-1 text-white/75">
-                  Any count of 1–{dash.threshold - 1} is withheld before release, even inside
-                  your own product lines — you saw the suppressed cells above.
+                  Any count of 1–{dash.threshold - 1} is withheld before release, and every
+                  released count is a band (11–20 · 21–50 · 51–200 · &gt;200) — subtracting
+                  released numbers from each other yields ranges, never a hidden cell. Each
+                  release is logged in the ledger.
                 </p>
               </li>
             </ul>
@@ -254,7 +265,10 @@ export default async function PartnerDashboardPage() {
           <div className="flex flex-wrap items-center justify-center gap-3 pb-2 text-xs text-muted">
             <span>
               Cohort queries ran in {dash.queryMs.toLocaleString("en-US")} ms · de-identified
-              tier · DUA dua-demo-v1 accepted this session
+              tier · DUA dua-demo-v1 accepted this session ·{" "}
+              <Link href="/partner/releases" className="underline underline-offset-4">
+                release ledger
+              </Link>
             </span>
             <form action={leaveDua}>
               <button
@@ -272,7 +286,7 @@ export default async function PartnerDashboardPage() {
   );
 }
 
-function CellValue({ cell }: { cell: SuppressedCell }) {
+function CellValue({ cell }: { cell: ReleasedCount }) {
   if (cell.suppressed) {
     return (
       <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
@@ -328,7 +342,7 @@ function DistBar({
   color,
   group,
 }: {
-  cell: SuppressedCell;
+  cell: ReleasedCount;
   pct: number | null;
   color: string;
   group: string;

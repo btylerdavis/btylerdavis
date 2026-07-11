@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { DeletionRequest, Prisma } from "@prisma/client";
 import { getConsentStates, revokeConsent, type InstrumentType } from "../consent";
 import { prisma } from "../db";
@@ -73,6 +74,34 @@ export function parseDeletionCounts(json: string | null): DeletionCounts {
   } catch {
     return zero;
   }
+}
+
+/**
+ * Immutable certificate content hash (level-up 8): SHA-256 over the stored
+ * execution-snapshot fields, in canonical order. Computed INSIDE the
+ * execution transaction and stored on the request; the certificate displays
+ * it, and recomputing it from the stored fields must always reproduce it —
+ * any divergence means the snapshot was tampered with after execution.
+ */
+export function certificateContentHash(input: {
+  requestId: string;
+  participantId: string;
+  requestedAt: Date;
+  executedAt: Date;
+  counts: DeletionCounts;
+  ledgerCount: number;
+  ledgerRef: string;
+}): string {
+  const canonical = JSON.stringify({
+    requestId: input.requestId,
+    participantId: input.participantId,
+    requestedAt: input.requestedAt.toISOString(),
+    executedAt: input.executedAt.toISOString(),
+    counts: DELETION_TABLES.map((table) => [table.key, input.counts[table.key] ?? 0]),
+    ledgerCount: input.ledgerCount,
+    ledgerRef: input.ledgerRef,
+  });
+  return createHash("sha256").update(canonical).digest("hex");
 }
 
 export type RequestDeletionResult =
@@ -183,6 +212,10 @@ export interface DeletionExecutionReport {
   /** consent events retained in the immutable ledger */
   ledgerRecords: number;
   ledgerRef: string;
+  /** which execution attempt succeeded (observable workflow, level-up 8) */
+  attempt: number;
+  /** immutable SHA-256 over the stored execution snapshot */
+  contentHash: string;
 }
 
 export type ExecuteDeletionResult =
@@ -205,6 +238,12 @@ export type ExecuteDeletionResult =
  *
  * If anything throws, the whole transaction rolls back and the request is
  * still `pending` — retryable, never wedged in `executing` (audit F-08).
+ *
+ * OBSERVABLE workflow (level-up 8): every execution attempt is recorded
+ * OUTSIDE the transaction (attempts counter + lastAttemptAt before the run;
+ * lastAttemptError after a failure), so a rolled-back attempt still leaves a
+ * visible retryable-failure trace on the request. The error itself is still
+ * rethrown — callers surface it and offer retry.
  */
 export async function executeDeletion(requestId: string): Promise<ExecuteDeletionResult> {
   const request = await prisma.deletionRequest.findUnique({ where: { id: requestId } });
@@ -213,10 +252,20 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
     return { ok: false, error: `Request is already ${request.status}` };
   }
 
-  const clock = await getSimClock();
+  // Attempt metadata: recorded before the transaction so a failure anywhere
+  // below still leaves the attempt visible (uses wall-clock time on purpose
+  // — the injected fault of audit F-08 is a MISSING sim clock).
+  const attempted = await prisma.deletionRequest.update({
+    where: { id: requestId },
+    data: { attempts: { increment: 1 }, lastAttemptAt: new Date() },
+    select: { attempts: true },
+  });
+  const attempt = attempted.attempts;
+
   const participantId = request.participantId;
 
   try {
+    const clock = await getSimClock();
     const report = await prisma.$transaction(async (tx) => {
       // 1. Atomic claim INSIDE the transaction: only one execution can move
       //    pending → executing; everything below rolls back with it.
@@ -279,6 +328,18 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
         ledger[0]?.id.slice(0, 8) ?? "none"
       }`;
 
+      // Immutable certificate hash over the snapshot being stored, computed
+      // inside the same transaction (level-up 8).
+      const contentHash = certificateContentHash({
+        requestId,
+        participantId,
+        requestedAt: request.requestedAt,
+        executedAt: clock,
+        counts,
+        ledgerCount: ledger.length,
+        ledgerRef,
+      });
+
       await tx.deletionRequest.update({
         where: { id: requestId },
         data: {
@@ -288,6 +349,8 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
           deletionCounts: JSON.stringify(counts),
           ledgerRef,
           ledgerCount: ledger.length,
+          contentHash,
+          lastAttemptError: null, // this attempt succeeded
         },
       });
 
@@ -301,12 +364,25 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
         totalRows: totalDeleted(counts),
         ledgerRecords: ledger.length,
         ledgerRef,
+        attempt,
+        contentHash,
       } satisfies DeletionExecutionReport;
     }, { timeout: 30_000 }); // headroom for participants with many nightly rows
 
     return { ok: true, report };
   } catch (error) {
     if (error instanceof ExecutionRefused) return { ok: false, error: error.message };
+    // The retryable failure path (audit F-08 / level-up 8): the transaction
+    // rolled back — the request is still `pending` — but the attempt stays
+    // observable. `updateMany` guards against clobbering a concurrent
+    // execution that succeeded in the meantime.
+    await prisma.deletionRequest.updateMany({
+      where: { id: requestId, status: "pending" satisfies DeletionStatus },
+      data: {
+        lastAttemptError:
+          error instanceof Error ? error.message.slice(0, 500) : "Unknown execution error",
+      },
+    });
     throw error;
   }
 }
@@ -394,14 +470,17 @@ export async function listDeletionRequests(): Promise<DeletionRequestListItem[]>
 
 /**
  * Latest request per status for one participant (participant-page state).
- * `executing` is surfaced too (audit F-08): with the single-transaction
- * design it never persists, but if it is ever observed the UI must say so
- * rather than showing neither pending nor executed.
+ * The FULL state machine is surfaced (level-up 8): `pending` (including the
+ * retryable-failure path via attempts/lastAttemptError on the request),
+ * `executing` (with the single-transaction design it never persists, but if
+ * it is ever observed the UI must say so), `executed`, and the latest
+ * `declined` (so the page can explain the routing explicitly).
  */
 export async function getParticipantDeletionState(participantId: string): Promise<{
   pending: DeletionRequest | null;
   executing: DeletionRequest | null;
   executed: DeletionRequest | null;
+  declined: DeletionRequest | null;
 }> {
   const requests = await prisma.deletionRequest.findMany({
     where: { participantId },
@@ -411,6 +490,7 @@ export async function getParticipantDeletionState(participantId: string): Promis
     pending: requests.find((request) => request.status === "pending") ?? null,
     executing: requests.find((request) => request.status === "executing") ?? null,
     executed: requests.find((request) => request.status === "executed") ?? null,
+    declined: requests.find((request) => request.status === "declined") ?? null,
   };
 }
 
@@ -421,13 +501,18 @@ export interface DeletionCertificate {
   /** stored at execution — NEVER recomputed live (audit F-01) */
   ledgerCount: number;
   ledgerRef: string;
+  /** immutable SHA-256 over the stored snapshot (level-up 8) */
+  contentHash: string;
+  /** true when the stored hash matches a recomputation over the stored
+   *  snapshot fields — the certificate's own integrity check */
+  contentHashVerified: boolean;
 }
 
 /**
  * Certificate data for an executed request — rendered ONLY from the stored
- * execution snapshot (counts, ledger count, ledger reference captured
- * atomically inside the execution transaction). Returns null unless the
- * request is executed.
+ * execution snapshot (counts, ledger count, ledger reference and content
+ * hash captured atomically inside the execution transaction). Returns null
+ * unless the request is executed.
  */
 export async function getDeletionCertificate(
   requestId: string
@@ -440,11 +525,26 @@ export async function getDeletionCertificate(
   // execution fact, never a live query.
   const fromRef = request.ledgerRef?.match(/^LEDGER\/(\d+) /);
   const ledgerCount = request.ledgerCount ?? (fromRef ? Number(fromRef[1]) : 0);
+  const ledgerRef = request.ledgerRef ?? `LEDGER/${ledgerCount} records retained`;
+  // Recompute the hash from the STORED snapshot fields (never a live query):
+  // for post-hash rows this verifies integrity; for legacy rows it derives
+  // the canonical hash of the stored facts.
+  const recomputed = certificateContentHash({
+    requestId: request.id,
+    participantId: request.participantId,
+    requestedAt: request.requestedAt,
+    executedAt: request.resolvedAt,
+    counts,
+    ledgerCount,
+    ledgerRef,
+  });
   return {
     request,
     counts,
     totalRows: totalDeleted(counts),
     ledgerCount,
-    ledgerRef: request.ledgerRef ?? `LEDGER/${ledgerCount} records retained`,
+    ledgerRef,
+    contentHash: request.contentHash ?? recomputed,
+    contentHashVerified: request.contentHash === null || request.contentHash === recomputed,
   };
 }

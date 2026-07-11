@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { CoverageStrip } from "@/components/CoverageStrip";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
+import { consentCoverage } from "@/lib/consent";
 import { formatDay } from "@/lib/format";
 import {
   filterGroups,
@@ -41,6 +43,11 @@ export default async function ResearchExplorerPage({
   const params = await searchParams;
   const filters = parseFilters(params);
   const [result, savedCohorts] = await Promise.all([loadExplorer(filters), listSavedCohorts()]);
+  // Coverage denominators for the research tier (level-up 9).
+  const coverage = await consentCoverage({
+    use: "research_deid",
+    clock: new Date(`${result.clockIso}T00:00:00Z`),
+  });
 
   const brands = [...new Set(MATTRESS_CATALOG.map((entry) => entry.brand))].sort();
   const groups = filterGroups(brands);
@@ -80,6 +87,13 @@ export default async function ResearchExplorerPage({
               />
             </div>
           </Card>
+
+          {/* Consent-coverage denominators (level-up 9) */}
+          <CoverageStrip
+            coverage={coverage}
+            tierLabel="research tier (research_deid)"
+            context="cohort counts and outcome means read only the Contributing set"
+          />
 
           {/* Filters */}
           <Card className="p-5 sm:p-6">

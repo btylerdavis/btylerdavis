@@ -2,7 +2,7 @@ import { prisma } from "../db";
 import { grantsFor, grantSetHas, loadAllGrants, type GrantSet } from "./engine";
 import { treatmentEventRowDataClass } from "./gatedQueries";
 import { sourceToDataClass } from "./scopes";
-import type { ConsentUse, DataClass } from "./types";
+import { DATA_CLASSES, type ConsentUse, type DataClass } from "./types";
 
 /**
  * Consent-aware AGGREGATE primitives (audit F-07, level-up 4).
@@ -292,4 +292,82 @@ export async function countActiveLast7(
   const from = new Date(clock.getTime() - 7 * 86_400_000);
   const active = await activeParticipantIds({ from, to: clock }, { use });
   return active.size;
+}
+
+// ---------------------------------------------------------------------------
+// Consent-coverage denominators (level-up 9)
+// ---------------------------------------------------------------------------
+
+export interface ConsentCoverage {
+  /** lifecycle-alive registry participants (tombstones excluded) */
+  eligible: number;
+  /** of eligible: holding ≥ 1 current grant for `use` on the relevant classes */
+  consented: number;
+  /** of consented: ≥ 1 observation whose class clears the read gate for `use` */
+  contributing: number;
+  /** of contributing: ≥ 1 gate-clearing observation in the 7 days ending at `clock` */
+  freshLast7: number;
+}
+
+/**
+ * The eligible → consented → contributing → fresh-last-7-days funnel behind
+ * every dashboard metric (level-up 9). Classification happens per
+ * (participant, source) group BEFORE aggregation — the same discipline as
+ * every other primitive here — so partial revocation moves these numbers
+ * exactly the way it moves the metrics they contextualize: a participant
+ * whose only rows belong to a revoked class stays "consented" (other grants
+ * intact) but stops "contributing", and a fully revoked participant drops
+ * out of both.
+ */
+export async function consentCoverage(opts: {
+  use: ConsentUse;
+  clock: Date;
+  /** restrict "consented"/"contributing" to these classes (default: all) */
+  dataClasses?: DataClass[];
+  grants?: Grants;
+}): Promise<ConsentCoverage> {
+  const grants = opts.grants ?? (await loadAllGrants());
+  const classes = opts.dataClasses ?? [...DATA_CLASSES];
+  const freshFrom = new Date(opts.clock.getTime() - 7 * 86_400_000);
+
+  const [participants, groups] = await Promise.all([
+    prisma.participant.findMany({
+      where: { deletedAt: null, lifecycleState: { not: "deleted" } },
+      select: { id: true },
+    }),
+    prisma.observation.groupBy({
+      by: ["participantId", "source"],
+      where: { effectiveDate: { lte: opts.clock } },
+      _max: { effectiveDate: true },
+    }),
+  ]);
+
+  const alive = new Set(participants.map((participant) => participant.id));
+  const consented = new Set<string>();
+  for (const id of alive) {
+    if (classes.some((dataClass) => grantSetHas(grantsFor(grants, id), dataClass, opts.use))) {
+      consented.add(id);
+    }
+  }
+
+  const contributing = new Set<string>();
+  const fresh = new Set<string>();
+  for (const group of groups) {
+    if (!consented.has(group.participantId)) continue; // tombstones/no-grant out
+    const dataClass = sourceToDataClass(group.source);
+    if (dataClass === null || !classes.includes(dataClass)) continue; // quarantined (F-10)
+    if (!grantSetHas(grantsFor(grants, group.participantId), dataClass, opts.use)) continue;
+    contributing.add(group.participantId);
+    const latest = group._max.effectiveDate;
+    if (latest && latest > freshFrom && latest <= opts.clock) {
+      fresh.add(group.participantId);
+    }
+  }
+
+  return {
+    eligible: alive.size,
+    consented: consented.size,
+    contributing: contributing.size,
+    freshLast7: fresh.size,
+  };
 }

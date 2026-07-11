@@ -48,6 +48,13 @@ export default async function DeletionsPage() {
     })),
     totalRows: item.totalRows,
     ledgerRef: item.request.ledgerRef,
+    // Observable workflow metadata (level-up 8): attempts survive rollbacks.
+    attempts: item.request.attempts,
+    lastAttemptAtLabel: item.request.lastAttemptAt
+      ? `${toIsoDay(item.request.lastAttemptAt)} UTC`
+      : null,
+    lastAttemptError: item.request.lastAttemptError,
+    contentHash: item.request.contentHash,
   }));
 
   const pendingCount = rows.filter((row) => row.status === "pending").length;

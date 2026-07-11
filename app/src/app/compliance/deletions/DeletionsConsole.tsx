@@ -33,10 +33,16 @@ export interface DeletionRequestRow {
   counts: DeletionCountRow[];
   totalRows: number;
   ledgerRef: string | null;
+  /** observable workflow metadata (level-up 8) */
+  attempts: number;
+  lastAttemptAtLabel: string | null;
+  lastAttemptError: string | null;
+  contentHash: string | null;
 }
 
 const STATUS_BADGE: Record<string, string> = {
   pending: "bg-warning/10 text-warning",
+  executing: "bg-accent-purple/10 text-accent-purple",
   executed: "bg-danger/10 text-danger",
   declined: "bg-pale-blue text-navy",
 };
@@ -77,6 +83,17 @@ export function DeletionsConsole({ rows }: { rows: DeletionRequestRow[] }) {
 
   return (
     <div className="space-y-4">
+      {/* The full state machine, visible (level-up 8) */}
+      <div className="rounded-card bg-pale-blue/50 px-4 py-2.5 text-xs text-muted">
+        <span className="font-semibold text-navy">Request lifecycle:</span> pending →
+        executing → executed <span className="text-navy">|</span> declined. A failed
+        execution attempt rolls the request back to{" "}
+        <span className="font-semibold">pending (retryable)</span> — the attempt count and
+        error stay on the request. Executed requests are{" "}
+        <span className="font-semibold text-danger">terminal</span>: there is no restore, and
+        re-consent cannot recreate the record.
+      </div>
+
       {error && <p className="text-sm font-semibold text-danger">{error}</p>}
 
       <ul className="space-y-3">
@@ -91,10 +108,20 @@ export function DeletionsConsole({ rows }: { rows: DeletionRequestRow[] }) {
                 >
                   {row.status}
                 </span>
+                {row.status === "pending" && row.lastAttemptError !== null && (
+                  <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">
+                    retryable failure
+                  </span>
+                )}
                 <span className="text-sm font-semibold text-navy">{row.label}</span>
                 <span className="text-xs text-muted">
                   {row.door} door · requested {row.requestedAtLabel}
                   {row.resolvedAtLabel ? ` · resolved ${row.resolvedAtLabel}` : ""}
+                  {row.attempts > 0
+                    ? ` · ${row.attempts} execution attempt${row.attempts === 1 ? "" : "s"}${
+                        row.lastAttemptAtLabel ? ` (last ${row.lastAttemptAtLabel})` : ""
+                      }`
+                    : ""}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -106,7 +133,11 @@ export function DeletionsConsole({ rows }: { rows: DeletionRequestRow[] }) {
                       disabled={pending}
                       onClick={() => execute(row.requestId)}
                     >
-                      {pending ? "Working…" : "Execute deletion"}
+                      {pending
+                        ? "Working…"
+                        : row.lastAttemptError !== null
+                          ? "Retry execution"
+                          : "Execute deletion"}
                     </Button>
                     <Button
                       size="sm"
@@ -128,6 +159,23 @@ export function DeletionsConsole({ rows }: { rows: DeletionRequestRow[] }) {
                 )}
               </div>
             </div>
+
+            {row.status === "pending" && row.lastAttemptError !== null && (
+              <p className="mt-2 rounded-card bg-danger/5 px-3 py-2 text-xs text-danger">
+                <span className="font-semibold">
+                  Attempt {row.attempts} failed; the transaction rolled back and the request
+                  remains pending.
+                </span>{" "}
+                {row.lastAttemptError}
+              </p>
+            )}
+
+            {row.status === "executing" && (
+              <p className="mt-2 rounded-card bg-accent-purple/5 px-3 py-2 text-xs text-body">
+                Execution in flight — with the single-transaction design this state never
+                persists; if it does, the attempt metadata above is the audit trail.
+              </p>
+            )}
 
             {row.note && (
               <p className="mt-2 text-xs text-muted">
@@ -157,6 +205,12 @@ export function DeletionsConsole({ rows }: { rows: DeletionRequestRow[] }) {
                     Consent ledger retained (append-only): {row.ledgerRef}
                   </p>
                 )}
+                {row.status === "executed" && row.contentHash && (
+                  <p className="mt-1.5 text-xs text-muted">
+                    Certificate content hash (SHA-256, stored at execution):{" "}
+                    <span className="font-mono break-all text-navy">{row.contentHash}</span>
+                  </p>
+                )}
               </div>
             )}
           </li>
@@ -173,8 +227,14 @@ function ExecutionReportPanel({ report }: { report: DeletionExecutionReport }) {
   return (
     <div className="rounded-card border border-danger/40 bg-danger/5 p-4">
       <p className="text-sm font-semibold text-navy">
-        Deletion executed — {report.totalRows.toLocaleString("en-US")} identified-tier rows
-        hard-deleted; participant row tombstoned.
+        Deletion executed (attempt {report.attempt}) —{" "}
+        {report.totalRows.toLocaleString("en-US")} identified-tier rows hard-deleted;
+        participant row tombstoned. Terminal: no restore, and re-consent cannot recreate the
+        record.
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        Certificate content hash (SHA-256):{" "}
+        <span className="font-mono break-all text-navy">{report.contentHash}</span>
       </p>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div>

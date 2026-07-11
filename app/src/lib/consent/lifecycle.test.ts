@@ -279,21 +279,35 @@ describe("deletion workflow atomicity (audit F-08)", () => {
     await prisma.simClock.deleteMany();
     await expect(executeDeletion(filed.request.id)).rejects.toThrow(/npm run seed/);
 
-    // NOT wedged in `executing`; nothing was deleted or revoked.
+    // NOT wedged in `executing`; nothing was deleted or revoked — and the
+    // failed attempt is OBSERVABLE on the request (level-up 8): attempt
+    // count, wall-clock timestamp, and the error, all outside the rolled-
+    // back transaction.
     const request = await prisma.deletionRequest.findUniqueOrThrow({
       where: { id: filed.request.id },
     });
     expect(request.status).toBe("pending");
+    expect(request.attempts).toBe(1);
+    expect(request.lastAttemptAt).not.toBeNull();
+    expect(request.lastAttemptError).toMatch(/npm run seed/);
     const participant = await prisma.participant.findUniqueOrThrow({ where: { id: subject } });
     expect(participant.deletedAt).toBeNull();
     expect(participant.lifecycleState).toBe("deletion_pending");
     expect((await loadGrants(subject)).size).toBeGreaterThan(0);
 
-    // Retry succeeds once the fault clears.
+    // Retry succeeds once the fault clears; the success clears the recorded
+    // failure and stamps the immutable certificate hash.
     await setSimClock(SIM_TODAY);
     const retried = await executeDeletion(filed.request.id);
     expect(retried.ok).toBe(true);
+    if (retried.ok) expect(retried.report.attempt).toBe(2);
     expect(await identifiedRowCount(subject)).toBe(0);
+    const executed = await prisma.deletionRequest.findUniqueOrThrow({
+      where: { id: filed.request.id },
+    });
+    expect(executed.attempts).toBe(2);
+    expect(executed.lastAttemptError).toBeNull();
+    expect(executed.contentHash).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("concurrent executions: exactly one wins, counts stay accurate", async () => {

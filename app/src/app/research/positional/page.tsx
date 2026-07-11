@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { CoverageStrip } from "@/components/CoverageStrip";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
@@ -10,6 +11,7 @@ import {
   EssChangeDistributionChart,
   WeeklySupineByBandChart,
 } from "@/components/charts/ResearchCharts";
+import { consentCoverage } from "@/lib/consent";
 import { formatDay } from "@/lib/format";
 import { loadPositionalDashboard, MIN_GROUP_N, RESPONDER_DROP_PP } from "@/lib/research/positional";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
@@ -28,6 +30,12 @@ export default async function PositionalDashboardPage() {
   const dash = await loadPositionalDashboard();
   const clockDate = new Date(`${dash.clockIso}T00:00:00Z`);
   const dayNumber = simDayNumber(clockDate);
+  // Coverage denominators scoped to the classes this study reads (level-up 9).
+  const coverage = await consentCoverage({
+    use: "research_deid",
+    clock: clockDate,
+    dataClasses: ["hst_clinical", "sleep_mat", "mattress_purchase", "pro_responses"],
+  });
 
   const fmtEss = (mean: number | null) =>
     mean === null ? "—" : `${mean < 0 ? "−" : "+"}${Math.abs(mean).toFixed(1)} pts`;
@@ -77,6 +85,13 @@ export default async function PositionalDashboardPage() {
               </div>
             </div>
           </Card>
+
+          {/* Consent-coverage denominators (level-up 9) — study classes only */}
+          <CoverageStrip
+            coverage={coverage}
+            tierLabel="research tier (research_deid) · HST / sensor / mattress / PRO classes"
+            context="the flagship cohort is drawn from the Contributing set"
+          />
 
           {/* Primary chart: weekly supine % by firmness band */}
           <ChartCard

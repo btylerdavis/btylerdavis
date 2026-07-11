@@ -1,18 +1,31 @@
 import {
-  buildSuppressedTable,
-  suppressCount,
-  SMALL_CELL_THRESHOLD,
-  type SuppressedCell,
-} from "../deid";
+  bandCount,
+  recordCountReleases,
+  releaseRecord,
+  type CountReleaseRecord,
+  type ReleasedCount,
+} from "../disclosure";
+import { SMALL_CELL_THRESHOLD } from "../deid";
 import { loadResearchCohort, meanOf, type ResearchMember } from "../research/cohort";
 
 /**
  * Partner portal aggregates (DEMO.md Act 7; SPEC §12.3 rules of engagement).
  * The Tempur-Sealy view consumes ONLY the research-tier cohort
  * (research_deid consent scope, via loadResearchCohort) and releases every
- * count through the de-identification suppression helpers: no names, no
- * participant ids, no cell under k=<SMALL_CELL_THRESHOLD>. Rows and cells
- * under the threshold are shown AS suppressed — the DUA made visible.
+ * count through the DISCLOSURE-CONTROL layer (audit F-12, level-up 10):
+ *
+ * - no names, no participant ids;
+ * - no cell under k=<SMALL_CELL_THRESHOLD> — small cells are shown AS
+ *   suppressed (the DUA made visible);
+ * - and no EXACT count at all: every released n is a band (11–20 / 21–50 /
+ *   51–200 / >200), so differencing released cells against each other or
+ *   against the proposal generator yields intervals, never values.
+ *
+ * Percentages are computed from band midpoints — approximate BY DESIGN, so
+ * a share can never be inverted back into an exact count.
+ *
+ * Every count released here is logged to the release ledger
+ * (loadPartnerDashboard → /partner/releases).
  */
 
 export const PARTNER_BRAND = "Tempur-Pedic";
@@ -40,8 +53,8 @@ export const SUPINE_CHANGE_BUCKETS = [
 ] as const;
 
 export interface SuppressedStat {
-  /** released n (suppressed display when 1 ≤ n < k) */
-  n: SuppressedCell;
+  /** released n — a band, never an exact count (suppressed when 1 ≤ n < k) */
+  n: ReleasedCount;
   /** mean is withheld whenever n is suppressed */
   mean: number | null;
 }
@@ -54,25 +67,25 @@ export interface OutcomeTile {
 
 export interface DistributionCell {
   bucket: string;
-  partner: SuppressedCell;
-  others: SuppressedCell;
-  /** shares of each group's released total (null when the cell is suppressed) */
+  partner: ReleasedCount;
+  others: ReleasedCount;
+  /** approximate shares from band midpoints (null when the cell is suppressed) */
   partnerPct: number | null;
   othersPct: number | null;
 }
 
 export interface ModelLineRow {
   line: PartnerLine;
-  n: SuppressedCell;
+  n: ReleasedCount;
   meanSupineChange: number | null;
   meanEssChange: number | null;
 }
 
 export interface PartnerDashboard {
   clockIso: string;
-  /** purchasers visible to the research tier (consent-filtered) */
-  partnerPurchasers: SuppressedCell;
-  otherPurchasers: SuppressedCell;
+  /** purchasers visible to the research tier (consent-filtered, banded) */
+  partnerPurchasers: ReleasedCount;
+  otherPurchasers: ReleasedCount;
   tiles: OutcomeTile[];
   distribution: DistributionCell[];
   suppressedDistributionCells: number;
@@ -86,8 +99,18 @@ const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 function stat(values: (number | null)[]): SuppressedStat {
   const { mean, n } = meanOf(values);
-  const cell = suppressCount(n);
+  const cell = bandCount(n);
   return { n: cell, mean: cell.suppressed || mean === null ? null : round1(mean) };
+}
+
+/**
+ * The magnitude a released band admits for share math: its midpoint.
+ * Approximate by design — the share can never be inverted into a count.
+ */
+export function bandMidpoint(released: ReleasedCount): number | null {
+  if (released.suppressed) return null;
+  if (released.max === null) return released.min; // ">200": conservative anchor
+  return (released.min + released.max) / 2;
 }
 
 /**
@@ -119,46 +142,54 @@ export function buildPartnerDashboard(
   ];
 
   // --- supine-improvement distribution, partner vs all other brands ------------
-  const entries: { row: string; col: string }[] = [];
+  const bucketCounts = new Map<string, { partner: number; others: number }>();
+  for (const bucket of SUPINE_CHANGE_BUCKETS) {
+    bucketCounts.set(bucket.key, { partner: 0, others: 0 });
+  }
   for (const member of purchasers) {
     if (member.supineChange === null) continue;
     const bucket = SUPINE_CHANGE_BUCKETS.find((b) => b.test(member.supineChange as number));
     if (!bucket) continue;
-    entries.push({
-      row: bucket.key,
-      col: member.brand === PARTNER_BRAND ? PARTNER_BRAND : CATEGORY_LABEL,
-    });
+    const entry = bucketCounts.get(bucket.key) as { partner: number; others: number };
+    if (member.brand === PARTNER_BRAND) entry.partner += 1;
+    else entry.others += 1;
   }
-  const table = buildSuppressedTable(entries, {
-    rowKeys: SUPINE_CHANGE_BUCKETS.map((b) => b.key),
-    colKeys: [PARTNER_BRAND, CATEGORY_LABEL],
-  });
 
-  // Percentages use only RELEASED counts, so a suppressed cell leaks nothing
-  // through the other cells' shares.
-  const releasedTotal = (col: string) =>
-    table.rowKeys.reduce((sum, row) => {
-      const cell = table.cells[row][col];
-      return cell.suppressed ? sum : sum + parseReleased(cell);
-    }, 0);
-  const partnerTotal = releasedTotal(PARTNER_BRAND);
-  const othersTotal = releasedTotal(CATEGORY_LABEL);
+  // Shares use band MIDPOINTS of released cells only: a suppressed cell
+  // contributes nothing, and no share can be inverted into an exact count.
+  let suppressedDistributionCells = 0;
+  const releasedCells = new Map<string, { partner: ReleasedCount; others: ReleasedCount }>();
+  let partnerMidpointTotal = 0;
+  let othersMidpointTotal = 0;
+  for (const bucket of SUPINE_CHANGE_BUCKETS) {
+    const raw = bucketCounts.get(bucket.key) as { partner: number; others: number };
+    const cell = { partner: bandCount(raw.partner), others: bandCount(raw.others) };
+    releasedCells.set(bucket.key, cell);
+    if (cell.partner.suppressed) suppressedDistributionCells += 1;
+    else partnerMidpointTotal += bandMidpoint(cell.partner) ?? 0;
+    if (cell.others.suppressed) suppressedDistributionCells += 1;
+    else othersMidpointTotal += bandMidpoint(cell.others) ?? 0;
+  }
 
-  const distribution: DistributionCell[] = table.rowKeys.map((bucket) => {
-    const partnerCell = table.cells[bucket][PARTNER_BRAND];
-    const othersCell = table.cells[bucket][CATEGORY_LABEL];
+  const distribution: DistributionCell[] = SUPINE_CHANGE_BUCKETS.map((bucket) => {
+    const cell = releasedCells.get(bucket.key) as {
+      partner: ReleasedCount;
+      others: ReleasedCount;
+    };
+    const partnerMid = bandMidpoint(cell.partner);
+    const othersMid = bandMidpoint(cell.others);
     return {
-      bucket,
-      partner: partnerCell,
-      others: othersCell,
+      bucket: bucket.key,
+      partner: cell.partner,
+      others: cell.others,
       partnerPct:
-        partnerCell.suppressed || partnerTotal === 0
+        partnerMid === null || partnerMidpointTotal === 0
           ? null
-          : round1((parseReleased(partnerCell) / partnerTotal) * 100),
+          : round1((partnerMid / partnerMidpointTotal) * 100),
       othersPct:
-        othersCell.suppressed || othersTotal === 0
+        othersMid === null || othersMidpointTotal === 0
           ? null
-          : round1((parseReleased(othersCell) / othersTotal) * 100),
+          : round1((othersMid / othersMidpointTotal) * 100),
     };
   });
 
@@ -173,7 +204,7 @@ export function buildPartnerDashboard(
   }
   const modelRows: ModelLineRow[] = PARTNER_LINES.map((line) => {
     const lineMembers = byLine.get(line) ?? [];
-    const n = suppressCount(lineMembers.length);
+    const n = bandCount(lineMembers.length);
     return {
       line,
       n,
@@ -188,11 +219,11 @@ export function buildPartnerDashboard(
 
   return {
     clockIso: clock.toISOString().slice(0, 10),
-    partnerPurchasers: suppressCount(partner.length),
-    otherPurchasers: suppressCount(others.length),
+    partnerPurchasers: bandCount(partner.length),
+    otherPurchasers: bandCount(others.length),
     tiles,
     distribution,
-    suppressedDistributionCells: table.suppressedCellCount,
+    suppressedDistributionCells,
     modelRows,
     suppressedModelRows: modelRows.filter((row) => row.n.suppressed).length,
     threshold: SMALL_CELL_THRESHOLD,
@@ -205,17 +236,49 @@ function roundedMean(values: (number | null)[]): number | null {
   return mean === null ? null : round1(mean);
 }
 
-/** Numeric value of a NON-suppressed cell ("1,234" → 1234). */
-function parseReleased(cell: SuppressedCell): number {
-  return Number(cell.display.replace(/,/g, ""));
+/**
+ * Every count the dashboard releases, shaped for the release ledger — the
+ * dashboard's release manifest (audit F-12: nothing leaves a partner surface
+ * without a ledger row).
+ */
+export function dashboardReleaseRecords(
+  dash: PartnerDashboard,
+  clock: Date
+): CountReleaseRecord[] {
+  const query = "surface=partner_dashboard";
+  const records: CountReleaseRecord[] = [
+    releaseRecord("partner_dashboard", query, "partner_purchasers", dash.partnerPurchasers, clock),
+    releaseRecord("partner_dashboard", query, "other_purchasers", dash.otherPurchasers, clock),
+  ];
+  for (const tile of dash.tiles) {
+    records.push(
+      releaseRecord("partner_dashboard", query, `tile:${tile.group}:supine_n`, tile.supineChange.n, clock),
+      releaseRecord("partner_dashboard", query, `tile:${tile.group}:ess_n`, tile.essChange.n, clock)
+    );
+  }
+  for (const cell of dash.distribution) {
+    records.push(
+      releaseRecord("partner_dashboard", query, `dist:${cell.bucket}:partner`, cell.partner, clock),
+      releaseRecord("partner_dashboard", query, `dist:${cell.bucket}:others`, cell.others, clock)
+    );
+  }
+  for (const row of dash.modelRows) {
+    records.push(
+      releaseRecord("partner_dashboard", query, `model:${row.line}:n`, row.n, clock)
+    );
+  }
+  return records;
 }
 
 export async function loadPartnerDashboard(): Promise<PartnerDashboard> {
   const startedAt = performance.now();
   const cohort = await loadResearchCohort();
-  return buildPartnerDashboard(
+  const dash = buildPartnerDashboard(
     cohort.members,
     cohort.clock,
     Math.round(performance.now() - startedAt)
   );
+  // Release-manifest linkage: every released count gets a ledger row.
+  await recordCountReleases(dashboardReleaseRecords(dash, cohort.clock));
+  return dash;
 }

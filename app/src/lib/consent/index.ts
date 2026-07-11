@@ -4,3 +4,5 @@ export * from "./engine";
 export * from "./gatedQueries";
 export * from "./aggregates";
 export * from "./policyRepo";
+export * from "./scopeHistory";
+export * from "./classCopy";

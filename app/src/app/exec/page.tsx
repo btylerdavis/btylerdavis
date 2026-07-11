@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
+import { CoverageStrip } from "@/components/CoverageStrip";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
@@ -89,6 +90,13 @@ export default async function ExecDashboardPage({
               />
             </div>
           </Card>
+
+          {/* Consent-coverage denominators (level-up 9) */}
+          <CoverageStrip
+            coverage={dash.coverage}
+            tierLabel="identified tier (view_identified)"
+            context="funnel, growth and asset numbers read only the Contributing set"
+          />
 
           <div className="grid gap-4 lg:grid-cols-5">
             {/* Referral funnel */}

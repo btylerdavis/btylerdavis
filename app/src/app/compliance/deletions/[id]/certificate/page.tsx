@@ -91,6 +91,15 @@ export default async function DeletionCertificatePage({
                   value={certificate.ledgerRef}
                   mono
                 />
+                <div className="sm:col-span-2">
+                  <CertField
+                    label={`Certificate content hash (SHA-256 of the stored snapshot${
+                      certificate.contentHashVerified ? " — verified against the snapshot" : ""
+                    })`}
+                    value={certificate.contentHash}
+                    mono
+                  />
+                </div>
               </dl>
 
               <h3 className="mt-8 text-sm font-semibold tracking-wide text-navy uppercase">
@@ -128,6 +137,11 @@ export default async function DeletionCertificatePage({
                 <li>
                   Every consent instrument was revoked at execution; collection stopped the same
                   instant and all read gates now refuse this subject&rsquo;s data.
+                </li>
+                <li>
+                  This deletion is <span className="font-semibold">terminal</span>: the record
+                  cannot be re-enrolled, re-consented, or restored by any administrative or
+                  participant-facing action.
                 </li>
                 <li>
                   The immutable consent event ledger ({ledgerRecords.toLocaleString("en-US")}{" "}

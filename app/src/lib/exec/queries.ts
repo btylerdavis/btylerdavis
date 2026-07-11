@@ -1,10 +1,12 @@
 import {
+  consentCoverage,
   getAllGrantedDevices,
   grantedObservationNights,
   grantSetHas,
   grantsFor,
   loadAllGrants,
   treatmentEventRowDataClass,
+  type ConsentCoverage,
   type DataClass,
 } from "../consent";
 import { prisma } from "../db";
@@ -83,6 +85,8 @@ export interface ExecDashboard {
     observationNights: number;
     instrumented: number;
   };
+  /** consent-coverage denominators for this tier (level-up 9) */
+  coverage: ConsentCoverage;
   queryMs: number;
 }
 
@@ -93,7 +97,7 @@ export async function loadExecDashboard(
   const clock = await getSimClock();
 
   const allGrants = await loadAllGrants();
-  const [participants, screens, hstGroups, therapyEvents, matDevices, grantedNights] =
+  const [participants, screens, hstGroups, therapyEvents, matDevices, grantedNights, coverage] =
     await Promise.all([
       // Tombstones drop out of every stage/tile (defense in depth — F-01).
       prisma.participant.findMany({
@@ -125,6 +129,8 @@ export async function loadExecDashboard(
       // Consent-aware nights: classified per source class BEFORE counting,
       // so a revoked class contributes zero nights (audit F-07).
       grantedObservationNights({ use: "view_identified", grants: allGrants }),
+      // Coverage denominators for the strip (level-up 9).
+      consentCoverage({ use: "view_identified", clock, grants: allGrants }),
     ]);
 
   const canView = (participantId: string, dataClass: DataClass) =>
@@ -221,6 +227,7 @@ export async function loadExecDashboard(
     },
     growth: { consented, linked },
     assets: { consented, linked, observationNights, instrumented },
+    coverage,
     queryMs: Math.round(performance.now() - startedAt),
   };
 }

@@ -261,6 +261,19 @@ model DeletionRequest {
   /// Ledger record count captured atomically at execution — the certificate
   /// renders ONLY from this stored snapshot, never from a live query.
   ledgerCount   Int?
+  /// Observable workflow metadata (level-up 8): every execution attempt is
+  /// recorded OUTSIDE the atomic transaction, so a failed attempt leaves an
+  /// audit trace while the request itself rolls back to `pending`.
+  attempts        Int       @default(0)
+  lastAttemptAt   DateTime?
+  /// Populated when the latest execution attempt failed (the retryable
+  /// failure path); cleared by a successful execution.
+  lastAttemptError String?
+  /// Immutable certificate content hash (level-up 8): SHA-256 over the
+  /// stored execution-snapshot fields, computed and stored inside the
+  /// execution transaction. The printable certificate displays it; any
+  /// later drift between certificate and snapshot is detectable.
+  contentHash   String?
   createdAt     DateTime  @default(now())
 
   participant Participant @relation(fields: [participantId], references: [id])
@@ -283,6 +296,28 @@ model SavedCohort {
   /// sim-clock date at save time
   clockDate   DateTime
   createdAt   DateTime @default(now())
+}
+
+/// Disclosure-control release ledger (audit F-12, level-up 10): one row per
+/// partner-facing count release. Every count a partner surface releases —
+/// proposal feasibility numbers, dashboard tiles/tables — is banded
+/// (never exact) and logged here with the surface, the canonical query, the
+/// metric, the band that left the system, and the sim-clock date. Viewable
+/// at /partner/releases (DUA-gated).
+model ReleaseLedgerEntry {
+  id        String   @id @default(uuid())
+  surface   String // "partner_proposal" | "partner_dashboard"
+  /// canonical query descriptor (preset + validated filters)
+  query     String
+  /// which released number this row logs (e.g. "matched", "firmness:soft")
+  metric    String
+  /// the band actually released (e.g. "11–20", "<11 (suppressed)")
+  band      String
+  /// sim-clock date at release
+  clockDate DateTime
+  createdAt DateTime @default(now())
+
+  @@index([surface, createdAt])
 }
 
 /// Singleton row holding the demo "current date" (the time machine's clock).

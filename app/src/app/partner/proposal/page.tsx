@@ -13,18 +13,49 @@ import {
   loadProposal,
   parseProposalParams,
   PROPOSAL_PRESETS,
+  type ProposalFilterKey,
 } from "@/lib/partner/proposal";
 import { ARM_LABELS, FIRMNESS_BAND_LABELS } from "@/lib/research/cohort";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { DUA_COOKIE } from "../dua";
 
+/** Form metadata per filter dimension (rendered only within the preset's family). */
+const FILTER_SELECT_META: Record<ProposalFilterKey, { label: string; options: [string, string][] }> = {
+  severity: {
+    label: "OSA severity",
+    options: [
+      ["mild", "Mild"],
+      ["moderate", "Moderate"],
+      ["severe", "Severe"],
+    ],
+  },
+  supine: {
+    label: "Supine-predominant",
+    options: [
+      ["y", "Yes"],
+      ["n", "No"],
+    ],
+  },
+  arm: {
+    label: "Treatment arm",
+    options: Object.entries(ARM_LABELS) as [string, string][],
+  },
+  firmness: {
+    label: "Firmness band",
+    options: Object.entries(FIRMNESS_BAND_LABELS) as [string, string][],
+  },
+};
+
 /**
  * Sponsored-study proposal generator (DEMO.md Act 7 reserve → working;
  * SPEC §12.4). DUA-gated like the dashboard. The form is a GET form — every
  * proposal is a bookmarkable URL — and the generated one-pager below it
- * carries LIVE consent-filtered cohort counts released through the same
- * k-suppression as every other partner surface. Print → PDF for the
- * one-page handout (chrome stripped by the print stylesheet).
+ * carries LIVE consent-filtered cohort counts released through the
+ * disclosure-control layer (audit F-12): BANDED counts (never exact),
+ * complementary suppression across the whole filter lattice, approved query
+ * families per research question, and a release-ledger row for every count
+ * that leaves the page. Print → PDF for the one-page handout (chrome
+ * stripped by the print stylesheet).
  */
 export const metadata: Metadata = { title: "Study proposal" };
 
@@ -73,8 +104,9 @@ export default async function ProposalPage({
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted">
                   Pick a research question from the SPEC §6.3–6.4 preset list and narrow the
-                  cohort; the one-pager below fills in live consent-filtered feasibility counts
-                  and the SPEC §12.4 price band. Print the page for the handout.
+                  cohort within that question&apos;s approved query family; the one-pager below
+                  fills in live consent-filtered feasibility counts — released as bands, never
+                  exact — and the SPEC §12.4 price band. Print the page for the handout.
                 </p>
               </div>
               <TimeMachineWidget
@@ -99,37 +131,19 @@ export default async function ProposalPage({
                   ))}
                 </select>
               </label>
-              <ProposalSelect
-                name="severity"
-                label="OSA severity"
-                value={filters.severity}
-                options={[
-                  ["mild", "Mild"],
-                  ["moderate", "Moderate"],
-                  ["severe", "Severe"],
-                ]}
-              />
-              <ProposalSelect
-                name="supine"
-                label="Supine-predominant"
-                value={filters.supine}
-                options={[
-                  ["y", "Yes"],
-                  ["n", "No"],
-                ]}
-              />
-              <ProposalSelect
-                name="arm"
-                label="Treatment arm"
-                value={filters.arm}
-                options={Object.entries(ARM_LABELS) as [string, string][]}
-              />
-              <ProposalSelect
-                name="firmness"
-                label="Firmness band"
-                value={filters.firmness}
-                options={Object.entries(FIRMNESS_BAND_LABELS) as [string, string][]}
-              />
+              {/* Approved query family (level-up 6): only the preset's own
+                  filter dimensions render — anything else is dropped at
+                  parse time, so free combination exists only within the
+                  family. */}
+              {preset.family.filterKeys.map((key) => (
+                <ProposalSelect
+                  key={key}
+                  name={key}
+                  label={FILTER_SELECT_META[key].label}
+                  value={filters[key]}
+                  options={FILTER_SELECT_META[key].options}
+                />
+              ))}
               <label className="block text-sm">
                 <span className="font-semibold text-navy">Duration</span>
                 <select
@@ -150,6 +164,26 @@ export default async function ProposalPage({
                 </button>
               </div>
             </form>
+
+            {/* Approved query families — the disclosure-control note */}
+            <div className="mt-4 rounded-card bg-pale-blue/60 p-4 text-xs text-muted">
+              <p className="font-semibold text-navy">
+                Approved query families (SPEC §12.3 · disclosure control)
+              </p>
+              <p className="mt-1">
+                Feasibility queries are restricted to preset families — free filter combination
+                is allowed only <span className="font-semibold">within</span> a family; other
+                filters are ignored. This question&apos;s family:{" "}
+                <span className="font-semibold text-navy">{preset.family.label}</span>. All
+                released counts are banded (&lt;11 suppressed · 11–20 · 21–50 · 51–200 ·
+                &gt;200) with complementary suppression across the whole family lattice, and
+                every release is logged in the{" "}
+                <Link href="/partner/releases" className="font-semibold underline underline-offset-4">
+                  release ledger
+                </Link>
+                .
+              </p>
+            </div>
           </Card>
 
           {/* Watermark banner — kept in print on purpose */}
@@ -198,8 +232,9 @@ export default async function ProposalPage({
                     <span className="font-semibold text-navy tabular-nums">
                       {proposal.cohort.total.display}
                     </span>{" "}
-                    total (counts under k = {proposal.cohort.threshold} are suppressed —
-                    SPEC §12.3 release rules).
+                    total (counts release as bands with k &lt; {proposal.cohort.threshold}{" "}
+                    suppression and complementary suppression — SPEC §12.3 + disclosure-control
+                    release rules).
                     {proposal.feasibility.met !== null && (
                       <>
                         {" "}
@@ -211,13 +246,51 @@ export default async function ProposalPage({
                           }`}
                         >
                           {proposal.feasibility.met
-                            ? "the matching cohort meets that bar today"
-                            : "the matching cohort does not meet that bar yet"}
+                            ? "the released band clears that bar today"
+                            : "the released band does not reach that bar yet"}
+                        </span>
+                        .
+                      </>
+                    )}
+                    {proposal.feasibility.bandNote !== null && (
+                      <>
+                        {" "}
+                        The SPEC §6.3 power sketch needs ≈ {proposal.feasibility.nPerGroup} per
+                        comparison group ({proposal.feasibility.required} total):{" "}
+                        <span className="font-semibold text-warning">
+                          {proposal.feasibility.bandNote}
                         </span>
                         .
                       </>
                     )}
                   </p>
+
+                  {proposal.firmnessBreakdown !== null && (
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                        Matched cohort by firmness band (released bands)
+                      </p>
+                      <table className="mt-1.5 w-full max-w-md text-sm">
+                        <tbody>
+                          {proposal.firmnessBreakdown.map((row) => (
+                            <tr
+                              key={row.band}
+                              className="border-b border-pale-blue/60 last:border-0"
+                            >
+                              <td className="py-1 pr-4 text-body">{row.label}</td>
+                              <td className="py-1 text-right font-semibold text-navy tabular-nums">
+                                {row.released.display}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <p className="mt-1 text-xs text-muted">
+                        Sub-counts come from the same audited lattice release as the totals —
+                        no cell is derivable by subtraction from the numbers on this page.
+                      </p>
+                    </div>
+                  )}
                 </section>
 
                 <section>
@@ -278,7 +351,9 @@ export default async function ProposalPage({
                     De-identified or Limited-Data-Set access under DUA only — never identified
                     data, never raw resale. The DUA prohibits re-identification attempts, onward
                     transfer, and marketing use of participant-level data; every released cell
-                    passes k-suppression, exactly as on the dashboard you just used.
+                    is banded with k-suppression and complementary suppression, exactly as on
+                    the dashboard you just used, and every released count is recorded in the
+                    release ledger.
                   </p>
                 </section>
               </div>
@@ -293,6 +368,12 @@ export default async function ProposalPage({
 
           <p className="pb-2 text-center text-xs text-muted print:hidden">
             Cohort queries ran in {proposal.queryMs.toLocaleString("en-US")} ms ·{" "}
+            {proposal.releasesLogged} count release{proposal.releasesLogged === 1 ? "" : "s"}{" "}
+            logged to the{" "}
+            <Link href="/partner/releases" className="underline underline-offset-4">
+              release ledger
+            </Link>{" "}
+            ·{" "}
             <Link href="/partner/dashboard" className="underline underline-offset-4">
               back to the partner dashboard
             </Link>

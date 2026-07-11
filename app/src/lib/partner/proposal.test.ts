@@ -15,13 +15,20 @@ import {
 /**
  * Proposal generator: the feasibility n must be a LIVE consent-filtered
  * research-tier count (revoke someone and the proposal shrinks), released
- * through the same k-suppression as every other partner surface, and every
- * proposal must carry the §12.4 "rough band, not a quote" honesty line.
+ * through the DISCLOSURE-CONTROL layer (audit F-12): banded counts (never
+ * exact), approved query families, and a release-ledger row for every count
+ * released. Every proposal must carry the §12.4 "rough band, not a quote"
+ * honesty line.
+ *
+ * NOTE (stage-2 assertion changes, justified): the pre-fix versions of these
+ * tests asserted EXACT released counts ("12", "11") — the very release shape
+ * audit F-12 refutes. They now assert the released BAND.
  */
 
 const SIM_TODAY = new Date(Date.UTC(2026, 5, 30));
 
 async function wipe() {
+  await prisma.releaseLedgerEntry.deleteMany();
   await prisma.deletionRequest.deleteMany();
   await prisma.observation.deleteMany();
   await prisma.sleepSession.deleteMany();
@@ -95,28 +102,35 @@ describe("proposalTimeline", () => {
   });
 });
 
-describe("loadProposal — consent-filtered live n", () => {
-  it("counts only research-consented participants; revocation shrinks it; small cells suppress", async () => {
+describe("loadProposal — consent-filtered live n, released as bands (F-12)", () => {
+  it("counts only research-consented participants; releases bands, never exact; revocation still bites", async () => {
     const ids = await seedConsented(12);
     // The category preset applies no default filters → matched = whole tier.
     const inputs = parseProposalParams({ q: "sponsor-lines-vs-category" });
 
     const before = await loadProposal(inputs);
-    expect(before.cohort.matched).toEqual({ suppressed: false, display: "12" });
-    expect(before.cohort.total.display).toBe("12");
-    // 12 << 2 × §6.3 sketch (≈ 63/group) → honestly "not met".
+    // 12 members release as the 11–20 BAND — never the exact count
+    // (pre-fix this asserted display "12"; that was the F-12 defect).
+    expect(before.cohort.matched.suppressed).toBe(false);
+    expect(before.cohort.matched.band).toBe("11-20");
+    expect(before.cohort.matched.display).toBe("11–20");
+    expect(before.cohort.matched.display).not.toContain("12");
+    expect(before.cohort.total.display).toBe("11–20");
+    // 12 << 2 × §6.3 sketch (≈ 63/group) → the band's max (20) decides "not met".
     expect(before.feasibility.met).toBe(false);
     expect(before.feasibility.nPerGroup).toBeGreaterThanOrEqual(63);
     expect(before.honestyLine).toBe(PRICE_HONESTY_LINE);
     expect(before.priceBand.min).toBeGreaterThan(0);
 
-    // Revoke one participant — the live count drops on the next generate.
+    // Revoke one participant — 11 stays inside the same band (bands are the
+    // point: single-participant changes are not observable)...
     await revokeConsent(ids[0], "LANE_A");
     const after = await loadProposal(inputs);
-    expect(after.cohort.matched).toEqual({ suppressed: false, display: "11" });
+    expect(after.cohort.matched.suppressed).toBe(false);
+    expect(after.cohort.matched.band).toBe("11-20");
 
-    // One more revocation puts the cell under k=11 → suppressed, no leak,
-    // and the feasibility verdict is withheld with it.
+    // ...but one more revocation puts the cell under k=11 → suppressed, no
+    // leak, and the feasibility verdict is withheld with it.
     await revokeConsent(ids[1], "LANE_A");
     const suppressed = await loadProposal(inputs);
     expect(suppressed.cohort.matched.suppressed).toBe(true);
@@ -128,6 +142,87 @@ describe("loadProposal — consent-filtered live n", () => {
     await seedConsented(12);
     const proposal = await loadProposal(parseProposalParams({ q: "sensor-validation" }));
     expect(proposal.feasibility.met).toBeNull();
+  });
+
+  it("shows the firmness sub-count breakdown from the same lattice — banded, and only when firmness is unfiltered", async () => {
+    await seedConsented(12);
+    const withBreakdown = await loadProposal(
+      parseProposalParams({ q: "sponsor-lines-vs-category" })
+    );
+    expect(withBreakdown.firmnessBreakdown).not.toBeNull();
+    expect(withBreakdown.firmnessBreakdown).toHaveLength(3);
+    for (const row of withBreakdown.firmnessBreakdown ?? []) {
+      // No purchases in this fixture: every firmness cell is an honest 0 —
+      // and never an exact non-zero count.
+      expect(row.released.display).toBe("0");
+    }
+
+    const filtered = await loadProposal(
+      parseProposalParams({ q: "sponsor-lines-vs-category", firmness: "medium" })
+    );
+    expect(filtered.firmnessBreakdown).toBeNull();
+  });
+
+  it("logs every released count to the release ledger (manifest linkage, level-up 6/10)", async () => {
+    await seedConsented(12);
+    const inputs = parseProposalParams({ q: "sponsor-lines-vs-category", severity: "moderate" });
+    const proposal = await loadProposal(inputs);
+
+    const entries = await prisma.releaseLedgerEntry.findMany({
+      orderBy: { createdAt: "asc" },
+    });
+    // matched + cohort_total + 3 firmness sub-counts, all from this render.
+    expect(proposal.releasesLogged).toBe(5);
+    expect(entries).toHaveLength(5);
+    expect(new Set(entries.map((entry) => entry.surface))).toEqual(
+      new Set(["partner_proposal"])
+    );
+    expect(entries.map((entry) => entry.metric).sort()).toEqual([
+      "cohort_total",
+      "firmness:firm",
+      "firmness:medium",
+      "firmness:soft",
+      "matched",
+    ]);
+    for (const entry of entries) {
+      expect(entry.query).toBe("q=sponsor-lines-vs-category&severity=moderate&dur=6");
+      expect(entry.clockDate).toEqual(SIM_TODAY);
+      // The ledger records BANDS, never exact non-zero counts.
+      expect(["0", "11–20", "<11 (suppressed)"]).toContain(entry.band);
+    }
+    // The whole tier (12) releases as its band; the severity-filtered
+    // matched cell in this fixture is an honest 0 (no HST data seeded).
+    const total = entries.find((entry) => entry.metric === "cohort_total");
+    expect(total?.band).toBe("11–20");
+    const matched = entries.find((entry) => entry.metric === "matched");
+    expect(matched?.band).toBe("0");
+  });
+});
+
+describe("approved query families (level-up 6)", () => {
+  it("drops filters outside the preset's family — free combination only within it", () => {
+    // The flagship positional family is severity × supine × firmness: an
+    // `arm` filter (which would rebuild the audit's 4-dimension differencing
+    // query) is ignored.
+    const inputs = parseProposalParams({
+      q: "positional-firmness",
+      severity: "moderate",
+      arm: "appliance_mattress",
+      firmness: "soft",
+    });
+    expect(inputs.preset.family.filterKeys).toEqual(["severity", "supine", "firmness"]);
+    expect(inputs.filters).toEqual({ severity: "moderate", supine: "y", firmness: "soft" });
+    expect(inputs.filters.arm).toBeUndefined();
+  });
+
+  it("every preset declares its family, and defaults stay inside it", () => {
+    for (const preset of PROPOSAL_PRESETS) {
+      expect(preset.family.filterKeys.length).toBeGreaterThan(0);
+      expect(preset.family.label.length).toBeGreaterThan(0);
+      for (const key of Object.keys(preset.defaultFilters)) {
+        expect(preset.family.filterKeys).toContain(key);
+      }
+    }
   });
 });
 

@@ -65,14 +65,19 @@ describe("shiftDate", () => {
 });
 
 describe("pseudonym", () => {
-  it("is deterministic and formatted P-xxxxxxxx", () => {
+  it("is deterministic and formatted P- + 12 hex chars (level-up 10)", () => {
     for (const pid of PIDS.slice(0, 20)) {
       expect(pseudonym(pid)).toBe(pseudonym(pid));
-      expect(pseudonym(pid)).toMatch(/^P-\d{8}$/);
+      expect(pseudonym(pid)).toMatch(/^P-[0-9a-f]{12}$/);
+      expect(pseudonym(pid)).toHaveLength(2 + 12);
+      // The pseudonym must not embed any fragment of the raw id.
+      expect(pseudonym(pid)).not.toContain(pid.slice(0, 6));
     }
   });
 
-  it("does not collide across a demo-scale cohort sample", () => {
+  it("does not collide across a beyond-demo-scale cohort sample", () => {
+    const many = Array.from({ length: 10_000 }, (_, i) => `collision-probe-${i}`);
+    expect(new Set(many.map(pseudonym)).size).toBe(many.length);
     expect(new Set(PIDS.map(pseudonym)).size).toBe(PIDS.length);
   });
 });

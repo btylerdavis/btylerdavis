@@ -353,9 +353,10 @@ describe("full revocation seals every product surface", () => {
     expect(positional.instrumentedCount).toBe(1);
 
     // 6. Partner aggregates: the only Tempur-Pedic purchaser vanished → 0
-    //    (released as a true zero, not suppressed).
+    //    (released as a true zero, not suppressed — stage-2 releases carry
+    //    band metadata alongside the display).
     const partner = await loadPartnerDashboard();
-    expect(partner.partnerPurchasers).toEqual({ suppressed: false, display: "0" });
+    expect(partner.partnerPurchasers).toMatchObject({ suppressed: false, display: "0" });
 
     // 7. Exec funnel: every stage and asset tile forgets the subject.
     const exec = await loadExecDashboard();

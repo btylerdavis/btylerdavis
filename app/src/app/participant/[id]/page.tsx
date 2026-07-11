@@ -7,6 +7,10 @@ import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getParticipantDeletionState } from "@/lib/compliance/deletion";
 import {
+  buildScopeHistory,
+  CLASS_DISABLES,
+  CLASS_LABELS,
+  getConsentHistory,
   getConsentStates,
   getDevices,
   getLinkedProfile,
@@ -16,6 +20,7 @@ import {
   grantSetHas,
   loadGrants,
   type DataClass,
+  type DataClassScopeHistory,
 } from "@/lib/consent";
 import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId } from "@/lib/format";
@@ -40,15 +45,17 @@ const LANE_LABELS: Record<string, string> = {
   LANE_C: "Lane C — record linkage",
 };
 
-const CLASS_LABELS: Record<DataClass, string> = {
-  wearable_sleep: "Wearable sleep",
-  cpap_telemetry: "CPAP telemetry",
-  hst_clinical: "Home sleep test",
-  mattress_purchase: "Mattress purchase",
-  sleep_mat: "Under-mattress sensor",
-  pro_responses: "Questionnaires",
-  linkage: "Record linkage",
-  registry_demographics: "Registry demographics",
+const USE_LABELS: Record<string, string> = {
+  collect: "collect",
+  view_identified: "identified views",
+  research_deid: "research (de-identified)",
+};
+
+const HISTORY_ACTION_LABELS: Record<string, string> = {
+  signed: "Signed",
+  revoked: "Revoked",
+  restored: "Restored",
+  revised: "Scope revised",
 };
 
 export default async function ParticipantPage({
@@ -61,12 +68,14 @@ export default async function ParticipantPage({
   const participant = await getParticipant(id);
   if (!participant) notFound();
 
-  const [simDate, consents, grants, deletionState] = await Promise.all([
+  const [simDate, consents, grants, deletionState, ledger] = await Promise.all([
     getSimClock(),
     getConsentStates(id),
     loadGrants(id),
     getParticipantDeletionState(id),
+    getConsentHistory(id),
   ]);
+  const scopeHistory = buildScopeHistory(ledger);
 
   // Tombstone: an executed deletion removed every identified-tier row; only
   // the append-only consent ledger and this participant row survive.
@@ -90,14 +99,25 @@ export default async function ParticipantPage({
                 already-published de-identified mart releases are immutable and cannot be
                 recalled (SPEC §9.4).
               </p>
-              {deletionState.executed && (
-                <Link
-                  href={`/compliance/deletions/${deletionState.executed.id}/certificate`}
-                  className={`${buttonClasses("outline", "sm")} mt-4`}
-                >
-                  View the deletion certificate
+              <p className="mt-2 text-sm font-semibold text-danger">
+                Deletion is terminal. This record cannot be re-enrolled, re-consented, or
+                restored — no participant-facing or administrative action can bring it back.
+                To take part in the registry again, a person would enroll as an entirely new
+                participant with a new record and new signatures.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {deletionState.executed && (
+                  <Link
+                    href={`/compliance/deletions/${deletionState.executed.id}/certificate`}
+                    className={buttonClasses("outline", "sm")}
+                  >
+                    View the deletion certificate
+                  </Link>
+                )}
+                <Link href={`/participant/${id}/receipt`} className={buttonClasses("outline", "sm")}>
+                  Consent receipt (retained ledger)
                 </Link>
-              )}
+              </div>
             </Card>
 
             <Card className="p-6">
@@ -273,6 +293,33 @@ export default async function ParticipantPage({
             )}
           </Card>
 
+          {/* Scope history per data class + consent receipt (level-up 7) */}
+          <Card className="p-6">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold text-navy">
+                  What you&apos;ve agreed to, class by class
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Replayed from your immutable consent ledger: every signature, revocation and
+                  restore, with dates and instrument versions. A class you never signed for
+                  can only be enabled by a fresh signature — never by an administrator.
+                </p>
+              </div>
+              <Link
+                href={`/participant/${id}/receipt`}
+                className={buttonClasses("outline", "sm")}
+              >
+                Consent receipt (printable)
+              </Link>
+            </div>
+            <ul className="mt-4 space-y-3">
+              {scopeHistory.map((entry) => (
+                <ScopeHistoryRow key={entry.dataClass} entry={entry} participantId={id} />
+              ))}
+            </ul>
+          </Card>
+
           {/* Devices */}
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-navy">Devices</h2>
@@ -410,11 +457,18 @@ export default async function ParticipantPage({
               published in de-identified form cannot be recalled — you were told this up front,
               in plain language (SPEC §9.4).
             </p>
+            <p className="mt-2 text-xs text-muted">
+              Request lifecycle: pending → executing → executed, or declined. A failed
+              execution attempt stays visible here and remains retryable. Once executed,
+              deletion is <span className="font-semibold text-danger">terminal</span> — no
+              re-consent or restore can recreate a deleted record.
+            </p>
             {deletionState.executing ? (
               <div className="mt-4 rounded-card bg-warning/10 px-4 py-3 text-sm">
                 <p className="font-semibold text-navy">
                   Deletion requested on {formatDay(deletionState.executing.requestedAt)} — being
-                  executed right now. This page will show the tombstone once it completes.
+                  executed right now (attempt {deletionState.executing.attempts}). This page
+                  will show the tombstone once it completes.
                 </p>
               </div>
             ) : deletionState.pending ? (
@@ -423,6 +477,13 @@ export default async function ParticipantPage({
                   Deletion requested on {formatDay(deletionState.pending.requestedAt)} — pending
                   compliance review.
                 </p>
+                {deletionState.pending.lastAttemptError !== null && (
+                  <p className="mt-1 text-xs font-semibold text-danger">
+                    An execution attempt (attempt {deletionState.pending.attempts}) failed and
+                    was rolled back — nothing was deleted yet. The request remains pending and
+                    the compliance team can retry; the failure is recorded on the request.
+                  </p>
+                )}
                 {deletionState.pending.note && (
                   <p className="mt-1 text-xs text-muted">
                     Your note: {deletionState.pending.note}
@@ -430,7 +491,26 @@ export default async function ParticipantPage({
                 )}
               </div>
             ) : (
-              <form action={fileDeletionRequest} className="mt-4 space-y-3">
+              <>
+                {deletionState.declined && (
+                  <div className="mt-4 rounded-card bg-pale-blue/70 px-4 py-3 text-sm">
+                    <p className="font-semibold text-navy">
+                      Your deletion request from{" "}
+                      {formatDay(deletionState.declined.requestedAt)} was declined
+                      {deletionState.declined.resolvedAt
+                        ? ` on ${formatDay(deletionState.declined.resolvedAt)}`
+                        : ""}
+                      . Your record remains active and nothing was deleted — you can file a new
+                      request below at any time.
+                    </p>
+                    {deletionState.declined.note && (
+                      <p className="mt-1 text-xs text-muted">
+                        Reason on file: {deletionState.declined.note}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <form action={fileDeletionRequest} className="mt-4 space-y-3">
                 <input type="hidden" name="participantId" value={id} />
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">Note</span>
@@ -446,12 +526,89 @@ export default async function ParticipantPage({
                 <button type="submit" className={buttonClasses("danger", "sm")}>
                   Request deletion
                 </button>
-              </form>
+                </form>
+              </>
             )}
           </Card>
         </div>
       </main>
       <Footer />
     </div>
+  );
+}
+
+/** One data class in the scope-history section (level-up 7). */
+function ScopeHistoryRow({
+  entry,
+  participantId,
+}: {
+  entry: DataClassScopeHistory;
+  participantId: string;
+}) {
+  const badge =
+    entry.state === "granted"
+      ? "bg-success/10 text-success"
+      : entry.state === "revoked"
+        ? "bg-danger/10 text-danger"
+        : "bg-pale-blue text-muted";
+  return (
+    <li className="rounded-card bg-pale-blue/50 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge}`}>
+            {entry.state === "never_authorized" ? "never authorized" : entry.state}
+          </span>
+          <span className="text-sm font-semibold text-navy">
+            {CLASS_LABELS[entry.dataClass]}
+          </span>
+        </div>
+        {entry.currentUses.length > 0 && (
+          <span className="text-xs text-muted">
+            in force: {entry.currentUses.map((use) => USE_LABELS[use] ?? use).join(" · ")}
+          </span>
+        )}
+      </div>
+
+      {/* Preview of what a change to this class disables */}
+      <p className="mt-1.5 text-xs text-muted">
+        {entry.state === "granted" ? "Revoking this: " : "While off: "}
+        {CLASS_DISABLES[entry.dataClass]}
+      </p>
+
+      {entry.events.length === 0 ? (
+        <p className="mt-1.5 text-xs text-muted">
+          Never part of any consent you signed — no one can switch it on for you;{" "}
+          <Link
+            href={`/participant/${participantId}/reconsent`}
+            className="font-semibold text-accent-purple underline underline-offset-2"
+          >
+            a fresh signature (re-consent) is the only way to enable it
+          </Link>
+          .
+        </p>
+      ) : (
+        <ul className="mt-1.5 space-y-0.5">
+          {entry.events.map((event, index) => (
+            <li key={index} className="text-xs text-body">
+              <span
+                className={`font-semibold ${
+                  event.action === "revoked" ? "text-danger" : "text-navy"
+                }`}
+              >
+                {HISTORY_ACTION_LABELS[event.action] ?? event.action}
+              </span>{" "}
+              {formatDay(event.date)} · {event.instrumentType} v{event.instrumentVersion} ·{" "}
+              {event.eventType.replace(/_/g, " ")}
+              {event.uses.length > 0 && (
+                <span className="text-muted">
+                  {" "}
+                  → {event.uses.map((use) => USE_LABELS[use] ?? use).join(", ")}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
   );
 }

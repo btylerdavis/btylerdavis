@@ -16,9 +16,12 @@ import { loadResearchCohort } from "../research/cohort";
 import { setSimClock } from "../simclock";
 import { addDays } from "../synthetic/profiles";
 import {
+  certificateContentHash,
   countIdentifiedRows,
   declineDeletion,
   executeDeletion,
+  getDeletionCertificate,
+  getParticipantDeletionState,
   parseDeletionCounts,
   requestDeletion,
   totalDeleted,
@@ -282,6 +285,13 @@ describe("deletion requests", () => {
     expect(parseDeletionCounts(request.deletionCounts)).toEqual(EXPECTED);
     expect(request.ledgerRef).toBe(report.ledgerRef);
     expect(request.ledgerCount).toBe(6); // certificate snapshot, stored at execution
+    // Observable workflow (level-up 8): attempt metadata on a clean success.
+    expect(request.attempts).toBe(1);
+    expect(report.attempt).toBe(1);
+    expect(request.lastAttemptError).toBeNull();
+    // Immutable certificate hash: stored at execution, returned on the report.
+    expect(request.contentHash).toBe(report.contentHash);
+    expect(request.contentHash).toMatch(/^[0-9a-f]{64}$/);
 
     // --- terminal lifecycle -----------------------------------------------------
     expect(tombstone!.lifecycleState).toBe("deleted");
@@ -323,6 +333,87 @@ describe("deletion requests", () => {
     const bystanderObs = await getObservations(bystander, { use: "view_identified" });
     expect(bystanderObs.blocked).toBe(false);
     expect(bystanderObs.data.length).toBeGreaterThan(0);
+  });
+
+  it("stores an immutable certificate hash: stable, verifiable, and independent of later database changes", async () => {
+    const subject = await seedSubject("Delia Deleted");
+    const filed = await requestDeletion(subject);
+    if (!filed.ok) throw new Error("request failed");
+    const executed = await executeDeletion(filed.request.id);
+    if (!executed.ok) throw new Error("execute failed");
+    const { report } = executed;
+
+    // The stored hash is exactly the canonical hash of the stored snapshot.
+    const recomputed = certificateContentHash({
+      requestId: report.requestId,
+      participantId: report.participantId,
+      requestedAt: report.requestedAt,
+      executedAt: report.executedAt,
+      counts: report.counts,
+      ledgerCount: report.ledgerRecords,
+      ledgerRef: report.ledgerRef,
+    });
+    expect(recomputed).toBe(report.contentHash);
+    // Stability: hashing the same snapshot again yields the same digest.
+    expect(
+      certificateContentHash({
+        requestId: report.requestId,
+        participantId: report.participantId,
+        requestedAt: report.requestedAt,
+        executedAt: report.executedAt,
+        counts: { ...report.counts },
+        ledgerCount: report.ledgerRecords,
+        ledgerRef: report.ledgerRef,
+      })
+    ).toBe(report.contentHash);
+    // Sensitivity: any snapshot field change changes the digest.
+    expect(
+      certificateContentHash({
+        requestId: report.requestId,
+        participantId: report.participantId,
+        requestedAt: report.requestedAt,
+        executedAt: report.executedAt,
+        counts: { ...report.counts, observations: report.counts.observations + 1 },
+        ledgerCount: report.ledgerRecords,
+        ledgerRef: report.ledgerRef,
+      })
+    ).not.toBe(report.contentHash);
+
+    // The certificate renders the STORED hash and verifies it against the
+    // stored snapshot fields — never a live query.
+    const certificate = await getDeletionCertificate(filed.request.id);
+    expect(certificate?.contentHash).toBe(report.contentHash);
+    expect(certificate?.contentHashVerified).toBe(true);
+
+    // Unrelated database activity after execution cannot move the hash.
+    await seedSubject("Later Larry");
+    const after = await getDeletionCertificate(filed.request.id);
+    expect(after?.contentHash).toBe(report.contentHash);
+    expect(after?.contentHashVerified).toBe(true);
+  });
+
+  it("surfaces the full participant-facing state machine, including declined", async () => {
+    const subject = await seedSubject("Kept Kim");
+    const filed = await requestDeletion(subject, "first thoughts");
+    if (!filed.ok) throw new Error("request failed");
+
+    let state = await getParticipantDeletionState(subject);
+    expect(state.pending?.id).toBe(filed.request.id);
+    expect(state.declined).toBeNull();
+    expect(state.executed).toBeNull();
+
+    await declineDeletion(filed.request.id, "wrong record (demo)");
+    state = await getParticipantDeletionState(subject);
+    expect(state.pending).toBeNull();
+    expect(state.declined?.id).toBe(filed.request.id);
+
+    // Declined is not terminal: a new request can be filed and executed.
+    const again = await requestDeletion(subject);
+    if (!again.ok) throw new Error("second request failed");
+    await executeDeletion(again.request.id);
+    state = await getParticipantDeletionState(subject);
+    expect(state.executed?.id).toBe(again.request.id);
+    expect(state.declined?.id).toBe(filed.request.id); // history stays visible
   });
 
   it("decline resolves the request and touches nothing else", async () => {

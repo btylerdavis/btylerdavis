@@ -1,12 +1,14 @@
 import type { ConsentRecord } from "@prisma/client";
 import {
   activeParticipantIds,
+  consentCoverage,
   evaluateGrants,
   getAllGrantedDevices,
   grantSetHas,
   grantsFor,
   latestGrantedObservationDates,
   loadAllGrants,
+  type ConsentCoverage,
   type DataClass,
 } from "../consent";
 import { prisma } from "../db";
@@ -85,6 +87,8 @@ export interface CoachDashboard {
     pageCount: number;
     sortDir: "asc" | "desc";
   };
+  /** consent-coverage denominators for this tier (level-up 9) */
+  coverage: ConsentCoverage;
   /** wall-clock ms spent loading every query on this render */
   queryMs: number;
 }
@@ -435,9 +439,11 @@ export async function loadCoachDashboard(opts: {
 
   // Consent-aware "last data": the freshest night among GRANTED classes only
   // — a sealed class must not leak freshness (audit F-07).
-  const [lastData, pageNames] = await Promise.all([
+  const [lastData, pageNames, coverage] = await Promise.all([
     latestGrantedObservationDates(pageIds, { use: "view_identified", grants: allGrants }),
     getLinkedDisplayNames(pageIds, { grants: allGrants }),
+    // Coverage denominators for the strip above the tiles (level-up 9).
+    consentCoverage({ use: "view_identified", clock, grants: allGrants }),
   ]);
 
   const cpapDeviceIds = new Set(
@@ -527,6 +533,7 @@ export async function loadCoachDashboard(opts: {
       pageCount,
       sortDir: opts.sortDir,
     },
+    coverage,
     queryMs: Math.round(performance.now() - startedAt),
   };
 }

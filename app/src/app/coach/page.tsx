@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { CoverageStrip } from "@/components/CoverageStrip";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TimeMachineWidget } from "@/components/TimeMachineWidget";
@@ -69,6 +70,13 @@ export default async function CoachPortalPage({
               </div>
             </div>
           </Card>
+
+          {/* Consent-coverage denominators (level-up 9) */}
+          <CoverageStrip
+            coverage={dashboard.coverage}
+            tierLabel="identified tier (view_identified)"
+            context="every metric below reads only the Contributing set"
+          />
 
           {/* Funnel strip */}
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
