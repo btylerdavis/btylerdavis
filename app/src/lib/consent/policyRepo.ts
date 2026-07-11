@@ -8,8 +8,14 @@ import {
   grantSetHas,
   type GrantSet,
 } from "./engine";
-import { sourceToDataClass, storedDataClass } from "./scopes";
-import { ConsentError, LifecycleError, type ConsentScope, type DataClass } from "./types";
+import { sourceToDataClass, storedDataClass, uniformRowDataClass } from "./scopes";
+import {
+  ConsentError,
+  LifecycleError,
+  LineageError,
+  type ConsentScope,
+  type DataClass,
+} from "./types";
 
 /**
  * Policy-enforced write repository (audit F-03/F-04, level-up 4).
@@ -58,6 +64,36 @@ export async function guardedSubjectWrite<T>(
     }
     return write(tx, grants);
   });
+}
+
+/**
+ * Row-lineage-authorized guarded write (audit v2 HIGH fix, prioritized fix
+ * 2). The consent class the chunk is admitted under is DERIVED from the
+ * rows' own persisted `source` lineage — the caller never supplies it — and
+ * asserted equal to `expectedClass` (the connector schema's class). Batches
+ * with an unknown source, mixed classes, or a lineage/connector disagreement
+ * are refused whole with LineageError BEFORE the transaction opens: no
+ * quarantine writes, nothing reaches the primary tables.
+ */
+export async function guardedImportRowsWrite<T extends { source: string }>(
+  participantId: string,
+  expectedClass: DataClass,
+  rows: T[],
+  write: (tx: Prisma.TransactionClient, rows: T[]) => Promise<number>,
+  opts: { db?: Db } = {}
+): Promise<number> {
+  const lineage = uniformRowDataClass(rows);
+  if (!lineage.ok) {
+    throw new LineageError(participantId, lineage.code, lineage.detail);
+  }
+  if (lineage.dataClass !== expectedClass) {
+    throw new LineageError(
+      participantId,
+      "class_mismatch",
+      `rows carry ${lineage.dataClass} lineage but the connector admits ${expectedClass}`
+    );
+  }
+  return guardedSubjectWrite(participantId, [lineage.dataClass], (tx) => write(tx, rows), opts);
 }
 
 /** guardedSubjectWrite variant that maps refusals to a blocked result. */

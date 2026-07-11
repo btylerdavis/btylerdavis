@@ -86,6 +86,26 @@ export class ConsentError extends Error {
 }
 
 /**
+ * Thrown when a batched subject-data write's row lineage cannot be
+ * authorized (audit v2 HIGH fix): a row's `source` maps to no data class
+ * (fail closed), the batch mixes classes, or the lineage-derived class
+ * disagrees with the class the operation claims to be writing. Nothing is
+ * written — refused batches never reach the primary tables.
+ */
+export class LineageError extends Error {
+  readonly code = "LINEAGE_DENIED";
+  readonly participantId: string;
+  readonly reason: string;
+
+  constructor(participantId: string, reason: string, detail: string) {
+    super(`Row lineage denied for participant ${participantId}: ${reason} — ${detail}`);
+    this.name = "LineageError";
+    this.participantId = participantId;
+    this.reason = reason;
+  }
+}
+
+/**
  * Thrown when a consent mutation or subject-data write targets a participant
  * whose lifecycle state forbids it (deleted tombstones above all — audit
  * F-01). Enforced INSIDE the same transaction as the mutation/write.

@@ -5,6 +5,8 @@ import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { FlowProgress } from "@/components/Stepper";
+import { CLASS_LABELS } from "@/lib/consent/classCopy";
+import type { DataClass } from "@/lib/consent/types";
 import { formatDay } from "@/lib/format";
 import type { ImportResult } from "@/lib/imports/ingest";
 import type { IdentityMatchWithDoor } from "@/lib/identity";
@@ -22,6 +24,15 @@ const KIND_LABELS = {
   apple_health: "Apple Health export (wearable sleep)",
   airview: "AirView nightly compliance (CPAP telemetry)",
 } as const;
+
+/** "LANE_B" + 1 → "Lane B grant (revision 1)" */
+function grantLabel(instrumentType: string, revision: number): string {
+  return `${instrumentType.replace("LANE_", "Lane ")} grant (revision ${revision})`;
+}
+
+function classLabel(dataClass: string): string {
+  return CLASS_LABELS[dataClass as DataClass] ?? dataClass;
+}
 
 const RECORD_LABELS: Record<string, string> = {
   HKCategoryTypeIdentifierSleepAnalysis: "Sleep analysis segments",
@@ -78,20 +89,24 @@ export function ImportFlow() {
         setError("Choose a file first");
         return;
       }
+      if (!patient) return;
       const formData = new FormData();
       formData.set("file", file);
-      acceptPreview(await previewImportUpload(formData));
+      acceptPreview(await previewImportUpload(patient.participantId, formData));
     });
 
   const pickSample = (kind: "apple_health" | "airview") =>
     run(async () => {
-      acceptPreview(await loadSampleImport(kind));
+      if (!patient) return;
+      acceptPreview(await loadSampleImport(patient.participantId, kind));
     });
 
   const commit = () =>
     run(async () => {
       if (!patient || !preview) return;
-      setResult(await confirmImport(patient.participantId, preview.parsed, align));
+      // Server-owned confirmation: only the single-use token, the
+      // participant, and the align flag travel back — never the payload.
+      setResult(await confirmImport(preview.token, patient.participantId, align));
     });
 
   return (
@@ -223,6 +238,34 @@ export function ImportFlow() {
 
           {result === null && (
             <>
+              {/* Consent-impact preview (audit v2 fix 11): what class this
+                  writes and which grant admits it, BEFORE confirmation. */}
+              {preview.impact.authority ? (
+                <p className="rounded-card border border-brand-blue/25 bg-brand-blue/5 px-4 py-2.5 text-sm text-body">
+                  This will write{" "}
+                  <span className="font-semibold text-navy">
+                    {preview.impact.rowCount.toLocaleString("en-US")}{" "}
+                    {classLabel(preview.impact.dataClass)} ({preview.impact.dataClass}) rows
+                  </span>{" "}
+                  for {patient.displayName} under their{" "}
+                  <span className="font-semibold text-navy">
+                    {grantLabel(
+                      preview.impact.authority.instrumentType,
+                      preview.impact.authority.revision
+                    )}
+                  </span>
+                  . The grant is re-checked inside every write transaction at confirmation.
+                </p>
+              ) : (
+                <p className="rounded-card border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm text-body">
+                  {patient.displayName} has{" "}
+                  <span className="font-semibold text-danger">
+                    no current {classLabel(preview.impact.dataClass)} (
+                    {preview.impact.dataClass}) collect grant
+                  </span>{" "}
+                  — the ingest gate will refuse this import if you confirm it.
+                </p>
+              )}
               <label className="flex items-start gap-2.5 text-sm text-body">
                 <input
                   type="checkbox"
@@ -257,12 +300,12 @@ export function ImportFlow() {
           {result?.blocked && (
             <div className="rounded-card border border-danger/30 bg-danger/5 p-4">
               <span className="rounded-full border border-danger/40 bg-white px-2.5 py-0.5 text-xs font-semibold text-danger">
-                Blocked by consent
+                Refused
               </span>
               <p className="mt-2 text-sm text-body">{result.reason}</p>
               <p className="mt-1 text-xs text-muted">
-                Nothing was written. That&rsquo;s the ingest gate doing its job — record the
-                right consent and try again.
+                That&rsquo;s the import trust boundary doing its job — fix the consent (or
+                re-preview the file) and try again.
               </p>
             </div>
           )}
@@ -276,7 +319,26 @@ export function ImportFlow() {
                 ({formatDay(result.firstDayIso)} – {formatDay(result.lastDayIso)}
                 {result.shiftedDays !== 0 && `, shifted ${result.shiftedDays} days`}).
               </p>
-              <p className="mt-2 text-sm text-body">
+              {/* Provenance receipt (audit v2 fix 6): what was admitted, from
+                  which file, by which parser, under which consent event. */}
+              <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+                <ReceiptRow label="Import batch" value={result.batchId} mono />
+                <ReceiptRow
+                  label="Written as"
+                  value={`${classLabel(result.dataClass)} (source "${result.source}")`}
+                />
+                <ReceiptRow
+                  label="Admitted under"
+                  value={grantLabel(result.consentInstrument, result.consentRevision)}
+                />
+                <ReceiptRow label="Parser" value={result.parserVersion} />
+                <ReceiptRow
+                  label="File digest (SHA-256)"
+                  value={`${result.fileDigest.slice(0, 16)}…`}
+                  mono
+                />
+              </dl>
+              <p className="mt-3 text-sm text-body">
                 The nights are live on the charts already.{" "}
                 <Link
                   href={`/participant/${patient.participantId}/trends`}
@@ -298,6 +360,15 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="text-xs font-medium text-muted">{label}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-navy">{value}</dd>
+    </div>
+  );
+}
+
+function ReceiptRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <dt className="shrink-0 font-medium text-muted">{label}:</dt>
+      <dd className={`truncate text-body ${mono ? "font-mono" : "font-semibold"}`}>{value}</dd>
     </div>
   );
 }

@@ -25,6 +25,8 @@ const SIM_TODAY = new Date(Date.UTC(2026, 5, 30));
 
 async function wipe() {
   await prisma.deletionRequest.deleteMany();
+  await prisma.pendingImport.deleteMany();
+  await prisma.importBatch.deleteMany();
   await prisma.observation.deleteMany();
   await prisma.sleepSession.deleteMany();
   await prisma.proResponse.deleteMany();

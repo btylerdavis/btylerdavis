@@ -256,6 +256,43 @@ export async function assertIngestAllowed(
   }
 }
 
+/** The consent event a "collect" admission would be recorded under. */
+export interface CollectAuthority {
+  instrumentType: InstrumentType;
+  /** revision of the instrument's current (authorizing) event */
+  revision: number;
+}
+
+/**
+ * Identifies the consent event that CURRENTLY authorizes collecting
+ * `dataClass` for this participant: the highest-revision event of an
+ * instrument whose current state is granted and whose scope contains
+ * (dataClass, "collect"). Used for import provenance receipts and the
+ * consent-impact preview (audit v2 prioritized fixes 6 + 11). When more
+ * than one instrument grants the class, the lexicographically first
+ * instrument (LANE_A < LANE_B < LANE_C) is reported, deterministically.
+ * Returns null when no current grant exists — the ingest gate will refuse.
+ */
+export async function collectAuthority(
+  participantId: string,
+  dataClass: DataClass,
+  db: Db = prisma
+): Promise<CollectAuthority | null> {
+  const records = await db.consentRecord.findMany({ where: { participantId } });
+  const authorizing = [...latestRecordsByInstrument(records).values()]
+    .filter(
+      (record) =>
+        record.status === "granted" &&
+        record.revokedAt === null &&
+        parseScope(record).some((grant) => grant.dataClass === dataClass && grant.use === "collect")
+    )
+    .sort((a, b) => a.instrumentType.localeCompare(b.instrumentType));
+  const record = authorizing[0];
+  return record
+    ? { instrumentType: record.instrumentType as InstrumentType, revision: record.revision }
+    : null;
+}
+
 interface AppendEventInput {
   eventType: ConsentEventType;
   status: ConsentStatus;

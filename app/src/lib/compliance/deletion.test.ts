@@ -50,12 +50,18 @@ const EXPECTED: DeletionCounts = {
   mattressPurchases: 1,
   treatmentEvents: 1,
   episodes: 1,
+  // Import trust boundary tables (audit v2 HIGH fix): now part of the
+  // deletion pass/certificate; seedSubject stages no imports, so 0.
+  pendingImports: 0,
+  importBatches: 0,
   demoIdentity: 1,
 };
 
 async function wipe() {
   await prisma.deletionRequest.deleteMany();
   await prisma.savedCohort.deleteMany();
+  await prisma.pendingImport.deleteMany();
+  await prisma.importBatch.deleteMany();
   await prisma.observation.deleteMany();
   await prisma.sleepSession.deleteMany();
   await prisma.proResponse.deleteMany();
@@ -252,6 +258,9 @@ describe("deletion requests", () => {
       mattressPurchases: 0,
       treatmentEvents: 0,
       episodes: 0,
+      // Import trust boundary tables (audit v2): part of the deletion pass.
+      pendingImports: 0,
+      importBatches: 0,
       demoIdentity: 0,
     });
 

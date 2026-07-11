@@ -56,6 +56,11 @@ const eslintConfig = defineConfig([
       // recommendations module touching prisma; the pipeline, schema,
       // safety chain, and evidence builder are pure.
       "src/lib/recommendations/decisionLog.ts",
+      // Import trust boundary (audit v2 HIGH fix): the only file in the
+      // imports module touching prisma — PendingImport staging tokens and
+      // ImportBatch provenance receipts. Subject-data rows still land only
+      // through the policy repository's guarded writes.
+      "src/lib/imports/pendingStore.ts",
       "src/lib/identity.ts",
       "src/lib/simclock.ts",
       "src/lib/synthetic/generator.ts",

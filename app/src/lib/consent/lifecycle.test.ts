@@ -76,6 +76,8 @@ const ALL_ON = {
 async function wipe() {
   await prisma.deletionRequest.deleteMany();
   await prisma.savedCohort.deleteMany();
+  await prisma.pendingImport.deleteMany();
+  await prisma.importBatch.deleteMany();
   await prisma.observation.deleteMany();
   await prisma.sleepSession.deleteMany();
   await prisma.proResponse.deleteMany();

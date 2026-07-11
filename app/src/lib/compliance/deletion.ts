@@ -49,6 +49,11 @@ export const DELETION_TABLES = [
   { key: "mattressPurchases", label: "Mattress purchases" },
   { key: "treatmentEvents", label: "Treatment events" },
   { key: "episodes", label: "Protocol episodes" },
+  // Import trust boundary tables (audit v2 HIGH fix): staged payloads hold
+  // subject data awaiting confirmation, and batch receipts carry per-subject
+  // provenance — both are identified-tier and must die with the participant.
+  { key: "pendingImports", label: "Staged import payloads" },
+  { key: "importBatches", label: "Import provenance receipts" },
   { key: "demoIdentity", label: "Identity record (name + email)" },
 ] as const;
 
@@ -177,6 +182,8 @@ export async function countIdentifiedRows(
     mattressPurchases,
     treatmentEvents,
     episodes,
+    pendingImports,
+    importBatches,
     demoIdentity,
   ] = await Promise.all([
     db.observation.count(where),
@@ -186,6 +193,8 @@ export async function countIdentifiedRows(
     db.mattressPurchase.count(where),
     db.treatmentEvent.count(where),
     db.episode.count(where),
+    db.pendingImport.count(where),
+    db.importBatch.count(where),
     db.demoIdentity.count(where),
   ]);
   return {
@@ -196,6 +205,8 @@ export async function countIdentifiedRows(
     mattressPurchases,
     treatmentEvents,
     episodes,
+    pendingImports,
+    importBatches,
     demoIdentity,
   };
 }
@@ -308,6 +319,10 @@ export async function executeDeletion(requestId: string): Promise<ExecuteDeletio
         mattressPurchases: (await tx.mattressPurchase.deleteMany(where)).count,
         treatmentEvents: (await tx.treatmentEvent.deleteMany(where)).count,
         episodes: (await tx.episode.deleteMany(where)).count,
+        // Import trust boundary (audit v2): staged payloads + provenance
+        // receipts are subject data — deleted with everything else.
+        pendingImports: (await tx.pendingImport.deleteMany(where)).count,
+        importBatches: (await tx.importBatch.deleteMany(where)).count,
         demoIdentity: (await tx.demoIdentity.deleteMany(where)).count,
       };
 

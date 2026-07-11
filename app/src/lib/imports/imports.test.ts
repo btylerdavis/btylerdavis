@@ -140,7 +140,9 @@ describe("AirView CSV parser", () => {
 
 describe("gated import ingest", () => {
   beforeEach(async () => {
-    await prisma.observation.deleteMany();
+    await prisma.pendingImport.deleteMany();
+  await prisma.importBatch.deleteMany();
+  await prisma.observation.deleteMany();
     await prisma.sleepSession.deleteMany();
     await prisma.proResponse.deleteMany();
     await prisma.mattressPurchase.deleteMany();
