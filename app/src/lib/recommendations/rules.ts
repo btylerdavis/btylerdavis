@@ -332,6 +332,14 @@ const RULES: Rule[] = [
 export const RULE_IDS = RULES.map((rule) => rule.ruleId);
 
 /**
+ * Registered rule → guardrail class (the source of truth the safety chain's
+ * guardrail-class validator checks drafts against — level-up 12).
+ */
+export const RULE_GUARDRAILS: Readonly<Record<string, GuardrailClass>> = Object.fromEntries(
+  RULES.map((rule) => [rule.ruleId, rule.guardrail])
+);
+
+/**
  * Evaluates every rule against the inputs. Deterministic: same inputs, same
  * cards, in fixed rule order (comfort → adherence → provider).
  */

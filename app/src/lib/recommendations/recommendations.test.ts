@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { buildEvidenceBundle, type EvidenceBundle } from "./evidence";
 import { buildNarrative, NARRATIVE_DISCLAIMER } from "./narrative";
 import {
   emptyInputs,
@@ -7,6 +8,10 @@ import {
   RULE_IDS,
   type RecommendationInputs,
 } from "./rules";
+// The banned-phrase list is now a RUNTIME control (safety.ts, one layer of
+// the SafetyCheck chain — level-up 12); these tests assert the same
+// discipline against the same list, so test and pipeline can never drift.
+import { BANNED_PHRASES } from "./safety";
 
 /**
  * Rules-engine unit tests (SPEC §10.3 guardrails): every rule fires on a
@@ -16,28 +21,14 @@ import {
  * composer can produce (narrative.ts, sampled across many seeds below).
  */
 
-// The non-device-CDS boundary, asserted as text: no diagnosis language, no
-// therapy-change directives, no "quit" framing. Applies to rule output AND
-// to every narrative draft.
-const BANNED_PHRASES = [
-  "you have",
-  "diagnos", // diagnosis, diagnose, diagnosed, diagnostic
-  "increase your pressure",
-  "decrease your pressure",
-  "change your pressure",
-  "adjust your pressure",
-  "stop using",
-  "stop your",
-  "quit",
-  "you suffer",
-  "your condition",
-  "prescri", // prescribe, prescription
-];
-
 const inputs = (overrides: Partial<RecommendationInputs>): RecommendationInputs => ({
   ...emptyInputs(),
   ...overrides,
 });
+
+/** Narrative composition consumes the typed EvidenceBundle (level-up 12). */
+const bundleFor = (participantId: string, values: RecommendationInputs): EvidenceBundle =>
+  buildEvidenceBundle(participantId, "2026-06-30", values);
 
 /** Inputs crafted so every rule fires at once (worst-case wording surface). */
 function everythingFires(): RecommendationInputs {
@@ -247,7 +238,7 @@ describe("AI narrative preview (drafted narratives, SPEC §10.4)", () => {
     expect(recs.length).toBe(RULE_IDS.length); // every rule's narrative is checked
     for (const participantId of SEED_IDS) {
       for (const rec of recs) {
-        const surface = `${buildNarrative(participantId, rec, everythingFires())} ${NARRATIVE_DISCLAIMER}`.toLowerCase();
+        const surface = `${buildNarrative(participantId, rec, bundleFor(participantId, everythingFires()))} ${NARRATIVE_DISCLAIMER}`.toLowerCase();
         for (const phrase of BANNED_PHRASES) {
           expect(
             surface,
@@ -260,28 +251,32 @@ describe("AI narrative preview (drafted narratives, SPEC §10.4)", () => {
 
   it("narratives are multi-sentence, data-grounded, and deterministic per participant", () => {
     const inputs = everythingFires();
+    const bundle = bundleFor("narrative-seed-0", inputs);
     for (const rec of evaluateRules(inputs)) {
-      const narrative = buildNarrative("narrative-seed-0", rec, inputs);
+      const narrative = buildNarrative("narrative-seed-0", rec, bundle);
       const sentences = narrative.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
       expect(sentences.length, `${rec.ruleId} narrative should read as prose`).toBeGreaterThanOrEqual(3);
       expect(narrative, `${rec.ruleId} narrative must cite the participant's data`).toMatch(/\d/);
       // Deterministic: same participant, same draft — every render.
-      expect(buildNarrative("narrative-seed-0", rec, inputs)).toBe(narrative);
+      expect(buildNarrative("narrative-seed-0", rec, bundle)).toBe(narrative);
     }
   });
 
   it("different participants read different drafts (varied sentence banks)", () => {
     const inputs = everythingFires();
     for (const rec of evaluateRules(inputs)) {
-      const variants = new Set(SEED_IDS.map((pid) => buildNarrative(pid, rec, inputs)));
+      const variants = new Set(
+        SEED_IDS.map((pid) => buildNarrative(pid, rec, bundleFor(pid, inputs)))
+      );
       expect(variants.size, `${rec.ruleId} should vary across participants`).toBeGreaterThan(1);
     }
   });
 
   it("cites the actual numbers behind the card", () => {
     const inputs = everythingFires();
+    const bundle = bundleFor("marcus-test", inputs);
     const byRule = new Map(
-      evaluateRules(inputs).map((rec) => [rec.ruleId, buildNarrative("marcus-test", rec, inputs)])
+      evaluateRules(inputs).map((rec) => [rec.ruleId, buildNarrative("marcus-test", rec, bundle)])
     );
     expect(byRule.get("adherence.streak")).toContain("96%");
     expect(byRule.get("adherence.streak")).toContain("30 nights");

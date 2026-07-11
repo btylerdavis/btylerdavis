@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   ComposedChart,
+  ErrorBar,
   Line,
   LineChart,
   ReferenceLine,
@@ -313,6 +314,8 @@ export interface ArmColumnPoint {
   label: string;
   value: number | null;
   n: number;
+  /** 95% CI half-width — drawn as an error bar when present (level-up 11) */
+  ci95?: number | null;
 }
 
 function ArmTick({
@@ -414,7 +417,11 @@ export function ArmChangeColumns({
               maxBarSize={40}
               isAnimationActive={false}
               label={(props: unknown) => <ChangeLabel {...(props as ChangeLabelProps)} />}
-            />
+            >
+              {points.some((point) => point.ci95 !== undefined && point.ci95 !== null) && (
+                <ErrorBar dataKey="ci95" width={6} strokeWidth={1.5} stroke={CHROME.ink} />
+              )}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -21,6 +21,7 @@ const RESEARCH_LINKS = [
   { href: "/research", label: "Cohort explorer" },
   { href: "/research/positional", label: "Positional study" },
   { href: "/research/compare", label: "Comparisons" },
+  { href: "/research/robustness", label: "Robustness" },
   { href: "/research/power", label: "Power" },
   { href: "/research/deid", label: "De-identification" },
   { href: "/research/abstract", label: "Abstract" },
@@ -29,6 +30,7 @@ const RESEARCH_LINKS = [
 const COMPLIANCE_LINKS = [
   { href: "/compliance/revocation", label: "Revocation" },
   { href: "/compliance/deletions", label: "Deletions" },
+  { href: "/compliance/model-log", label: "Model log" },
 ];
 
 const BUSINESS_LINKS = [

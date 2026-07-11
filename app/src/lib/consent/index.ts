@@ -3,6 +3,7 @@ export * from "./scopes";
 export * from "./engine";
 export * from "./gatedQueries";
 export * from "./aggregates";
+export * from "./consentTimeline";
 export * from "./policyRepo";
 export * from "./scopeHistory";
 export * from "./classCopy";

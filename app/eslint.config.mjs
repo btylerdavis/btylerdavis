@@ -52,6 +52,10 @@ const eslintConfig = defineConfig([
       // Disclosure-control layer (audit F-12): the only file touching prisma
       // is the release ledger; bands/lattice are pure functions.
       "src/lib/disclosure/ledger.ts",
+      // Governed-model decision log (level-up 12): the only file in the
+      // recommendations module touching prisma; the pipeline, schema,
+      // safety chain, and evidence builder are pure.
+      "src/lib/recommendations/decisionLog.ts",
       "src/lib/identity.ts",
       "src/lib/simclock.ts",
       "src/lib/synthetic/generator.ts",

@@ -6,6 +6,7 @@ import {
   type ArmKey,
   type SeverityBand,
 } from "./cohort";
+import { meanCi95 } from "./stats";
 
 /**
  * Treatment-comparison precompute (SPEC §6.4; DEMO.md Act 5). The arithmetic
@@ -36,6 +37,10 @@ export interface ArmComparison {
   n: number;
   essChange: { mean: number | null; n: number };
   seffChange: { mean: number | null; n: number };
+  /** 95% CI half-widths for the two deltas (normal approx — level-up 11);
+   *  null when fewer than 2 members contributed */
+  essChangeCi95: number | null;
+  seffChangeCi95: number | null;
   covariates: {
     meanAge: number | null;
     meanAhi: { mean: number | null; n: number };
@@ -65,6 +70,8 @@ export function computeArmComparisons(members: ArmMemberInput[]): ArmComparison[
       n: group.length,
       essChange: meanOf(group.map((member) => member.essChange90)),
       seffChange: meanOf(group.map((member) => member.seffChange)),
+      essChangeCi95: meanCi95(group.map((member) => member.essChange90)).ci95,
+      seffChangeCi95: meanCi95(group.map((member) => member.seffChange)).ci95,
       covariates: {
         meanAge: meanOf(group.map((member) => member.age)).mean,
         meanAhi: meanOf(group.map((member) => member.ahi)),

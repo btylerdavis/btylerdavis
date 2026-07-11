@@ -13,6 +13,7 @@ import {
 } from "@/components/charts/ResearchCharts";
 import { consentCoverage } from "@/lib/consent";
 import { formatDay } from "@/lib/format";
+import { FIRMNESS_BAND_LABELS } from "@/lib/research/cohort";
 import { loadPositionalDashboard, MIN_GROUP_N, RESPONDER_DROP_PP } from "@/lib/research/positional";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 
@@ -101,6 +102,34 @@ export default async function PositionalDashboardPage() {
             emptyMessage="No instrumented supine-predominant participants are readable under current consents."
           >
             <WeeklySupineByBandChart points={dash.weekly} bandN={dash.bandN} />
+            {/* Headline band deltas with 95% CIs (level-up 11) */}
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              {dash.bandDeltas.map(({ band, stats }) => (
+                <span
+                  key={band}
+                  className="rounded-full bg-pale-blue px-2.5 py-1 font-semibold text-navy tabular-nums"
+                >
+                  {FIRMNESS_BAND_LABELS[band]}:{" "}
+                  {stats.mean === null
+                    ? "—"
+                    : `${stats.mean >= 0 ? "+" : "−"}${Math.abs(stats.mean).toFixed(1)} pp` +
+                      (stats.ci95 !== null ? ` ± ${stats.ci95.toFixed(1)}` : "") +
+                      ` · n=${stats.n}`}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              Member-level pre → post supine change (post − pre; negative = less supine time)
+              with 95% CIs, normal approximation — the uncertainty behind the headline. Full
+              bias workup:{" "}
+              <Link
+                href="/research/robustness"
+                className="font-semibold underline underline-offset-4"
+              >
+                robustness views
+              </Link>
+              .
+            </p>
           </ChartCard>
 
           <div className="grid gap-4 lg:grid-cols-2">

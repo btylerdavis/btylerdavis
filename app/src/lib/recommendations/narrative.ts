@@ -1,19 +1,22 @@
 import { Rng } from "../synthetic/prng";
+import type { EvidenceBundle } from "./evidence";
 import type { Recommendation, RecommendationInputs } from "./rules";
 
 /**
  * AI narrative preview (DEMO.md §3 reserve → working; SPEC §10.4).
  *
- * Composes a multi-sentence, warm plain-language narrative for each
- * recommendation card from the participant's REAL inputs — no network, no
- * model call. Each slot (opener / evidence / context / closer) draws from a
+ * EVIDENCE-FIRST (audit level-up 12): the composer consumes the typed
+ * EvidenceBundle — the same consent-scoped snapshot whose claims the card
+ * cites — so narrative numbers and the "View evidence" tables can never
+ * diverge. Each slot (opener / evidence / context / closer) draws from a
  * sentence bank; the pick is keyed on the data (thresholds choose between
  * phrasings) and on a PRNG seeded per (participant, rule), so the same
  * participant always reads the same draft and different participants read
- * different ones. Production swaps this composer for a governed LLM behind
- * the same interface (SPEC §10.4); the guardrail wording discipline is
- * identical — the banned-phrase test in recommendations.test.ts runs over
- * every narrative this module can emit.
+ * different ones. No network, no model call. Production swaps this composer
+ * for a governed LLM behind the same interface (SPEC §10.4) — emitting
+ * through the same RecommendationDraft schema and SafetyCheck chain
+ * (schema.ts / safety.ts); the banned-phrase discipline runs at render time
+ * AND in recommendations.test.ts over every narrative this module can emit.
  */
 
 export const NARRATIVE_VERSION = "narrative-v1";
@@ -256,14 +259,17 @@ const BUILDERS: Record<string, NarrativeBuilder> = {
 };
 
 /**
- * The drafted narrative for one card. Deterministic: seeded on
- * (NARRATIVE_VERSION, participantId, ruleId), so a participant's draft is
- * stable across renders while different participants read different drafts.
+ * The drafted narrative for one card, composed FROM the evidence bundle
+ * (level-up 12: builders read bundle.inputs — the consent-scoped snapshot
+ * the bundle's claims cite — so text and evidence tables share one source).
+ * Deterministic: seeded on (NARRATIVE_VERSION, participantId, ruleId), so a
+ * participant's draft is stable across renders while different participants
+ * read different drafts.
  */
 export function buildNarrative(
   participantId: string,
   recommendation: Recommendation,
-  inputs: RecommendationInputs
+  bundle: EvidenceBundle
 ): string {
   const builder = BUILDERS[recommendation.ruleId];
   if (!builder) {
@@ -271,5 +277,5 @@ export function buildNarrative(
     return recommendation.body;
   }
   const rng = new Rng(`${NARRATIVE_VERSION}:${participantId}:${recommendation.ruleId}`);
-  return builder(rng, inputs).join(" ");
+  return builder(rng, bundle.inputs).join(" ");
 }

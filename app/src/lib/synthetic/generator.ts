@@ -150,13 +150,21 @@ export function nightlyRows(profile: ParticipantProfile, date: Date, gate: Inges
   const daysOnMattress = p.hasMattress ? daysBetween(mattressDeliveryDate, date) : -1;
   const mattressActive = p.hasMattress && daysOnMattress >= 1;
 
-  // Is any therapy plausibly moving downstream physiology tonight?
+  // Is any AIRWAY therapy plausibly moving downstream physiology tonight?
+  // The mattress' causal channel is POSITION ONLY (supine_time_pct below):
+  // wearable physiology (efficiency, duration, resting HR, HRV) responds to
+  // CPAP/appliance therapy, never to the mattress. That design is what makes
+  // resting_hr a genuine NEGATIVE CONTROL for the flagship firmness-band
+  // comparison (audit level-up 11, /research/robustness): a firmness-band
+  // contrast in resting-HR change would signal selection/confounding or a
+  // pipeline bug, not a mattress effect — and on this generator it is flat
+  // by construction. ESS/ISI improvements for mattress responders are
+  // profile-driven (profiles.ts) and unaffected. No RNG draw is added or
+  // removed here, so per-scenario determinism is preserved.
   const therapyActive =
-    (cpapActive && p.cpapAdherent) ||
-    (applianceActive && p.applianceAdherent) ||
-    (mattressActive && p.supineDropPoints > 6);
+    (cpapActive && p.cpapAdherent) || (applianceActive && p.applianceAdherent);
   const therapyRamp = therapyActive
-    ? ramp(Math.max(cpapActive ? daysOnCpap : 0, applianceActive ? daysOnAppliance : 0, mattressActive ? daysOnMattress : 0), 30)
+    ? ramp(Math.max(cpapActive ? daysOnCpap : 0, applianceActive ? daysOnAppliance : 0), 30)
     : 0;
 
   // --- CPAP telemetry (source "airview") -----------------------------------

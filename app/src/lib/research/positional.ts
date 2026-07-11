@@ -5,6 +5,7 @@ import {
   type ResearchCohort,
   type ResearchMember,
 } from "./cohort";
+import { meanCi95, type MeanCi } from "./stats";
 
 /**
  * Positional-OSA flagship dashboard (SPEC §6.3 visualized; DEMO.md Act 5's
@@ -49,6 +50,12 @@ export interface EssDistBucket {
   nonRespondersCount: number;
 }
 
+export interface BandDeltaCi {
+  band: FirmnessBand;
+  /** member-level supine change (post − pre, pp) with 95% CI (level-up 11) */
+  stats: MeanCi;
+}
+
 export interface PositionalDashboard {
   clockIso: string;
   /** supine-predominant members with a mattress delivery (consent-filtered) */
@@ -59,6 +66,12 @@ export interface PositionalDashboard {
   bandN: Record<FirmnessBand, number>;
   /** medium-band supine drop, pre-mean − post-mean (headline effect size) */
   mediumBandDropPp: number | null;
+  /**
+   * The headline band deltas WITH uncertainty (level-up 11): per firmness
+   * band, the member-level pre→post supine change mean ± 95% CI (normal
+   * approximation) and the contributing n.
+   */
+  bandDeltas: BandDeltaCi[];
   brandPairs: BrandPair[];
   essDist: EssDistBucket[];
   respondersN: number;
@@ -143,6 +156,19 @@ export function buildPositionalDashboard(cohort: ResearchCohort): PositionalDash
       ? round1(mediumPre.mean - mediumPost.mean)
       : null;
 
+  // --- band deltas with 95% CIs (level-up 11) ---------------------------------
+  // Member-level pre→post supine change per firmness band — the same
+  // windowed means the brand pairs use, so the CI describes the actual
+  // between-participant spread of the headline effect.
+  const bandDeltas: BandDeltaCi[] = (["soft", "medium", "firm"] as const).map((band) => ({
+    band,
+    stats: meanCi95(
+      flagship
+        .filter((member) => member.firmnessBand === band)
+        .map((member) => member.supineChange)
+    ),
+  }));
+
   // --- per-brand before/after pairs ------------------------------------------
   const byBrand = new Map<string, { pres: number[]; posts: number[] }>();
   for (const member of flagship) {
@@ -198,6 +224,7 @@ export function buildPositionalDashboard(cohort: ResearchCohort): PositionalDash
     weekly,
     bandN,
     mediumBandDropPp,
+    bandDeltas,
     brandPairs,
     essDist,
     respondersN: responders.length,

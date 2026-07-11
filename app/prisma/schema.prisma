@@ -320,6 +320,59 @@ model ReleaseLedgerEntry {
   @@index([surface, createdAt])
 }
 
+/// Governed-model decision log (level-up 12): one row per rendered
+/// recommendation card per sim date. Every card the template engine emits is
+/// schema-validated (zod RecommendationDraft) and run through the SafetyCheck
+/// chain (denylist + claim-evidence linkage + guardrail-class validator);
+/// the outcome of every check is recorded here — model id + version, checks
+/// passed, sim date — and displayed read-only at /compliance/model-log. A
+/// future governed LLM logs through the exact same row shape.
+model ModelDecisionLog {
+  id            String   @id @default(uuid())
+  participantId String
+  ruleId        String
+  /// SPEC §10.3 guardrail class of the rendered card
+  guardrail     String
+  /// generation engine id ("templates-v1" today; a governed LLM later)
+  model         String
+  modelVersion  String
+  /// RecommendationDraft passed zod validation before rendering
+  schemaValid   Boolean
+  /// JSON string: SafetyCheck[] — { id, label, passed, detail }
+  checks        String
+  /// every safety check passed (a failed card is never rendered)
+  passed        Boolean
+  /// sim-clock date the card was rendered for
+  simDate       DateTime
+  /// Clinician-review stub (level-up 12): provider-class cards are queued
+  /// for review; the model-log page's "Mark reviewed (demo)" button fills
+  /// these in. Structure only — no real clinician workflow in the demo.
+  reviewQueued  Boolean  @default(false)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  /// One log row per card per engine version per sim date — re-rendering a
+  /// page never duplicates its audit trail.
+  @@unique([participantId, ruleId, model, modelVersion, simDate])
+  @@index([createdAt])
+  @@index([reviewQueued, reviewedAt])
+}
+
+/// Seed-stamped marker (level-up 11 scenario sweep hook): written once by
+/// `npm run seed` so every surface can state which effect-size scenario the
+/// database was actually seeded with — and warn when the running server's
+/// SCENARIO env disagrees (the time machine would generate inconsistent
+/// nights). Fully deterministic: no wall-clock timestamps.
+model SeedInfo {
+  id         String   @id @default("singleton")
+  /// "default" | "null" (src/lib/synthetic/profiles.ts seedScenario)
+  scenario   String
+  cohortSize Int
+  /// sim-clock date at seed time (deterministic, pinned)
+  clockDate  DateTime
+}
+
 /// Singleton row holding the demo "current date" (the time machine's clock).
 model SimClock {
   id          String   @id @default("singleton")

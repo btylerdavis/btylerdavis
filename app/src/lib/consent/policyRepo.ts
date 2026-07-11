@@ -451,6 +451,25 @@ export async function createRetailEnrollment(input: {
   });
 }
 
+export interface SeedInfoRecord {
+  scenario: string;
+  cohortSize: number;
+  clockDate: Date;
+}
+
+/**
+ * The seed-stamped scenario marker (level-up 11 scenario sweep hook):
+ * which effect-size scenario `npm run seed` actually built the database
+ * with. Null on databases seeded before the marker existed — surfaces
+ * render an "unknown (re-seed to stamp)" state rather than guessing.
+ */
+export async function getSeedInfo(db: Db = prisma): Promise<SeedInfoRecord | null> {
+  const row = await db.seedInfo.findUnique({ where: { id: "singleton" } });
+  return row
+    ? { scenario: row.scenario, cohortSize: row.cohortSize, clockDate: row.clockDate }
+    : null;
+}
+
 export interface CatalogItem {
   sku: string;
   brand: string;

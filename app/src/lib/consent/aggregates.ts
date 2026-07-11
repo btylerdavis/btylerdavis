@@ -295,6 +295,76 @@ export async function countActiveLast7(
 }
 
 // ---------------------------------------------------------------------------
+// Missingness primitives (level-up 11)
+// ---------------------------------------------------------------------------
+
+export interface MonthlyClassNightsRow {
+  participantId: string;
+  dataClass: DataClass;
+  /** "YYYY-MM" (UTC) */
+  month: string;
+  /** distinct day-grain observation nights of this class in the month */
+  nights: number;
+}
+
+interface MonthlyNightsSqlRow {
+  pid: string;
+  src: string;
+  month: string;
+  nights: bigint | number;
+}
+
+/**
+ * Distinct day-grain observation nights per (participant, data class,
+ * calendar month), counting ONLY granted classes (audit F-07 discipline:
+ * rows are classified per source BEFORE aggregation, unknown sources are
+ * quarantined per F-10). This is the "present nights" numerator of the
+ * missingness-by-class view (level-up 11); a revoked class contributes no
+ * nights to any month, and a tombstoned participant is absent because
+ * tombstones hold no grants.
+ *
+ * NOTE: raw SQL uses epoch-ms date arithmetic (Prisma stores SQLite DateTime
+ * as INTEGER ms). On the Postgres swap, replace the strftime bucket with
+ * to_char(effectiveDate, 'YYYY-MM').
+ */
+export async function monthlyGrantedClassNights(opts: {
+  use: ConsentUse;
+  grants?: Grants;
+}): Promise<MonthlyClassNightsRow[]> {
+  const grants = opts.grants ?? (await loadAllGrants());
+  const rows = await prisma.$queryRaw<MonthlyNightsSqlRow[]>`
+    SELECT participantId AS pid, source AS src,
+           strftime('%Y-%m', effectiveDate / 1000, 'unixepoch') AS month,
+           COUNT(DISTINCT effectiveDate) AS nights
+    FROM "Observation"
+    WHERE grain = 'day'
+    GROUP BY participantId, source, month
+  `;
+  const byKey = new Map<string, MonthlyClassNightsRow>();
+  for (const row of rows) {
+    const dataClass = sourceToDataClass(row.src);
+    if (dataClass === null) continue; // unknown source: quarantined (F-10)
+    if (!grantSetHas(grantsFor(grants, row.pid), dataClass, opts.use)) continue;
+    // Two sources can map to one class (e.g. airview + sd_card); nights are
+    // summed per class — the per-source distinct-date union is exact for the
+    // generator (one source per class per participant) and a safe upper
+    // bound otherwise (capped against expected nights by the caller).
+    const key = `${row.pid}|${dataClass}|${row.month}`;
+    const existing = byKey.get(key);
+    if (existing) existing.nights += Number(row.nights);
+    else {
+      byKey.set(key, {
+        participantId: row.pid,
+        dataClass,
+        month: row.month,
+        nights: Number(row.nights),
+      });
+    }
+  }
+  return [...byKey.values()];
+}
+
+// ---------------------------------------------------------------------------
 // Consent-coverage denominators (level-up 9)
 // ---------------------------------------------------------------------------
 

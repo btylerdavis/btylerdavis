@@ -471,6 +471,48 @@ export function meanOf(values: (number | null)[]): { mean: number | null; n: num
 }
 
 // ---------------------------------------------------------------------------
+// Robustness-view data access (level-up 11; kept here so the robustness
+// module imports no raw prisma)
+// ---------------------------------------------------------------------------
+
+export interface DeliveryWindowNightRow {
+  pid: string;
+  /** observation source — the caller classifies + consent-gates it */
+  src: string;
+  offsetMs: bigint | number;
+  value: number;
+}
+
+/**
+ * Nightly values of one concept relative to each participant's FIRST
+ * mattress delivery, −4w..+9w — the same window/join as the supine loader
+ * above. Raw rows: the caller (research/robustness) classifies each source
+ * fail-closed and applies research_deid consent per class, mirroring the
+ * cohort loader's discipline. Used for the resting-HR negative control.
+ */
+export async function loadDeliveryWindowNights(
+  concept: string
+): Promise<DeliveryWindowNightRow[]> {
+  return prisma.$queryRaw<DeliveryWindowNightRow[]>`
+    SELECT o.participantId AS pid,
+           o.source AS src,
+           o.effectiveDate - mp.deliveryMs AS offsetMs,
+           o.valueNumeric AS value
+    FROM "Observation" o
+    JOIN (
+      SELECT participantId, MIN(deliveryDate) AS deliveryMs
+      FROM "MattressPurchase"
+      WHERE deliveryDate IS NOT NULL
+      GROUP BY participantId
+    ) mp ON mp.participantId = o.participantId
+    WHERE o.concept = ${concept}
+      AND o.valueNumeric IS NOT NULL
+      AND o.effectiveDate >= mp.deliveryMs - ${SUPINE_PRE_DAYS * DAY_MS}
+      AND o.effectiveDate <= mp.deliveryMs + ${63 * DAY_MS}
+  `;
+}
+
+// ---------------------------------------------------------------------------
 // OMOP export data access (kept here so the route imports no raw prisma)
 // ---------------------------------------------------------------------------
 

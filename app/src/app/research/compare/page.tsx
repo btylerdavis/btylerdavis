@@ -39,13 +39,22 @@ export default async function TreatmentComparePage() {
     label: ARM_SHORT[arm.arm] ?? arm.arm,
     value: arm.essChange.mean === null ? null : round1(arm.essChange.mean),
     n: arm.essChange.n,
+    ci95: arm.essChangeCi95 === null ? null : Math.round(arm.essChangeCi95 * 100) / 100,
   }));
   const seffPoints = result.arms.map((arm) => ({
     arm: arm.arm,
     label: ARM_SHORT[arm.arm] ?? arm.arm,
     value: arm.seffChange.mean === null ? null : round1(arm.seffChange.mean),
     n: arm.seffChange.n,
+    ci95: arm.seffChangeCi95 === null ? null : Math.round(arm.seffChangeCi95 * 100) / 100,
   }));
+
+  const fmtCi = (mean: number | null, ci95: number | null, n: number, unit: string) =>
+    mean === null
+      ? "—"
+      : `${mean >= 0 ? "+" : "−"}${Math.abs(mean).toFixed(1)}${unit}` +
+        (ci95 !== null ? ` ± ${ci95.toFixed(1)}` : "") +
+        ` (n=${n})`;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -79,7 +88,7 @@ export default async function TreatmentComparePage() {
           {/* Outcome columns */}
           <ChartCard
             title="Mean outcome change by treatment arm"
-            subtitle="different units, separate panels — n under each column"
+            subtitle="different units, separate panels — n under each column · error bars = 95% CI (normal approx)"
           >
             <div className="grid gap-6 lg:grid-cols-2">
               <ArmChangeColumns
@@ -94,8 +103,33 @@ export default async function TreatmentComparePage() {
                 caption="Sleep-efficiency change · baseline → day 76–90 (pp)"
                 color={SERIES.secondary}
                 unit=" pp"
-                domain={[-1, 4]}
+                domain={[-2, 4]}
               />
+            </div>
+            {/* Arm deltas ± 95% CI as text (level-up 11) */}
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                    <th className="py-2 pr-4 font-semibold">Arm</th>
+                    <th className="py-2 pr-4 font-semibold">ESS change ± 95% CI</th>
+                    <th className="py-2 font-semibold">Sleep-efficiency change ± 95% CI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.arms.map((arm) => (
+                    <tr key={arm.arm} className="border-b border-pale-blue/60 last:border-0">
+                      <td className="py-2 pr-4 font-semibold text-navy">{arm.label}</td>
+                      <td className="py-2 pr-4 tabular-nums">
+                        {fmtCi(arm.essChange.mean, arm.essChangeCi95, arm.essChange.n, " pts")}
+                      </td>
+                      <td className="py-2 tabular-nums">
+                        {fmtCi(arm.seffChange.mean, arm.seffChangeCi95, arm.seffChange.n, " pp")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </ChartCard>
 

@@ -8,8 +8,11 @@ import { TimeMachineWidget } from "@/components/TimeMachineWidget";
 import { getLinkedProfile, loadGrants, type DataClass } from "@/lib/consent";
 import { getParticipant } from "@/lib/consent/policyRepo";
 import { formatDay, shortId } from "@/lib/format";
-import { buildNarrative } from "@/lib/recommendations/narrative";
-import { loadRecommendations } from "@/lib/recommendations/queries";
+import {
+  RECS_MODEL_ID,
+  RECS_MODEL_VERSION,
+  renderGovernedRecommendations,
+} from "@/lib/recommendations/pipeline";
 import { MAX_SIM_DAYS, simDayNumber } from "@/lib/simclock";
 import { NarrativeCards } from "./NarrativeCards";
 
@@ -20,6 +23,11 @@ import { NarrativeCards } from "./NarrativeCards";
  * view_identified grants — revoke them and the page shows the blocked state
  * instead of cards. Every card carries its §10.3 guardrail-class badge and
  * the non-device-CDS boundary line.
+ *
+ * Governed pipeline (audit level-up 12): every card on this page came
+ * through evidence bundle → template draft → zod schema → SafetyCheck chain
+ * → ModelDecisionLog (see /compliance/model-log). No LLM is called;
+ * RECS_MODE=templates is the permanent fallback engine.
  */
 export const metadata: Metadata = { title: "Recommendations" };
 
@@ -43,8 +51,8 @@ export default async function RecommendationsPage({
   if (!participant) notFound();
 
   const grants = await loadGrants(id);
-  const [result, linked] = await Promise.all([
-    loadRecommendations(id, { grants }),
+  const [{ result, cards, mode }, linked] = await Promise.all([
+    renderGovernedRecommendations(id, { grants }),
     getLinkedProfile(id, { use: "view_identified", grants }),
   ]);
   const displayName = !linked.blocked ? (linked.identity?.displayName ?? null) : null;
@@ -124,7 +132,7 @@ export default async function RecommendationsPage({
                 </Card>
               )}
 
-              {result.recommendations.length === 0 ? (
+              {cards.length === 0 ? (
                 <Card className="p-6">
                   <h2 className="text-lg font-semibold text-navy">
                     Nothing to suggest right now
@@ -137,9 +145,12 @@ export default async function RecommendationsPage({
                 </Card>
               ) : (
                 <NarrativeCards
-                  cards={result.recommendations.map((rec) => ({
-                    recommendation: rec,
-                    narrative: buildNarrative(id, rec, result.inputs),
+                  cards={cards.map((card) => ({
+                    recommendation: card.recommendation,
+                    narrative: card.draft.narrative,
+                    claims: card.claims,
+                    review: card.review,
+                    passed: card.passed,
                   }))}
                   series={result.series}
                 />
@@ -149,8 +160,14 @@ export default async function RecommendationsPage({
 
           <p className="pb-2 text-center text-xs text-muted">
             As of {formatDay(result.clockIso)} · queries ran in{" "}
-            {result.queryMs.toLocaleString("en-US")} ms · rules engine v1 — deterministic,
-            documented against the FDA non-device-CDS boundary before shipping (SPEC §10.3)
+            {result.queryMs.toLocaleString("en-US")} ms · engine {RECS_MODEL_ID} (
+            {RECS_MODEL_VERSION}), deterministic — RECS_MODE=templates is the permanent
+            fallback{mode.fellBack && ` (requested mode "${mode.requested}" not implemented — fell back)`}
+            · every card schema-validated + safety-checked, logged to the{" "}
+            <Link href="/compliance/model-log" className="underline underline-offset-4">
+              model decision log
+            </Link>{" "}
+            (SPEC §10.3–10.4)
           </p>
         </div>
       </main>

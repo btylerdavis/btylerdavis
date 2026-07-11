@@ -83,6 +83,8 @@ async function tuneSqliteForBulkLoad(): Promise<void> {
 
 async function resetDatabase(): Promise<void> {
   // FK-safe delete order.
+  await prisma.seedInfo.deleteMany();
+  await prisma.modelDecisionLog.deleteMany();
   await prisma.releaseLedgerEntry.deleteMany();
   await prisma.deletionRequest.deleteMany();
   await prisma.savedCohort.deleteMany();
@@ -195,6 +197,13 @@ async function main() {
     where: { id: SIM_CLOCK_ID },
     update: { currentDate: clockDate },
     create: { id: SIM_CLOCK_ID, currentDate: clockDate },
+  });
+
+  // 6. Seed-stamped scenario marker (level-up 11): surfaces state which
+  //    scenario the database was seeded with and warn when the running
+  //    server's SCENARIO env disagrees. Deterministic — no wall clock.
+  await prisma.seedInfo.create({
+    data: { id: "singleton", scenario, cohortSize: COHORT_SIZE, clockDate },
   });
 
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);

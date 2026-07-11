@@ -1,6 +1,7 @@
 import { Card } from "@/components/Card";
 import { TrendSparkline } from "@/components/charts/ResearchCharts";
 import { SERIES } from "@/components/charts/theme";
+import type { EvidenceClaim } from "@/lib/recommendations/evidence";
 import { NARRATIVE_DISCLAIMER } from "@/lib/recommendations/narrative";
 import {
   GUARDRAIL_FOOTER,
@@ -19,8 +20,14 @@ import type { RecommendationsResult } from "@/lib/recommendations/queries";
  * discuss-with-provider = accentPurple.
  *
  * With `showNarrative` + `narrative` set, the card also renders the drafted
- * AI-narrative preview (template-composed from the same inputs — see
- * lib/recommendations/narrative.ts) with its disclaimer line.
+ * AI-narrative preview (template-composed from the same evidence bundle —
+ * see lib/recommendations/narrative.ts) with its disclaimer line.
+ *
+ * Governed-pipeline layers (audit level-up 12): `claims` renders the "View
+ * evidence" expander — every claim the card cites, with the exact data
+ * points and the consent-gated query behind it — and `review` renders the
+ * clinician-review badge on provider-class cards (queued at first render;
+ * marked reviewed from /compliance/model-log).
  */
 
 const BADGE_CLASSES: Record<GuardrailClass, string> = {
@@ -56,17 +63,30 @@ export function GuardrailBadge({ guardrail }: { guardrail: GuardrailClass }) {
   );
 }
 
+export interface ReviewState {
+  queued: boolean;
+  reviewedBy: string | null;
+  /** ISO timestamp */
+  reviewedAt: string | null;
+}
+
 export function RecommendationCard({
   recommendation,
   series,
   narrative,
   showNarrative = false,
+  claims,
+  review,
 }: {
   recommendation: Recommendation;
   series: RecommendationsResult["series"];
   /** drafted AI-narrative preview text (lib/recommendations/narrative.ts) */
   narrative?: string;
   showNarrative?: boolean;
+  /** evidence claims the card cites (the "View evidence" expander) */
+  claims?: EvidenceClaim[];
+  /** clinician-review state for provider-class cards (level-up 12) */
+  review?: ReviewState;
 }) {
   const rec = recommendation;
   const spark = rec.sparkline ? SPARK_META[rec.sparkline] : null;
@@ -77,7 +97,19 @@ export function RecommendationCard({
     <Card className="p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold text-navy">{rec.title}</h2>
-        <GuardrailBadge guardrail={rec.guardrail} />
+        <div className="flex flex-col items-end gap-1.5">
+          <GuardrailBadge guardrail={rec.guardrail} />
+          {review?.queued &&
+            (review.reviewedAt === null ? (
+              <span className="rounded-full border border-warning/40 bg-warning/10 px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-warning">
+                Queued for clinician review
+              </span>
+            ) : (
+              <span className="rounded-full border border-success/40 bg-success/10 px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-success">
+                Clinician reviewed (demo)
+              </span>
+            ))}
+        </div>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-body">{rec.body}</p>
 
@@ -117,6 +149,48 @@ export function RecommendationCard({
             />
             <p className="text-[11px] text-muted">{spark.name} · last 6 weeks</p>
           </div>
+        )}
+
+        {/* View evidence: claim → data table (evidence-first pipeline) */}
+        {claims && claims.length > 0 && (
+          <details className="group mt-3">
+            <summary className="cursor-pointer text-xs font-semibold text-brand-blue underline-offset-4 select-none hover:underline">
+              View evidence ({claims.length} claim{claims.length === 1 ? "" : "s"})
+            </summary>
+            <div className="mt-2 space-y-3">
+              {claims.map((claim) => (
+                <div key={claim.id} className="rounded-card bg-white p-3 shadow-card">
+                  <p className="text-sm font-semibold text-navy">{claim.statement}</p>
+                  <table className="mt-2 w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-pale-blue text-left tracking-wide text-muted uppercase">
+                        <th className="py-1 pr-3 font-semibold">Metric</th>
+                        <th className="py-1 pr-3 font-semibold">Period</th>
+                        <th className="py-1 font-semibold">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {claim.points.map((point) => (
+                        <tr
+                          key={`${point.metric}|${point.period}`}
+                          className="border-b border-pale-blue/60 last:border-0"
+                        >
+                          <td className="py-1.5 pr-3 text-body">{point.metric}</td>
+                          <td className="py-1.5 pr-3 text-muted">{point.period}</td>
+                          <td className="py-1.5 font-semibold text-navy tabular-nums">
+                            {point.value}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="mt-1.5 font-mono text-[10px] break-all text-muted">
+                    {claim.id} · {claim.dataClass} · {claim.query}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 
