@@ -67,6 +67,10 @@ export interface AdvanceSummary {
   daysAdvanced: number;
   written: WriteCounts;
   participantsProcessed: number;
+  /** live-enrolled participants skipped: no synthetic profile backs them, so
+   *  the simulator generates no nightly stream for them (their real data
+   *  would arrive from device sync, not the time machine) */
+  participantsSkipped: number;
   /** participants with at least one data class dropped by the ingest gate */
   participantsConsentLimited: number;
   /** rows dropped by the per-flush policy revalidation (consent/lifecycle
@@ -107,7 +111,26 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
     consentByParticipant.set(record.participantId, list);
   }
 
+  // Only the seeded synthetic cohort can be regenerated: buildProfile derives
+  // a latent profile (and its device ids) from the participant id, and the
+  // seed persists exactly those device rows. A live-enrolled demo participant
+  // (created through the enroll flow) has a random id whose derived profile
+  // references device ids that were never persisted — generating their nights
+  // would emit observations/sessions pointing at non-existent Device rows and
+  // the batched write would abort the whole cohort's advance on a foreign-key
+  // violation. Such participants are cleanly SKIPPED here: they simply have no
+  // synthetic nightly stream (their real data comes from device sync, not the
+  // simulator). The sentinel is the derived wearable device — every seeded
+  // profile has exactly one, unconditionally persisted by the seed; no
+  // live-enrolled participant has a device at that derived id.
+  const seededDeviceIds = new Set(
+    (await prisma.device.findMany({ select: { id: true } })).map((d) => d.id)
+  );
+  const isSeeded = (profile: ReturnType<typeof buildProfile>): boolean =>
+    seededDeviceIds.has(profile.wearableDeviceId);
+
   const written: WriteCounts = { observations: 0, sleepSessions: 0, proResponses: 0, treatmentEvents: 0 };
+  let participantsSkipped = 0;
   let participantsConsentLimited = 0;
   let rowsDroppedAtCommit = 0;
   let buffer: GeneratedBatch = emptyBatch();
@@ -127,9 +150,17 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
   };
 
   for (const { id } of participants) {
+    const profile = buildProfile(id);
+
+    // Live-enrolled participant with no synthetic backing: skip cleanly.
+    // Never abort the batch for one un-generatable participant.
+    if (!isSeeded(profile)) {
+      participantsSkipped += 1;
+      continue;
+    }
+
     const grants = evaluateGrants(consentByParticipant.get(id) ?? []);
     const gate = await buildIngestGate(id, grants);
-    const profile = buildProfile(id);
 
     if (hasAnyDrop(gate, profile)) participantsConsentLimited += 1;
 
@@ -145,6 +176,7 @@ export async function advanceDays(n: number): Promise<AdvanceSummary> {
     daysAdvanced: n,
     written,
     participantsProcessed: participants.length,
+    participantsSkipped,
     participantsConsentLimited,
     rowsDroppedAtCommit,
   };

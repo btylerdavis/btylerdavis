@@ -32,6 +32,8 @@ export interface AdvanceOk {
   proResponsesAdded: number;
   treatmentEventsAdded: number;
   participantsProcessed: number;
+  /** live-enrolled participants skipped (no synthetic nightly stream) */
+  participantsSkipped: number;
   /** participants with at least one data class dropped by the ingest gate */
   participantsConsentLimited: number;
   /** participants with any observation in the 7 sim-days ending at the new clock */
@@ -97,6 +99,7 @@ export async function advanceSim(days: number): Promise<AdvanceOutcome> {
     proResponsesAdded: summary.written.proResponses,
     treatmentEventsAdded: summary.written.treatmentEvents,
     participantsProcessed: summary.participantsProcessed,
+    participantsSkipped: summary.participantsSkipped,
     participantsConsentLimited: summary.participantsConsentLimited,
     participantsActiveLast7,
     dayNumber,
