@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "./db";
 import { evaluateGrants, revokeConsent } from "./consent";
 import { advanceDays, getSimClock, MAX_SIM_DAYS, maxSimDate, setSimClock, simDayNumber } from "./simclock";
+import { MATTRESS_CATALOG } from "./synthetic/catalog";
 import { enrollmentRows } from "./synthetic/enrollment";
 import { buildIngestGate, nightlyRows } from "./synthetic/generator";
 import {
@@ -12,6 +13,9 @@ import {
   participantIdForIndex,
   type ParticipantProfile,
 } from "./synthetic/profiles";
+import { connectWearable, enrollRetail, recordMattressPurchase } from "@/app/enroll/retail/actions";
+import { confirmHstIntake, enrollClinicPatient, loadSampleHst, recordCpapSetup } from "@/app/enroll/clinic/actions";
+import type { StopBangAnswers } from "./stopbang";
 
 async function wipe() {
   await prisma.observation.deleteMany();
@@ -137,5 +141,67 @@ describe("time machine (sim clock)", () => {
     await setSimClock(addDays(maxSimDate(), -3));
     await expect(advanceDays(10)).rejects.toThrow(/day 400/);
     expect(simDayNumber(await getSimClock())).toBe(MAX_SIM_DAYS - 3);
+  });
+
+  // Regression (live-demo bug): advancing the clock AFTER a participant was
+  // created through the real enrollment flow used to abort the whole cohort's
+  // advance. A live-enrolled participant has a random id whose buildProfile-
+  // derived device ids were never persisted, so their generated nightly rows
+  // referenced non-existent Device rows and the batched createMany failed with
+  // a foreign-key violation (Prisma P2003) — "the clock stopped safely". Live
+  // participants must now be SKIPPED cleanly: the seeded cohort still accrues
+  // nights, the live participant gets no synthetic nightly stream (their real
+  // data would arrive from device sync), and nothing throws.
+  it("skips a live-enrolled participant and still advances the seeded cohort", async () => {
+    const marcus = buildProfile(MARCUS_REED_PARTICIPANT_ID);
+    await insertParticipant(marcus);
+
+    // Live enrollment through the real actions (retail → clinic → HST → CPAP →
+    // mattress): a real Participant with Lane A/B/C data but NO synthetic
+    // profile or nightly history.
+    await prisma.mattressCatalog.createMany({ data: MATTRESS_CATALOG });
+    await setSimClock(new Date(Date.UTC(2026, 5, 30)));
+    const answers: StopBangAnswers = {
+      snoring: true, tiredness: true, observed_apnea: true, pressure: true,
+      bmi: false, age: true, neck: true, gender: true,
+    };
+    const togglesAllOn = { wearable_sleep: true, sleep_mat: true, mattress_purchase: true, pro_responses: true };
+    const retail = await enrollRetail({ displayName: "Live Enrollee", answers, toggles: togglesAllOn });
+    await connectWearable(retail.participantId, "apple");
+    await recordMattressPurchase(retail.participantId, "TP-PROADAPT-MH-Q");
+    const clinic = await enrollClinicPatient({ mode: "existing", participantId: retail.participantId }, true);
+    const hst = await loadSampleHst("report");
+    expect(hst.ok).toBe(true);
+    if (hst.ok) await confirmHstIntake(clinic.participantId, hst.parsed);
+    await recordCpapSetup(clinic.participantId, "airsense11");
+
+    // Day 90: every derived enrollment date (≤ DEMO_EPOCH+75) is behind the
+    // window, so pre-fix the live participant WOULD have generated nights and
+    // FK-crashed. Post-fix they are skipped.
+    await setSimClock(addDays(DEMO_EPOCH, 90));
+    const liveObsBefore = await prisma.observation.count({ where: { participantId: retail.participantId } });
+
+    const summary = await advanceDays(7); // must not throw
+    expect(summary.daysAdvanced).toBe(7);
+    // The clock advanced (it never would have, had generation aborted).
+    expect((await getSimClock()).toISOString()).toBe(addDays(DEMO_EPOCH, 97).toISOString());
+
+    // The live participant is skipped: no synthetic nightly stream fabricated.
+    expect(summary.participantsSkipped).toBe(1);
+    expect(await prisma.sleepSession.count({ where: { participantId: retail.participantId } })).toBe(0);
+    // No new observations for the live participant — only their enrollment-time
+    // HST rows remain (their own-page data is untouched).
+    const liveObsAfter = await prisma.observation.findMany({
+      where: { participantId: retail.participantId },
+      select: { source: true },
+    });
+    expect(liveObsAfter).toHaveLength(liveObsBefore);
+    expect(new Set(liveObsAfter.map((o) => o.source))).toEqual(new Set(["hst"]));
+
+    // The seeded cohort (Marcus) still accrues its nights.
+    const marcusUsage = await prisma.observation.count({
+      where: { participantId: marcus.id, concept: "cpap_usage_minutes" },
+    });
+    expect(marcusUsage).toBe(7);
   });
 });
