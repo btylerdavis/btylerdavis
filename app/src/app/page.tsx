@@ -82,7 +82,7 @@ export default async function Home() {
           <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
             <Card tone="dark" className="px-6 py-10 sm:px-12 sm:py-14">
               <p className="text-xs font-semibold tracking-[0.16em] text-sky-blue uppercase">
-                Sleeptopia × The Mattress Hub
+                Prepared for Sleeptopia × The Mattress Hub · August 2026
               </p>
               <h1 className="mt-3 max-w-2xl text-4xl leading-tight font-semibold sm:text-5xl">
                 Better Sleep Starts with Data.
@@ -232,6 +232,32 @@ export default async function Home() {
               </li>
             ))}
           </ol>
+
+          {/* Deep dives — the phase 3–4 screens the eight acts reach for on request */}
+          <div className="mt-4 rounded-card bg-pale-blue/60 p-4">
+            <p className="font-heading font-semibold text-navy">Deep dives</p>
+            <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {[
+                { label: "Robustness & bias", href: "/research/robustness" },
+                { label: "Power calculator", href: "/research/power" },
+                { label: "Deletion console", href: "/compliance/deletions" },
+                { label: "Model decision log", href: "/compliance/model-log" },
+                { label: "Study proposal", href: "/partner/proposal" },
+                {
+                  label: "Marcus's recommendations",
+                  href: `/participant/${MARCUS_REED_PARTICIPANT_ID}/recommendations`,
+                },
+              ].map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="font-semibold text-brand-blue underline-offset-4 hover:underline"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </p>
+          </div>
         </section>
       </main>
 

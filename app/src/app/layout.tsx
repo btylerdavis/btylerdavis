@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { DemoNavigator } from "@/components/DemoNavigator";
 import { DemoWatermark } from "@/components/DemoWatermark";
 
 /**
@@ -48,6 +49,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         {children}
+        <DemoNavigator />
         <DemoWatermark />
       </body>
     </html>

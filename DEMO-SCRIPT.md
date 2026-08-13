@@ -20,7 +20,10 @@ Work from `app/` in the repo. Do these in order; total ~10 minutes plus rehearsa
    `Marcus Reed: d81a5f64-… (cpap_mattress, AHI 24, supine 41)`. If that line is wrong, stop
    and re-run before doing anything else.
 3. **Production build + start**: `npm run build` then `npm run start`. Never demo `next dev`.
-4. **Warm every route once** (primes caches; also your smoke test — every line must say 200):
+4. **Warm every route once** (primes caches; also your smoke test — every line must say 200,
+   except `/partner/releases`, which says **307** from curl: that's the DUA gate redirecting
+   to `/partner` because curl carries no cookie. In the browser it loads fine after
+   **Accept & enter (demo)**.):
    ```
    M=d81a5f64-9c3e-4b7a-8f21-6e0a4c9b5d17
    for r in / /enroll/retail /enroll/clinic /timemachine /coach /coach/import /research \
