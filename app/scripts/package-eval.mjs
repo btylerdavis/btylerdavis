@@ -26,6 +26,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -41,10 +42,17 @@ function die(msg) {
   process.exit(1);
 }
 
-if (!fs.existsSync(path.join(standaloneDir, "server.js"))) {
-  die("missing .next/standalone/server.js — run `EVAL_BUILD=1 npm run build` first");
+if (!fs.existsSync(path.join(standaloneDir, "server.js")) || !fs.existsSync(staticDir)) {
+  // No standalone bundle yet: run the flagged build ourselves so callers
+  // never have to juggle the EVAL_BUILD env var (it kept getting lost when
+  // command lines were pasted in pieces).
+  console.log("package-eval: no standalone bundle found — running EVAL_BUILD=1 npm run build now (~2 min)...");
+  execSync("npm run build", { cwd: repoRoot, stdio: "inherit", env: { ...process.env, EVAL_BUILD: "1" } });
 }
-if (!fs.existsSync(staticDir)) die("missing .next/static — run `EVAL_BUILD=1 npm run build` first");
+if (!fs.existsSync(path.join(standaloneDir, "server.js"))) {
+  die("standalone build did not produce .next/standalone/server.js — check next.config.ts has the EVAL_BUILD gate (git pull?)");
+}
+if (!fs.existsSync(staticDir)) die("missing .next/static after build");
 if (!fs.existsSync(devDb)) die("missing prisma/dev.db — run `npm run seed` first");
 const wal = `${devDb}-wal`;
 if (fs.existsSync(wal) && fs.statSync(wal).size > 0) {
