@@ -348,5 +348,20 @@ console.log(`  removed ${removedMd.length} third-party .md file(s): ${removedMd.
 console.log("  verified: darwin-arm64 / darwin / windows Prisma engines present");
 console.log("  verified: no src/, no *.md, launcher exec bit set");
 console.log("");
-console.log("Package ready. Zip it with (exec bit preserved):");
-console.log(`  cd ${path.dirname(outDir)} && zip -ryq sleeptopia-eval.zip ${path.basename(outDir)}`);
+// Zip it (exec bit preserved) and reveal the result.
+const distDir = path.dirname(outDir);
+const zipPath = path.join(distDir, "sleeptopia-eval.zip");
+fs.rmSync(zipPath, { force: true });
+execSync(`zip -ryq sleeptopia-eval.zip ${JSON.stringify(path.basename(outDir))}`, {
+  cwd: distDir,
+  stdio: "inherit",
+});
+const zipMb = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(0);
+console.log("=".repeat(60));
+console.log(`  DONE - sleeptopia-eval.zip is ready (${zipMb} MB)`);
+console.log(`  Location: ${zipPath}`);
+console.log("  Drag that one file into the Google Drive folder.");
+console.log("=".repeat(60));
+if (process.platform === "darwin") {
+  try { execSync(`open ${JSON.stringify(distDir)}`); } catch {}
+}
