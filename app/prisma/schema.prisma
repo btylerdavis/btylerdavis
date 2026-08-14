@@ -9,6 +9,10 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native" keeps local dev/CI working; the darwin/windows targets are
+  // bundled into the client evaluation package (scripts/package-eval.mjs)
+  // so it runs on Apple Silicon, Intel Mac, and Windows machines.
+  binaryTargets = ["native", "darwin-arm64", "darwin", "windows"]
 }
 
 datasource db {
