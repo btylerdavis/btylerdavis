@@ -48,3 +48,4 @@ prisma/dev.db*
 # database
 prisma/*.db*
 !.env.example
+dist/
