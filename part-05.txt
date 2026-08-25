@@ -1,0 +1,162 @@
+ndex: 120;
+      padding: 13px 18px;
+      border: 2px solid var(--brown);
+      border-radius: 999px;
+      background: var(--brown);
+      color: white;
+      box-shadow: 4px 4px 0 var(--banana);
+      transform: translate(-50%, 120px);
+      opacity: 0;
+      transition: transform 220ms ease, opacity 220ms ease;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    @media (max-width: 980px) {
+      .nav-links { display: none; }
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding-top: 36px;
+      }
+      .hero-copy { text-align: center; }
+      .hero-copy > p { margin-left: auto; margin-right: auto; }
+      .hero-actions, .micro-proof { justify-content: center; }
+      .hero-art { min-height: 570px; }
+      .product-hero-card { width: min(94%, 520px); }
+      .village-grid { grid-template-columns: 1fr; }
+      .village-card:nth-child(2) { transform: none; }
+      .product-panel { grid-template-columns: 1fr; }
+      .gallery { min-height: 560px; }
+      .difference-grid { grid-template-columns: 1fr; }
+      .difference-card:nth-child(2) { transform: none; }
+      .gift-card { grid-template-columns: 1fr; }
+      .faq-wrap { grid-template-columns: 1fr; gap: 30px; }
+      .faq-intro { position: static; }
+    }
+
+    @media (max-width: 680px) {
+      .shell { width: min(100% - 24px, 1180px); }
+      .announcement { font-size: 0.77rem; }
+      .nav { min-height: 72px; }
+      .brand { font-size: 1.08rem; }
+      .brand-mark { width: 40px; height: 40px; }
+      .cart-button .cart-label { display: none; }
+      .hero { min-height: auto; padding-bottom: 58px; }
+      h1 { font-size: clamp(3.05rem, 15vw, 4.45rem); }
+      .headline-pop { width: 100%; font-size: 0.64em; }
+      .eyebrow { max-width: 100%; font-size: 0.68rem; letter-spacing: 0.05em; padding: 8px 11px; white-space: normal; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .primary-button, .secondary-button { width: 100%; }
+      .micro-proof { display: grid; justify-content: start; text-align: left; max-width: 360px; margin: 0 auto; }
+      .hero-art { min-height: 475px; }
+      .product-hero-card { min-height: 455px; border-radius: 32px; }
+      .hero-product-svg { min-height: 455px; }
+      .price-bubble { width: 72px; height: 72px; top: 16px; left: 16px; font-size: 1.5rem; }
+      .zip-bubble { right: 10px; top: 90px; font-size: 0.72rem; }
+      .print-bubble { font-size: 0.7rem; }
+      .monkey-peek { width: 88px; left: -30px; top: 70px; }
+      section { padding: 80px 0; }
+      .section-heading { margin-bottom: 34px; }
+      .section-heading h2 { font-size: clamp(2.55rem, 12vw, 4rem); }
+      .village-card { min-height: 280px; padding: 24px; }
+      .product-panel { padding: 12px; border-radius: 30px; }
+      .gallery { grid-template-columns: 1fr; min-height: auto; }
+      .thumbs { order: 2; flex-direction: row; }
+      .thumb-button { width: 70px; height: 70px; }
+      .gallery-main { min-height: 440px; border-radius: 24px; }
+      .product-info { padding: 22px 10px 14px; }
+      .product-info h2 { font-size: 2.8rem; }
+      .feature-list { grid-template-columns: 1fr; }
+      .size-grid { grid-template-columns: repeat(3, 1fr); }
+      .purchase-row { grid-template-columns: 1fr; }
+      .difference-card { min-height: 260px; }
+      .gift-card { padding: 30px 22px; border-radius: 32px; box-shadow: 7px 7px 0 var(--brown); }
+      .gift-card h2 { font-size: 3rem; }
+      .gift-actions { flex-direction: column; }
+      .gift-actions .primary-button, .gift-actions .secondary-button { width: 100%; }
+      .faq-intro h2 { font-size: 3.25rem; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; }
+      .share-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="announcement">
+    <span class="spark">&#9733;</span>
+    Launch price: $20. Big personality. Tiny package.
+    <span class="spark">&#9733;</span>
+  </div>
+
+  <header class="shell">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="Tot Onesie home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="31" height="31" viewBox="0 0 64 64" fill="none">
+            <circle cx="16" cy="29" r="11" fill="#9b6546" stroke="#4b2d20" stroke-width="4"/>
+            <circle cx="48" cy="29" r="11" fill="#9b6546" stroke="#4b2d20" stroke-width="4"/>
+            <circle cx="32" cy="31" r="22" fill="#8a573d" stroke="#4b2d20" stroke-width="4"/>
+            <ellipse cx="32" cy="39" rx="15" ry="12" fill="#f2c79f"/>
+            <circle cx="25" cy="27" r="2.8" fill="#30251f"/>
+            <circle cx="39" cy="27" r="2.8" fill="#30251f"/>
+            <path d="M26 42 C30 46 35 46 39 42" stroke="#30251f" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>Tot Onesie</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#why">Why back-zip</a>
+        <a href="#shop">Shop</a>
+        <a href="#gift">Gift it</a>
+        <a href="#faq">FAQ</a>
+      </div>
+
+      <div class="nav-actions">
+        <button class="cart-button icon-button" type="button" data-open-cart aria-label="Open shopping bag">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 8H19L18 21H6L5 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M9 9V6C9 4.34 10.34 3 12 3C13.66 3 15 4.34 15 6V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="cart-label">Bag</span>
+          <span class="cart-count" data-cart-count>0</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> A clever little sleeper</div>
+        <h1>Back-zip bedtime. <span class="headline-pop">Front-row cuddles.</span></h1>
+        <p>Meet the playful infant sleeper that puts the zipper behind baby and the cuteness right where it belongs. One original monkey print. One easy $20 gift.</p>
+        <div class="hero-actions">
+          <a class="primary-button" href="#shop">
+            Shop the Monkey Zip <span aria-hidden="true">&rarr;</span>
+          </a>
+          <button class="secondary-button" type="button" data-share>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+              <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M8.7 10.7L15.3 6.3M8.7 13.3L15.3 17.7" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Share with your village
+          </button>
+        </div>
+        <div class="micro-proof" aria-label="Product highlights">
+          <span><span class="check">&#10003;</span> Original monkey print</span>
+          <span><span class="check">&#10003;</span> Rear 
