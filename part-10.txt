@@ -1,0 +1,146 @@
+t-thumb" aria-hidden="true">
+            <svg viewBox="0 0 90 100">
+              <rect width="90" height="100" fill="#ffd447"/>
+              <path d="M34 17 H56 L69 31 L60 42 L57 81 H33 L30 42 L21 31Z" fill="#fff7dd" stroke="#4b2d20" stroke-width="3"/>
+              <path d="M45 20 V67" stroke="#ff6d5f" stroke-width="5"/>
+              <circle cx="40" cy="42" r="5" fill="#8a573d"/><circle cx="50" cy="42" r="5" fill="#8a573d"/>
+            </svg>
+          </div>
+          <div>
+            <h3>${STORE_CONFIG.productName}</h3>
+            <div class="cart-meta">Size: ${item.size}<br>Quantity: ${item.quantity}</div>
+          </div>
+          <div class="cart-item-price">${money.format(item.quantity * STORE_CONFIG.price)}</div>
+        </article>
+      `).join("");
+    };
+
+    $$('[data-gallery]').forEach((button) => {
+      button.addEventListener("click", () => {
+        const view = button.dataset.gallery;
+        $$('[data-gallery]').forEach((item) => {
+          const active = item === button;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-selected", String(active));
+        });
+        $$('[data-view]').forEach((item) => item.classList.toggle("active", item.dataset.view === view));
+      });
+    });
+
+    $$('[data-size]').forEach((button) => {
+      button.addEventListener("click", () => {
+        state.size = button.dataset.size;
+        $$('[data-size]').forEach((item) => {
+          const selected = item === button;
+          item.classList.toggle("selected", selected);
+          item.setAttribute("aria-checked", String(selected));
+        });
+      });
+    });
+
+    $("[data-qty-minus]").addEventListener("click", () => {
+      state.quantity = Math.max(1, state.quantity - 1);
+      $("[data-quantity]").textContent = state.quantity;
+    });
+
+    $("[data-qty-plus]").addEventListener("click", () => {
+      state.quantity = Math.min(10, state.quantity + 1);
+      $("[data-quantity]").textContent = state.quantity;
+    });
+
+    $("[data-add-to-cart]").addEventListener("click", () => {
+      const existing = state.cart.find((item) => item.size === state.size);
+      if (existing) existing.quantity += state.quantity;
+      else state.cart.push({ size: state.size, quantity: state.quantity });
+      renderCart();
+      toast(`${state.quantity} ${state.size} sleeper${state.quantity > 1 ? "s" : ""} added to your bag.`);
+      setModal("[data-cart-drawer]", true);
+    });
+
+    $$('[data-open-cart]').forEach((button) => button.addEventListener("click", () => setModal("[data-cart-drawer]", true)));
+    $("[data-close-cart]").addEventListener("click", () => setModal("[data-cart-drawer]", false));
+    $("[data-cart-drawer]").addEventListener("click", (event) => {
+      if (event.target.matches("[data-cart-drawer]")) setModal("[data-cart-drawer]", false);
+    });
+
+    const shareData = () => ({
+      title: "Tot Onesie | Back-Zip Monkey Sleeper",
+      text: "Look at this playful $20 infant sleeper with the zipper in back.",
+      url: window.location.href,
+      image: new URL("social-card.png", window.location.href).href
+    });
+
+    const openShare = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData());
+          return;
+        } catch (error) {
+          if (error && error.name === "AbortError") return;
+        }
+      }
+      setModal("[data-share-modal]", true);
+    };
+
+    $$('[data-share]').forEach((button) => button.addEventListener("click", openShare));
+    $("[data-close-share]").addEventListener("click", () => setModal("[data-share-modal]", false));
+    $("[data-share-modal]").addEventListener("click", (event) => {
+      if (event.target.matches("[data-share-modal]")) setModal("[data-share-modal]", false);
+    });
+
+    $$('[data-share-channel]').forEach((button) => {
+      button.addEventListener("click", async () => {
+        const data = shareData();
+        const url = encodeURIComponent(data.url);
+        const text = encodeURIComponent(`${data.text} ${data.url}`);
+        const title = encodeURIComponent(data.title);
+        switch (button.dataset.shareChannel) {
+          case "facebook":
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+            break;
+          case "pinterest":
+            window.open(`https://www.pinterest.com/pin/create/button/?url=${url}&media=${encodeURIComponent(data.image)}&description=${encodeURIComponent(data.text)}`, "_blank", "noopener,noreferrer");
+            break;
+          case "email":
+            window.location.href = `mailto:?subject=${title}&body=${text}`;
+            break;
+          case "copy":
+            try {
+              await navigator.clipboard.writeText(data.url);
+              toast("Product link copied.");
+              setModal("[data-share-modal]", false);
+            } catch (error) {
+              window.prompt("Copy this link:", data.url);
+            }
+            break;
+        }
+      });
+    });
+
+    $("[data-checkout]").addEventListener("click", () => {
+      if (STORE_CONFIG.checkoutUrl) {
+        window.location.href = STORE_CONFIG.checkoutUrl;
+      } else {
+        setModal("[data-cart-drawer]", false);
+        setModal("[data-checkout-modal]", true);
+      }
+    });
+
+    $$('[data-close-checkout]').forEach((button) => button.addEventListener("click", () => setModal("[data-checkout-modal]", false)));
+    $("[data-checkout-modal]").addEventListener("click", (event) => {
+      if (event.target.matches("[data-checkout-modal]")) setModal("[data-checkout-modal]", false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setModal("[data-cart-drawer]", false);
+        setModal("[data-share-modal]", false);
+        setModal("[data-checkout-modal]", false);
+      }
+    });
+
+    $("[data-year]").textContent = new Date().getFullYear();
+    renderCart();
+  </script>
+</body>
+</html>
