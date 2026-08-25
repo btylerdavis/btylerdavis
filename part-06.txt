@@ -1,0 +1,110 @@
+ zipper placement</span>
+          <span><span class="check">&#10003;</span> Giftable $20 price</span>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-label="Illustration of the Tot Onesie back-zip monkey sleeper">
+        <div class="art-blob"></div>
+        <div class="art-dots"></div>
+        <div class="product-hero-card">
+          <div class="price-bubble"><span>$20<small>launch price</small></span></div>
+          <div class="zip-bubble">Zips in back</div>
+          <div class="print-bubble">Monkey Business print</div>
+
+          <svg class="monkey-peek" viewBox="0 0 160 180" aria-hidden="true">
+            <circle cx="28" cy="77" r="26" fill="#9b6546" stroke="#4b2d20" stroke-width="6"/>
+            <circle cx="132" cy="77" r="26" fill="#9b6546" stroke="#4b2d20" stroke-width="6"/>
+            <circle cx="80" cy="77" r="56" fill="#8a573d" stroke="#4b2d20" stroke-width="6"/>
+            <ellipse cx="80" cy="96" rx="38" ry="31" fill="#f2c79f"/>
+            <circle cx="61" cy="66" r="6" fill="#30251f"/>
+            <circle cx="99" cy="66" r="6" fill="#30251f"/>
+            <path d="M65 105 C74 115 88 115 97 105" stroke="#30251f" stroke-width="6" stroke-linecap="round"/>
+            <path d="M50 135 C58 165 101 165 111 135" fill="#8a573d" stroke="#4b2d20" stroke-width="6"/>
+          </svg>
+
+          <svg class="banana-doodle" viewBox="0 0 120 120" aria-hidden="true">
+            <path d="M26 26 C22 72 57 100 96 79 C75 85 49 68 48 35 C40 30 33 28 26 26Z" fill="#ffd447" stroke="#4b2d20" stroke-width="6" stroke-linejoin="round"/>
+            <path d="M25 23 L20 12" stroke="#4b2d20" stroke-width="6" stroke-linecap="round"/>
+            <path d="M96 80 L104 89" stroke="#4b2d20" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+
+          <svg class="hero-product-svg" viewBox="0 0 560 620" role="img" aria-labelledby="hero-product-title hero-product-desc">
+            <title id="hero-product-title">Back view of the Tot Onesie monkey sleeper</title>
+            <desc id="hero-product-desc">A cream footed infant sleeper with repeating monkey faces, bananas, and a coral zipper down the back.</desc>
+            <defs>
+              <pattern id="monkeyPatternHero" width="92" height="92" patternUnits="userSpaceOnUse">
+                <rect width="92" height="92" fill="#fff7dd"/>
+                <g transform="translate(13 13)">
+                  <circle cx="9" cy="22" r="8" fill="#a66f4c"/>
+                  <circle cx="45" cy="22" r="8" fill="#a66f4c"/>
+                  <circle cx="27" cy="24" r="19" fill="#8a573d"/>
+                  <ellipse cx="27" cy="31" rx="12" ry="10" fill="#f2c79f"/>
+                  <circle cx="21" cy="22" r="2" fill="#30251f"/>
+                  <circle cx="33" cy="22" r="2" fill="#30251f"/>
+                  <path d="M22 34 C25 37 29 37 32 34" stroke="#30251f" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </g>
+                <path d="M66 61 C64 77 76 85 87 76 C78 79 70 72 71 62Z" fill="#ffd447" stroke="#4b2d20" stroke-width="2"/>
+              </pattern>
+              <filter id="softShadowHero" x="-30%" y="-30%" width="160%" height="170%">
+                <feDropShadow dx="0" dy="18" stdDeviation="15" flood-color="#4b2d20" flood-opacity="0.22"/>
+              </filter>
+            </defs>
+            <ellipse cx="282" cy="552" rx="150" ry="34" fill="#4b2d20" opacity="0.12"/>
+            <g filter="url(#softShadowHero)">
+              <path d="M191 95 C191 55 224 34 266 34 H295 C337 34 370 55 370 95 L449 158 C470 175 468 206 448 224 L400 266 L389 355 L438 474 C448 500 429 529 400 531 L354 534 C332 535 316 520 316 499 L309 402 H252 L245 499 C244 520 228 535 206 534 L160 531 C131 529 112 500 122 474 L171 355 L160 266 L112 224 C92 206 90 175 111 158Z" fill="url(#monkeyPatternHero)" stroke="#4b2d20" stroke-width="7" stroke-linejoin="round"/>
+              <path d="M198 83 C218 109 341 109 363 83" fill="none" stroke="#4b2d20" stroke-width="7" stroke-linecap="round"/>
+              <path d="M280 100 L280 355" stroke="#ff6d5f" stroke-width="13" stroke-linecap="round"/>
+              <path d="M280 106 L280 351" stroke="#fff7dd" stroke-width="3" stroke-dasharray="3 8" stroke-linecap="round"/>
+              <rect x="263" y="122" width="34" height="46" rx="11" fill="#ff6d5f" stroke="#4b2d20" stroke-width="5"/>
+              <circle cx="280" cy="143" r="6" fill="#fff7dd"/>
+              <path d="M280 149 L280 164" stroke="#4b2d20" stroke-width="4" stroke-linecap="round"/>
+              <path d="M251 402 C259 420 301 420 309 402" fill="none" stroke="#4b2d20" stroke-width="6"/>
+              <path d="M137 472 C157 489 190 492 213 482" fill="none" stroke="#4b2d20" stroke-width="5" opacity="0.35"/>
+              <path d="M347 482 C370 492 403 489 423 472" fill="none" stroke="#4b2d20" stroke-width="5" opacity="0.35"/>
+            </g>
+            <g transform="translate(363 43) rotate(7)">
+              <path d="M0 0 H83 Q96 0 96 13 V37 Q96 50 83 50 H0 Q-13 50 -13 37 V13 Q-13 0 0 0Z" fill="#fff" stroke="#4b2d20" stroke-width="4"/>
+              <text x="42" y="31" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="800" fill="#4b2d20">BACK VIEW</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Moms love clever</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Grandmas love practical</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Aunts love adorable</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Babies love monkey business</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Only $20</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Moms love clever</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Grandmas love practical</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Aunts love adorable</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Babies love monkey business</span>
+        <span class="ticker-item"><span class="ticker-star">&#9733;</span> Only $20</span>
+      </div>
+    </div>
+
+    <section id="why">
+      <div class="shell">
+        <div class="section-heading">
+          <span class="section-kicker">Made for the whole village</span>
+          <h2>One tiny sleeper. Three very happy grown-ups.</h2>
+          <p>Tot Onesie is easy to understand, fun to give, and impossible not to share.</p>
+        </div>
+
+        <div class="village-grid">
+          <article class="village-card">
+            <div class="village-icon" aria-hidden="true">&#9829;</div>
+            <h3>For new moms</h3>
+            <p>A playful everyday sleeper with a zipper detail that feels fresh, thoughtful, and different from the usual baby basics.</p>
+            <svg class="card-scribble" viewBox="0 0 160 160" aria-hidden="true">
+              <path d="M30 106 C62 20 102 136 133 46" fill="none" stroke="#4b2d20" stroke-width="12" stroke-linecap="round"/>
+            </svg>
+          </article>
+
+          <article class="village-card">
+            <div class="village-icon" aria-hidden="true">&#9733;</div>
+            <h3>For grandmas</h3>
+            <p>A useful gif
