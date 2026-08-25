@@ -1,0 +1,163 @@
+anana print makes that functional twist feel like a distinct, shareable brand.</p>
+          </details>
+          <details>
+            <summary>What sizes are shown in this concept?</summary>
+            <p>The prototype includes Newborn, 0-3M, 3-6M, 6-9M, and 9-12M. Replace these with the exact size range and measurements from the final manufacturing specification before launch.</p>
+          </details>
+          <details id="size-guide">
+            <summary>How should shoppers choose a size?</summary>
+            <p>Publish a verified size chart based on the finished garment measurements. Baby sizing can vary by manufacturer, so weight, height, and garment dimensions should come from the actual production run.</p>
+          </details>
+          <details>
+            <summary>What fabric and care details should be listed?</summary>
+            <p>Use only the fiber content, wash instructions, fit notes, and safety or compliance statements printed on or supported by the final garment documentation. Those details are intentionally not invented in this prototype.</p>
+          </details>
+          <details>
+            <summary>Can I share the product?</summary>
+            <p>Yes. The share buttons use the device share sheet when available and provide Facebook, Pinterest, email, and copy-link fallbacks.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="#top">
+            <span class="brand-mark" aria-hidden="true">
+              <svg width="31" height="31" viewBox="0 0 64 64" fill="none">
+                <circle cx="16" cy="29" r="11" fill="#9b6546" stroke="#4b2d20" stroke-width="4"/>
+                <circle cx="48" cy="29" r="11" fill="#9b6546" stroke="#4b2d20" stroke-width="4"/>
+                <circle cx="32" cy="31" r="22" fill="#8a573d" stroke="#4b2d20" stroke-width="4"/>
+                <ellipse cx="32" cy="39" rx="15" ry="12" fill="#f2c79f"/>
+                <circle cx="25" cy="27" r="2.8" fill="#30251f"/>
+                <circle cx="39" cy="27" r="2.8" fill="#30251f"/>
+                <path d="M26 42 C30 46 35 46 39 42" stroke="#30251f" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span>Tot Onesie</span>
+          </a>
+          <p>Back-zip bedtime. Front-row cuddles. A playful babywear concept made for moms, grandmas, favorite aunts, and very tiny monkeys.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h3>Explore</h3>
+            <a href="#why">Why back-zip</a>
+            <a href="#shop">Shop the sleeper</a>
+            <a href="#gift">Gift it</a>
+          </div>
+          <div>
+            <h3>Before launch</h3>
+            <a href="#faq">Product details</a>
+            <a href="#faq">Shipping and returns</a>
+            <a href="#faq">Privacy and terms</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; <span data-year></span> Tot Onesie. All rights reserved.</span>
+        <span>Original monkey artwork. No licensed character affiliation.</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="drawer-backdrop" data-cart-drawer aria-hidden="true">
+    <aside class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+      <div class="drawer-head">
+        <h2 id="cart-title">Your bag</h2>
+        <button class="close-button" type="button" data-close-cart aria-label="Close shopping bag">&times;</button>
+      </div>
+      <div data-cart-items>
+        <div class="cart-empty">Your bag is ready for a little monkey business.</div>
+      </div>
+      <div class="drawer-footer">
+        <div class="total-row"><span>Subtotal</span><span data-cart-total>$0</span></div>
+        <button class="checkout-button" type="button" data-checkout>Connect checkout</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-backdrop" data-share-modal aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="share-title">
+      <div class="drawer-head">
+        <h2 id="share-title">Share the cuteness</h2>
+        <button class="close-button" type="button" data-close-share aria-label="Close share dialog">&times;</button>
+      </div>
+      <p>Send Tot Onesie to a new mom, grandma, aunt, or anyone with strong opinions about adorable baby clothes.</p>
+      <div class="share-grid">
+        <button class="share-chip" type="button" data-share-channel="facebook">Facebook</button>
+        <button class="share-chip" type="button" data-share-channel="pinterest">Pinterest</button>
+        <button class="share-chip" type="button" data-share-channel="email">Email</button>
+        <button class="share-chip" type="button" data-share-channel="copy">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" data-checkout-modal aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+      <div class="drawer-head">
+        <h2 id="checkout-title">Ready for checkout</h2>
+        <button class="close-button" type="button" data-close-checkout aria-label="Close checkout notice">&times;</button>
+      </div>
+      <p>The storefront and cart are working. Add your Shopify, Stripe Payment Link, Square, or other secure checkout URL in the configuration block at the bottom of this file to begin taking orders.</p>
+      <button class="primary-button" style="width:100%; margin-top:12px;" type="button" data-close-checkout>Got it</button>
+    </div>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite" data-toast></div>
+
+  <script>
+    const STORE_CONFIG = {
+      productName: "Monkey Business Back-Zip Sleeper",
+      price: 20,
+      currency: "USD",
+      checkoutUrl: ""
+    };
+
+    const state = {
+      size: "Newborn",
+      quantity: 1,
+      cart: []
+    };
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: STORE_CONFIG.currency,
+      maximumFractionDigits: 0
+    });
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    const toast = (message) => {
+      const node = $("[data-toast]");
+      node.textContent = message;
+      node.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => node.classList.remove("show"), 2600);
+    };
+
+    const setModal = (selector, open) => {
+      const modal = $(selector);
+      modal.classList.toggle("open", open);
+      modal.setAttribute("aria-hidden", String(!open));
+      document.body.style.overflow = open ? "hidden" : "";
+    };
+
+    const renderCart = () => {
+      const count = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      const total = state.cart.reduce((sum, item) => sum + item.quantity * STORE_CONFIG.price, 0);
+      $$('[data-cart-count]').forEach((node) => { node.textContent = count; });
+      $("[data-cart-total]").textContent = money.format(total);
+      const container = $("[data-cart-items]");
+
+      if (!state.cart.length) {
+        container.innerHTML = '<div class="cart-empty">Your bag is ready for a little monkey business.</div>';
+        return;
+      }
+
+      container.innerHTML = state.cart.map((item) => `
+        <article class="cart-item">
+          <div class="car
