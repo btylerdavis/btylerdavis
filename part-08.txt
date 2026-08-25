@@ -1,0 +1,134 @@
+font-size="21" font-weight="800" fill="#4b2d20">ORIGINAL PRINT</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div class="gallery-view" data-view="zip">
+                <svg viewBox="0 0 560 620" role="img" aria-label="Close-up of the coral zipper on the back">
+                  <rect x="50" y="30" width="460" height="560" rx="50" fill="#fff7dd" stroke="#4b2d20" stroke-width="8"/>
+                  <path d="M280 60 V554" stroke="#ff6d5f" stroke-width="44" stroke-linecap="round"/>
+                  <path d="M280 64 V550" stroke="#fff7dd" stroke-width="7" stroke-dasharray="7 14"/>
+                  <rect x="238" y="150" width="84" height="118" rx="24" fill="#ff6d5f" stroke="#4b2d20" stroke-width="8"/>
+                  <circle cx="280" cy="198" r="16" fill="#fff7dd" stroke="#4b2d20" stroke-width="6"/>
+                  <path d="M280 214 V253" stroke="#4b2d20" stroke-width="8" stroke-linecap="round"/>
+                  <path d="M130 335 C177 300 217 297 238 304" fill="none" stroke="#62cce7" stroke-width="16" stroke-linecap="round"/>
+                  <path d="M322 304 C360 291 408 305 442 339" fill="none" stroke="#62cce7" stroke-width="16" stroke-linecap="round"/>
+                  <g transform="translate(92 73) rotate(-4)">
+                    <rect width="178" height="58" rx="21" fill="#ffd447" stroke="#4b2d20" stroke-width="4"/>
+                    <text x="89" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="800" fill="#4b2d20">ZIP IN BACK</text>
+                  </g>
+                </svg>
+              </div>
+              <span class="zoom-note">Tap thumbnails for details</span>
+            </div>
+          </div>
+
+          <div class="product-info">
+            <div class="product-badges">
+              <span class="product-badge">Tot Onesie Original</span>
+              <span class="product-badge">Monkey Business print</span>
+            </div>
+            <h2>Monkey Business Back-Zip Sleeper</h2>
+            <div class="product-price-row">
+              <span class="product-price">$20</span>
+              <span class="price-note">Simple, giftable pricing</span>
+            </div>
+            <p class="product-description">A cheerful footed sleeper with an original monkey-and-banana print and a coral zipper running down the back.</p>
+
+            <ul class="feature-list">
+              <li><span class="feature-dot">&#10003;</span> Rear zipper placement</li>
+              <li><span class="feature-dot">&#10003;</span> Original all-over print</li>
+              <li><span class="feature-dot">&#10003;</span> Footed silhouette</li>
+              <li><span class="feature-dot">&#10003;</span> Ready-to-gift price</li>
+            </ul>
+
+            <div class="option-label">
+              <span>Choose a size</span>
+              <a href="#size-guide">Size guide</a>
+            </div>
+            <div class="size-grid" role="radiogroup" aria-label="Choose a size">
+              <button class="size-button selected" type="button" role="radio" aria-checked="true" data-size="Newborn">NB</button>
+              <button class="size-button" type="button" role="radio" aria-checked="false" data-size="0-3M">0-3M</button>
+              <button class="size-button" type="button" role="radio" aria-checked="false" data-size="3-6M">3-6M</button>
+              <button class="size-button" type="button" role="radio" aria-checked="false" data-size="6-9M">6-9M</button>
+              <button class="size-button" type="button" role="radio" aria-checked="false" data-size="9-12M">9-12M</button>
+            </div>
+
+            <div class="purchase-row">
+              <div class="quantity" aria-label="Quantity selector">
+                <button type="button" data-qty-minus aria-label="Decrease quantity">-</button>
+                <output data-quantity>1</output>
+                <button type="button" data-qty-plus aria-label="Increase quantity">+</button>
+              </div>
+              <button class="add-button" type="button" data-add-to-cart>Add to bag - $20</button>
+            </div>
+            <button class="share-product-button" type="button" data-share>Share this onesie</button>
+            <p class="mini-note">Prototype storefront: connect the checkout button to Shopify, Stripe, or another merchant platform before accepting payment. Add verified fabric, care, fit, inventory, shipping, return, and garment-compliance details from the final production specification.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="difference">
+      <div class="shell">
+        <div class="section-heading">
+          <span class="section-kicker">The back-zip difference</span>
+          <h2>A familiar baby essential, turned around.</h2>
+          <p>The product story is simple enough to understand in one glance and distinctive enough to remember.</p>
+        </div>
+
+        <div class="difference-grid">
+          <article class="difference-card">
+            <div class="number-pill">01</div>
+            <h3>See the idea instantly</h3>
+            <p>The coral zipper down the back becomes the visual hook, so the product explains itself in photos, videos, and social posts.</p>
+          </article>
+          <article class="difference-card">
+            <div class="number-pill">02</div>
+            <h3>Lead with personality</h3>
+            <p>The original monkey print gives Tot Onesie a recognizable signature without relying on a licensed character.</p>
+          </article>
+          <article class="difference-card">
+            <div class="number-pill">03</div>
+            <h3>Make gifting easy</h3>
+            <p>At $20, the decision feels small while the design still feels special enough for showers, visits, and just-because gifts.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="gift-section" id="gift">
+      <div class="shell">
+        <div class="gift-card">
+          <div>
+            <span class="section-kicker">Send a little monkey business</span>
+            <h2>The gift that gets opened, photographed, and shared.</h2>
+            <p>Perfect for baby showers, first visits, welcome-home surprises, and the aunt who refuses to bring another beige outfit.</p>
+            <div class="gift-actions">
+              <a class="primary-button" href="#shop">Choose a size <span aria-hidden="true">&rarr;</span></a>
+              <button class="secondary-button" type="button" data-share>Send to someone</button>
+            </div>
+          </div>
+          <div class="gift-visual" aria-hidden="true">
+            <div class="gift-box">
+              <div class="gift-ribbon-v"></div>
+              <div class="gift-ribbon-h"></div>
+              <div class="gift-tag">To: Tiny Human</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="shell faq-wrap">
+        <div class="faq-intro">
+          <span class="section-kicker">Questions, answered</span>
+          <h2>Everything before monkey business begins.</h2>
+          <p>Keep this section current as final product specifications, inventory, and policies are confirmed.</p>
+        </div>
+
+        <div class="faq-list">
+          <details open>
+            <summary>What makes Tot Onesie different?</summary>
+            <p>The core product idea is the zipper placement: it runs down the back rather than the front. The original monkey-and-b
