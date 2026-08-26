@@ -138,7 +138,8 @@ export default async function ConsentReceiptPage({
               {consents.length === 0 ? (
                 <p className="mt-2 text-sm text-graphite">No consent records.</p>
               ) : (
-                <table className="mt-2 w-full text-sm">
+                <div className="mt-2 overflow-x-auto">
+                <table className="w-full min-w-[420px] text-sm">
                   <thead>
                     <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                       <th className="py-2 pr-4 font-semibold">Instrument</th>
@@ -165,6 +166,7 @@ export default async function ConsentReceiptPage({
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
 
               {/* Per-class signed scopes + history */}
@@ -226,7 +228,8 @@ export default async function ConsentReceiptPage({
               <h3 className="mt-8 text-sm font-semibold tracking-wide text-navy uppercase">
                 Ledger events (immutable, oldest first)
               </h3>
-              <table className="mt-2 w-full text-sm">
+              <div className="mt-2 overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Date</th>
@@ -259,6 +262,7 @@ export default async function ConsentReceiptPage({
                   ))}
                 </tbody>
               </table>
+              </div>
 
               <p className="mt-6 border-t border-hairline pt-3 text-xs text-graphite">
                 Issued {formatDay(simDate)} (simulation clock). This receipt is a projection of

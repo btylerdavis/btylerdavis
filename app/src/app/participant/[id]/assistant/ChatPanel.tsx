@@ -36,15 +36,18 @@ function shortLogId(logId: string | null): string {
   return logId ? `${logId.slice(0, 8)}…` : "—";
 }
 
+/* Checks render as a flex-wrap row (never inline nowrap runs): JSX strips the
+   whitespace between the spans, which otherwise fuses them into one
+   unbreakable line that overflows narrow viewports. */
 function ChecksLine({ turn }: { turn: ChatTurnResult }) {
   return (
-    <p className="mt-3 border-t border-hairline pt-2 text-[12px] text-graphite">
+    <p className="mt-3 flex flex-wrap gap-x-3 gap-y-0.5 border-t border-hairline pt-2 text-[12px] text-graphite">
       {turn.checks.map((check) => (
-        <span key={check.id} className="mr-3 whitespace-nowrap">
+        <span key={check.id} className="whitespace-nowrap">
           {check.passed ? "✓" : "✕"} {check.label.toLowerCase()}
         </span>
       ))}
-      <span>· logged {shortLogId(turn.logId)}</span>
+      <span className="whitespace-nowrap">· logged {shortLogId(turn.logId)}</span>
     </p>
   );
 }
@@ -125,15 +128,14 @@ function AssistantBubble({ turn }: { turn: ChatTurnResult }) {
         </div>
       )}
       {escalated ? (
-        <p className="mt-3 border-t border-white/15 pt-2 text-[12px] text-white/70">
+        <p className="mt-3 flex flex-wrap gap-x-3 gap-y-0.5 border-t border-white/15 pt-2 text-[12px] text-white/70">
           {turn.checks.map((check) => (
-            <span key={check.id} className="mr-3 whitespace-nowrap">
+            <span key={check.id} className="whitespace-nowrap">
               {check.passed ? "✓" : "✕"} {check.label.toLowerCase()}
             </span>
           ))}
-          <span>
-            · logged {shortLogId(turn.logId)} · queued for clinician review
-          </span>
+          <span className="whitespace-nowrap">· logged {shortLogId(turn.logId)}</span>
+          <span className="whitespace-nowrap">· queued for clinician review</span>
         </p>
       ) : (
         <ChecksLine turn={turn} />

@@ -86,7 +86,10 @@ export default async function OutreachQueuePage() {
               queue.items.map((item) => (
                 <HairlineCard key={`${item.participantId}-${item.signal}`} className="p-5 sm:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
+                    {/* min-w floor: on phones the draft column refuses to
+                        squeeze beside the buttons and wraps them below
+                        instead — full-width message, decisions underneath */}
+                    <div className="min-w-[16rem] flex-1">
                       {/* Who + why */}
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[16px] font-semibold text-ink">
@@ -122,16 +125,19 @@ export default async function OutreachQueuePage() {
                           </span>
                         ))}
                       </div>
-                      <p className="mt-2.5 text-[12px] text-graphite">
+                      {/* flex-wrap (not inline nowrap runs): JSX strips the
+                          whitespace between the spans, which otherwise fuses
+                          them into one unbreakable line that overflows phones */}
+                      <p className="mt-2.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-graphite">
                         {item.checks.map((check) => (
-                          <span key={check.id} className="mr-3 whitespace-nowrap">
+                          <span key={check.id} className="whitespace-nowrap">
                             {check.passed ? "✓" : "✕"} {check.label.toLowerCase()}
                           </span>
                         ))}
                         <span className="whitespace-nowrap">
-                          · schema {item.schemaValid ? "valid" : "invalid"} · logged{" "}
-                          {shortId(item.logId)}
+                          · schema {item.schemaValid ? "valid" : "invalid"}
                         </span>
+                        <span className="whitespace-nowrap">· logged {shortId(item.logId)}</span>
                       </p>
                     </div>
 
