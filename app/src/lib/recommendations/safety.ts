@@ -21,6 +21,13 @@ import { RULE_GUARDRAILS } from "./rules";
  * (decisionLog.ts) and displayed at /compliance/model-log. A failed check
  * withholds the card. The chain is engine-agnostic: a governed LLM's drafts
  * run through exactly these functions.
+ *
+ * The chain is also SURFACE-agnostic: the AI Care Assistant (chat replies
+ * and coach outreach drafts) runs through these same three functions. The
+ * linkage and guardrail checks accept an optional rule registry /
+ * required-claims map so a second governed surface can register its own
+ * rules WITHOUT reimplementing (or weakening) any check — the defaults keep
+ * the recommendation engine's behavior byte-for-byte identical.
  */
 
 /**
@@ -80,10 +87,11 @@ export function denylistCheck(draft: RecommendationDraft): SafetyCheck {
 
 export function evidenceLinkageCheck(
   draft: RecommendationDraft,
-  bundle: EvidenceBundle
+  bundle: EvidenceBundle,
+  requiredClaims: Readonly<Record<string, readonly string[]>> = REQUIRED_CLAIMS
 ): SafetyCheck {
   const missing = draft.evidenceClaimIds.filter((id) => getClaim(bundle, id) === undefined);
-  const required = REQUIRED_CLAIMS[draft.ruleId] ?? [];
+  const required = requiredClaims[draft.ruleId] ?? [];
   const uncited = required.filter((id) => !draft.evidenceClaimIds.includes(id));
   const passed = missing.length === 0 && uncited.length === 0;
   return {
@@ -105,8 +113,11 @@ export function evidenceLinkageCheck(
   };
 }
 
-export function guardrailClassCheck(draft: RecommendationDraft): SafetyCheck {
-  const registered = RULE_GUARDRAILS[draft.ruleId];
+export function guardrailClassCheck(
+  draft: RecommendationDraft,
+  registry: Readonly<Record<string, string>> = RULE_GUARDRAILS
+): SafetyCheck {
+  const registered = registry[draft.ruleId];
   if (registered === undefined) {
     return {
       id: "guardrail_class",
@@ -142,12 +153,25 @@ export function guardrailClassCheck(draft: RecommendationDraft): SafetyCheck {
   };
 }
 
+/** Optional registry overrides for a second governed surface (assistant). */
+export interface SafetyChainRegistry {
+  /** rule id → guardrail class (defaults to the recommendation rules) */
+  registry?: Readonly<Record<string, string>>;
+  /** rule id → required claim ids (defaults to REQUIRED_CLAIMS) */
+  requiredClaims?: Readonly<Record<string, readonly string[]>>;
+}
+
 /** Runs the full chain in order; the card renders only if every check passes. */
 export function runSafetyChain(
   draft: RecommendationDraft,
-  bundle: EvidenceBundle
+  bundle: EvidenceBundle,
+  opts: SafetyChainRegistry = {}
 ): SafetyCheck[] {
-  return [denylistCheck(draft), evidenceLinkageCheck(draft, bundle), guardrailClassCheck(draft)];
+  return [
+    denylistCheck(draft),
+    evidenceLinkageCheck(draft, bundle, opts.requiredClaims),
+    guardrailClassCheck(draft, opts.registry),
+  ];
 }
 
 export function safetyChainPassed(checks: SafetyCheck[]): boolean {

@@ -449,6 +449,37 @@ model ImportBatch {
   @@index([participantId, createdAt])
 }
 
+/// AI Care Assistant outreach decision (Addendum A demonstration): one row
+/// per coach Approve/Skip on a generated outreach-queue item. Queue items
+/// themselves are computed live from consent-gated signals (never stored),
+/// so a revoked participant's items vanish on the next render; a decision
+/// recorded here retires the item for that sim date. The governance trail
+/// for the drafted message lives in ModelDecisionLog — a generation row
+/// when the item is drafted, and a decision row (`…#approved` /
+/// `…#skipped`) written when the coach acts, carrying the safety chain
+/// re-run against CURRENT consent at decision time.
+model OutreachDecision {
+  id            String   @id @default(uuid())
+  participantId String
+  /// signal id: "therapy_gap" | "adherence_low" | "resupply_due" | "checkin_missed"
+  signal        String
+  status        String // "approved" | "skipped"
+  decidedBy     String
+  /// sim-clock date of the queue the item was generated for
+  simDate       DateTime
+  /// snapshot of the drafted message as it stood at the decision
+  draftTitle    String
+  draftBody     String
+  /// ModelDecisionLog row recording the decision's safety-chain re-run
+  logId         String?
+  createdAt     DateTime @default(now())
+
+  /// One decision per (participant, signal) per queue day.
+  @@unique([participantId, signal, simDate])
+  @@index([simDate, status])
+  @@index([participantId])
+}
+
 /// Singleton row holding the demo "current date" (the time machine's clock).
 model SimClock {
   id          String   @id @default("singleton")

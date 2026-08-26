@@ -61,6 +61,12 @@ const eslintConfig = defineConfig([
       // ImportBatch provenance receipts. Subject-data rows still land only
       // through the policy repository's guarded writes.
       "src/lib/imports/pendingStore.ts",
+      // AI Care Assistant outreach queue (Addendum A): the only file in the
+      // assistant module touching prisma — the consent-aware cohort signal
+      // scan (same standing as coach/queries.ts) and the OutreachDecision
+      // store. Chat, intents, claims, and reply builders are pure and read
+      // only through the consent-gated readers.
+      "src/lib/assistant/queue.ts",
       "src/lib/identity.ts",
       "src/lib/simclock.ts",
       "src/lib/synthetic/generator.ts",
