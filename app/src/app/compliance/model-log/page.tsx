@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
+import { GUARDRAIL_BADGE_CLASSES } from "@/components/RecommendationCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatDay, shortId } from "@/lib/format";
 import { listModelDecisions } from "@/lib/recommendations/decisionLog";
@@ -45,12 +46,6 @@ function ruleIdWithBreaks(ruleId: string) {
     </span>
   ));
 }
-
-const BADGE_CLASSES: Record<GuardrailClass, string> = {
-  comfort: "bg-sky text-white",
-  "adherence-support": "bg-brand text-white",
-  "discuss-with-provider": "bg-lake text-white",
-};
 
 export default async function ModelLogPage() {
   const { entries, total, queuedForReview } = await listModelDecisions(200);
@@ -137,7 +132,7 @@ export default async function ModelLogPage() {
                         <td className="py-2.5 pr-3 whitespace-nowrap">
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
-                              BADGE_CLASSES[entry.guardrail as GuardrailClass] ??
+                              GUARDRAIL_BADGE_CLASSES[entry.guardrail as GuardrailClass] ??
                               "bg-cream text-navy"
                             }`}
                           >

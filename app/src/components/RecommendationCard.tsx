@@ -30,7 +30,13 @@ import type { RecommendationsResult } from "@/lib/recommendations/queries";
  * marked reviewed from /compliance/model-log).
  */
 
-const BADGE_CLASSES: Record<GuardrailClass, string> = {
+/**
+ * Single source for the guardrail-class badge treatment (light→dark blue
+ * scale, every pairing ≥ WCAG AA at badge size). Everything that renders a
+ * guardrail chip — cards here, the model decision log — imports this map so
+ * the classes stay identical everywhere.
+ */
+export const GUARDRAIL_BADGE_CLASSES: Record<GuardrailClass, string> = {
   comfort: "bg-skylight text-navy",
   "adherence-support": "bg-lake text-white",
   "discuss-with-provider": "bg-navy text-white",
@@ -56,7 +62,7 @@ const SPARK_META: Record<
 export function GuardrailBadge({ guardrail }: { guardrail: GuardrailClass }) {
   return (
     <span
-      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${BADGE_CLASSES[guardrail]}`}
+      className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${GUARDRAIL_BADGE_CLASSES[guardrail]}`}
     >
       {GUARDRAIL_LABELS[guardrail]}
     </span>

@@ -171,7 +171,7 @@ export function ChatPanel({
   };
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-hairline bg-white">
+    <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-hairline bg-white">
       {/* Transcript */}
       <div className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
         {entries.length === 0 && (

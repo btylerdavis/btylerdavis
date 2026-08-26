@@ -351,9 +351,11 @@ interface ChangeLabelProps {
   width?: number | string;
   height?: number | string;
   value?: number | string | null;
+  /** 95% CI half-width in DATA units — clears the label past the whisker */
+  ci95?: number | null;
 }
 
-function ChangeLabel({ x = 0, y = 0, width = 0, height = 0, value }: ChangeLabelProps) {
+function ChangeLabel({ x = 0, y = 0, width = 0, height = 0, value, ci95 }: ChangeLabelProps) {
   if (value === undefined || value === null || value === "") return <g />;
   const px = Number(x);
   const py = Number(y);
@@ -361,10 +363,15 @@ function ChangeLabel({ x = 0, y = 0, width = 0, height = 0, value }: ChangeLabel
   const ph = Number(height);
   const numeric = Number(value);
   const below = numeric < 0;
+  // The bar spans 0 → value, so bar height ÷ |value| = pixels per data unit;
+  // that converts the CI half-width into the whisker's pixel extent past the
+  // bar end, and the label sits beyond it instead of colliding with the cap.
+  const pxPerUnit = ph > 0 && numeric !== 0 ? ph / Math.abs(numeric) : 0;
+  const whiskerPx = ci95 != null ? ci95 * pxPerUnit : 0;
   return (
     <text
       x={px + pw / 2}
-      y={below ? py + ph + 14 : py - 6}
+      y={below ? py + ph + whiskerPx + 14 : py - whiskerPx - 6}
       textAnchor="middle"
       fill={CHROME.ink}
       fontSize={FONT.label}
@@ -394,7 +401,7 @@ export function ArmChangeColumns({
       <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{caption}</p>
       <div className="mt-1 h-60">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={points} margin={{ top: 18, right: 8, bottom: 18, left: 0 }}>
+          <BarChart data={points} margin={{ top: 24, right: 8, bottom: 18, left: 0 }}>
             <BrandGrid />
             <XAxis
               dataKey="label"
@@ -417,7 +424,12 @@ export function ArmChangeColumns({
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
               isAnimationActive={false}
-              label={(props: unknown) => <ChangeLabel {...(props as ChangeLabelProps)} />}
+              label={(props: unknown) => {
+                const labelProps = props as ChangeLabelProps & { index?: number };
+                const ci95 =
+                  labelProps.index !== undefined ? points[labelProps.index]?.ci95 ?? null : null;
+                return <ChangeLabel {...labelProps} ci95={ci95} />;
+              }}
             >
               {points.some((point) => point.ci95 !== undefined && point.ci95 !== null) && (
                 <ErrorBar dataKey="ci95" width={6} strokeWidth={1.5} stroke={CHROME.ink} />

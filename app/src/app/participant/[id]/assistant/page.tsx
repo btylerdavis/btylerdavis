@@ -83,10 +83,14 @@ export default async function AssistantPage({
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_320px]">
-            {/* Chat column */}
-            <div className="min-h-[540px]">
+            {/* Chat column — a flex column so the panel (flex-1) and the
+                governance disclaimer below it both count toward the column's
+                height; with a bare min-height the ChatPanel's percentage
+                height made the disclaimer overflow and the next grid row
+                painted over it on mobile. */}
+            <div className="flex min-h-[540px] flex-col">
               {paused ? (
-                <HairlineCard className="p-6 sm:p-8">
+                <HairlineCard className="flex-1 p-6 sm:p-8">
                   <p className="eyebrow font-sans">Assistant paused</p>
                   <p className="mt-3 font-display text-[26px] font-medium leading-[1.2] text-ink">
                     {alive

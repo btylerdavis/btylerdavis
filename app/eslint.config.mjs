@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Packaged eval build output (git-ignored) — not source; linting it
+    // buries the real signal under thousands of generated-code findings.
+    "dist/**",
   ]),
 
   // -------------------------------------------------------------------------
