@@ -220,12 +220,20 @@ export default async function ParticipantPage({
               <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
                 Participant snapshot
               </p>
-              <Link
-                href={`/participant/${id}/trends`}
-                className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
-              >
-                View trends →
-              </Link>
+              <span className="flex flex-wrap items-center gap-3">
+                <Link
+                  href={`/participant/${id}/assistant`}
+                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                >
+                  Care assistant →
+                </Link>
+                <Link
+                  href={`/participant/${id}/trends`}
+                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                >
+                  View trends →
+                </Link>
+              </span>
             </div>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               {displayName ?? `Participant ${shortId(id)}`}

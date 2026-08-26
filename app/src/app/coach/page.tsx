@@ -64,9 +64,14 @@ export default async function CoachPortalPage({
                   dayNumber={dashboard.dayNumber}
                   daysRemaining={dashboard.daysRemaining}
                 />
-                <ButtonLink href="/coach/import" variant="purple" size="sm">
-                  Import device data
-                </ButtonLink>
+                <div className="flex flex-wrap gap-2">
+                  <ButtonLink href="/coach/outreach" variant="primary" size="sm">
+                    Outreach queue
+                  </ButtonLink>
+                  <ButtonLink href="/coach/import" variant="purple" size="sm">
+                    Import device data
+                  </ButtonLink>
+                </div>
               </div>
             </div>
           </Card>

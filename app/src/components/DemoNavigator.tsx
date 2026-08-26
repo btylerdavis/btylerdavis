@@ -30,6 +30,13 @@ const ACTS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Coach portal", href: "/coach" },
     ],
   },
+  {
+    title: "AI assistant",
+    links: [
+      { label: "Marcus's chat", href: `/participant/${MARCUS}/assistant` },
+      { label: "Outreach queue", href: "/coach/outreach" },
+    ],
+  },
   { title: "Research", links: [{ label: "Research", href: "/research/positional" }] },
   {
     title: "Compliance",
