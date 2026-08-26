@@ -7,10 +7,11 @@ import { runChatTurn, type ChatTurnResult } from "@/lib/assistant/chat";
  * Chat server action (Addendum A). Thin: all governance lives in
  * runChatTurn — consent gate, consent-gated reads, zod schema, SafetyCheck
  * chain, ModelDecisionLog row. The action only validates the transport
- * shape and mints the per-turn audit id (server-side, so every turn logs
- * distinctly regardless of client state). No page revalidation: the
- * transcript is client state, and the audit trail lands in the model log
- * regardless.
+ * shape and mints the per-turn audit id (server-side, so repeat turns stay
+ * distinct in the log regardless of client state). No page revalidation:
+ * the transcript is client state, and for every turn against a live record
+ * the audit trail lands in the model log regardless (tombstoned/unknown
+ * ids are refused without a row — see runChatTurn's LOGGING notes).
  */
 
 const MAX_MESSAGE_LENGTH = 500;

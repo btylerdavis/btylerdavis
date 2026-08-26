@@ -499,3 +499,49 @@ export function buildOutreachDraft(
     }
   }
 }
+
+/**
+ * Coach-decision refusal notices — the queue's analogue of
+ * buildConsentRefusalNotice: drafted when Approve/Skip re-runs the pipeline
+ * and CURRENT consent (or the re-derived signal) no longer supports the
+ * item. Generic text, zero participant data. Each registered rule requires
+ * a claim that cannot exist on the branch that drafts it (see
+ * ASSISTANT_RULES), so the chain withholds the notice and the refused
+ * decision lands in the decision log with passed=false.
+ */
+export function buildOutreachRefusalNotice(
+  kind: "consent_refused" | "signal_gone",
+  signal: OutreachSignal
+): RecommendationDraft {
+  const label = OUTREACH_SIGNAL_LABELS[signal];
+  if (kind === "consent_refused") {
+    return candidate(
+      ASSISTANT_OUTREACH_MODEL_ID,
+      "outreach.consent_refused",
+      "Outreach blocked — consent no longer admits it",
+      `A coach decision arrived for a "${label}" queue item, but no current consent grant ` +
+        `admits the assistant for this record any more. Nothing was sent, and no message ` +
+        `was drafted from participant data.`,
+      `A decision on a "${label}" queue item was refused at the consent gate: the grant ` +
+        `that admitted the item at render time is no longer current. The send is blocked, ` +
+        `this notice carries no personal data, and the refusal itself is the decision-log ` +
+        `entry.`,
+      [{ label: "Assistant consent gate", value: "no current grant — send blocked" }],
+      ["assistant.enrollment"]
+    );
+  }
+  return candidate(
+    ASSISTANT_OUTREACH_MODEL_ID,
+    "outreach.signal_gone",
+    "Outreach blocked — the signal did not re-derive",
+    `A coach decision arrived for a "${label}" queue item, but re-running the signal ` +
+      `against current consent-gated data found no "${label}" signal to ground it. ` +
+      `Nothing was sent; the queue retires the item on its next render.`,
+    `A decision on a "${label}" queue item was refused at revalidation: the signal ` +
+      `computed at render time no longer holds against current consent-gated data (the ` +
+      `data moved on, or a data-class grant was revoked). The send is blocked and the ` +
+      `refusal itself is the decision-log entry.`,
+    [{ label: `Re-derived "${label}" signal`, value: "not present — send blocked" }],
+    ["assistant.enrollment", "outreach.live_signal"]
+  );
+}

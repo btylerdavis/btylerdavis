@@ -79,6 +79,26 @@ export const ASSISTANT_RULES: Readonly<Record<string, AssistantRule>> = {
     guardrail: "adherence-support",
     required: ["assistant.enrollment", "pro.checkin_due"],
   },
+  /**
+   * Coach-decision refusals — the queue's analogues of
+   * "chat.consent_refused". Each is registered with a required claim that
+   * CANNOT exist on the branch that drafts it, so the notice always fails
+   * the evidence-linkage check and the refused Approve/Skip lands in the
+   * decision log with passed=false:
+   * - consent_refused needs assistant.enrollment, which cannot exist once
+   *   the assistant consent gate refuses;
+   * - signal_gone needs outreach.live_signal, the claim only a re-derived
+   *   signal could carry — and it is drafted precisely when revalidation
+   *   found none.
+   */
+  "outreach.consent_refused": {
+    guardrail: "adherence-support",
+    required: ["assistant.enrollment"],
+  },
+  "outreach.signal_gone": {
+    guardrail: "adherence-support",
+    required: ["assistant.enrollment", "outreach.live_signal"],
+  },
 };
 
 export const ASSISTANT_GUARDRAILS: Readonly<Record<string, GuardrailClass>> =

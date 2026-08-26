@@ -73,6 +73,30 @@ describe("intent classification", () => {
     expect(classifyIntent("hello").intent).toBe("greeting");
     expect(classifyIntent("tell me about the weather").intent).toBe("unknown");
   });
+
+  it("only a bare/short 'help' greets — help plus a real problem routes on the problem", () => {
+    expect(classifyIntent("help").intent).toBe("greeting");
+    expect(classifyIntent("Help!").intent).toBe("greeting");
+    expect(classifyIntent("help me please").intent).toBe("greeting");
+    expect(classifyIntent("help I keep taking off the mask at 2am").intent).toBe("comfort");
+    expect(classifyIntent("help my nose is so dry every morning").intent).toBe("dryness");
+    expect(classifyIntent("help my mask leaks all night").intent).toBe("leak");
+  });
+
+  it("pressure/strength paraphrases escalate as clinical", () => {
+    const cases = [
+      "my machine feels too strong",
+      "turn down my machine strength",
+      "the air is too strong at night",
+      "can you turn the pressure down",
+      "it blows too hard when I lie down",
+    ];
+    for (const message of cases) {
+      const match = classifyIntent(message);
+      expect(match.intent, message).toBe("clinical");
+      expect(match.clinicalTopic, message).toBe("pressure settings");
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -558,7 +582,7 @@ describe("outreach queue: signals, consent, approvals (database)", () => {
     expect(entries.some((entry) => entry.ruleId === "outreach.resupply_due#skipped")).toBe(true);
   });
 
-  it("approval after revocation is refused — the send never happens", async () => {
+  it("approval after revocation is refused — the send never happens, and the refusal is logged", async () => {
     const { p4 } = await seedQueueCohort();
     expect((await loadOutreachQueue()).totals.checkin_missed).toBe(1);
 
@@ -569,5 +593,38 @@ describe("outreach queue: signals, consent, approvals (database)", () => {
     expect(outcome.ok).toBe(false);
     expect(outcome.reason).toContain("Consent revoked");
     expect(await prisma.outreachDecision.count()).toBe(0);
+
+    // The blocked send is itself on the model decision log, through the
+    // same chain chat's consent refusals take: no grant → no enrollment
+    // claim → evidence linkage fails → passed=false.
+    const { entries } = await listModelDecisions();
+    const row = entries.find(
+      (entry) => entry.ruleId === "outreach.consent_refused#checkin_missed#approved"
+    );
+    expect(row?.participantId).toBe(p4);
+    expect(row?.model).toBe(ASSISTANT_OUTREACH_MODEL_ID);
+    expect(row?.passed).toBe(false);
+    expect(row?.checks.find((check) => check.id === "evidence_linkage")?.passed).toBe(false);
+  });
+
+  it("approving a signal that no longer re-derives is refused and logged", async () => {
+    const { p3 } = await seedQueueCohort();
+    // p3 has steady recent use — no therapy_gap signal exists for it, so a
+    // stale Approve on that signal must be refused at revalidation.
+    const outcome = await decideOutreach(p3, "therapy_gap", "approved");
+    expect(outcome.ok).toBe(false);
+    expect(outcome.reason).toContain("Signal no longer present");
+    expect(await prisma.outreachDecision.count()).toBe(0);
+
+    const { entries } = await listModelDecisions();
+    const row = entries.find(
+      (entry) => entry.ruleId === "outreach.signal_gone#therapy_gap#approved"
+    );
+    expect(row?.participantId).toBe(p3);
+    expect(row?.passed).toBe(false);
+    // Consent is still current (enrollment claim exists); the missing
+    // outreach.live_signal claim is what fails the chain by construction.
+    expect(row?.checks.find((check) => check.id === "evidence_linkage")?.passed).toBe(false);
+    expect(row?.checks.find((check) => check.id === "denylist")?.passed).toBe(true);
   });
 });

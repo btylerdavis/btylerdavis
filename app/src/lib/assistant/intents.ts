@@ -59,6 +59,12 @@ const CLINICAL_RULES: ClinicalRule[] = [
       /\b(change|adjust|increase|decrease|raise|lower|turn)\b.*pressure/,
       /\bcmh2o\b/,
       /\bpressure setting/,
+      // Paraphrases that never say "pressure": machine/air strength and
+      // force complaints, and turn-it-up/-down asks, are pressure asks.
+      /\b(machine|cpap|air ?flow|air|pressure)\b.*\b(too strong|too powerful|too forceful|too much air)\b/,
+      /\b(turn|dial|crank)\w*\b.*\b(up|down)\b.*\b(machine|strength|power|air ?flow|air|pressure)\b/,
+      /\b(machine|cpap|air ?flow) strength\b/,
+      /\bblow(s|ing)? too hard\b/,
     ],
   },
   {
@@ -173,13 +179,19 @@ const INTENT_RULES: IntentRule[] = [
       /\bannoying\b/,
       /\bhate\b/,
       /keeps? (me|waking)/,
+      // Taking the mask off mid-sleep is a habituation complaint.
+      /\b(take|takes|taking|took|taken|rip|rips|ripping|ripped|pull|pulls|pulling|pulled|tear|tearing|tore|yank|yanks|yanking|yanked)\b.*\bmask\b/,
+      /\bmask\b.*\b(comes?|came|falls?|fell|keeps? coming) off\b/,
     ],
   },
   {
     intent: "greeting",
     patterns: [
       /^(hi|hey|hello|howdy|good (morning|afternoon|evening)|yo)\b/,
-      /^help\b/,
+      // Only a BARE/short "help" is the greeting menu — "help I keep taking
+      // off the mask at 2am" must route on the problem, not the menu, so a
+      // help that carries content falls through to the substantive rules.
+      /^(please )?help( me)?( please)?[\s.!?]*$/,
       /what can you (do|help)/,
       /^\?+$/,
     ],

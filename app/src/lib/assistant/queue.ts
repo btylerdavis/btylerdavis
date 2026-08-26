@@ -25,11 +25,12 @@ import {
 } from "../recommendations/safety";
 import { getSimClock } from "../simclock";
 import { addDays } from "../synthetic/profiles";
-import { extendBundle, type AssistantContext } from "./claims";
+import { emptyAssistantContext, extendBundle, type AssistantContext } from "./claims";
 import { assistantConsentGranted } from "./chat";
 import { CHAIN_REGISTRY, CHAIN_REQUIRED_CLAIMS } from "./registry";
 import {
   buildOutreachDraft,
+  buildOutreachRefusalNotice,
   dueResupplyItems,
   OUTREACH_SIGNAL_LABELS,
   type OutreachSignal,
@@ -62,7 +63,11 @@ import {
  *
  * Approving an item RE-RUNS the whole pipeline against CURRENT consent
  * before anything is recorded — a revocation between queue render and
- * click blocks the send and the block itself is logged.
+ * click blocks the send, and the block itself is written to the model
+ * decision log as an `outreach.consent_refused` row (a signal that no
+ * longer re-derives logs `outreach.signal_gone` the same way). Only
+ * tombstoned / mid-deletion records are refused without a row — the same
+ * no-audit-row-for-a-deleted-id privacy rule the chat surface follows.
  */
 
 const ADHERENT_NIGHT_MIN = 240; // ≥ 4 h
@@ -506,6 +511,48 @@ export interface DecisionOutcome {
 }
 
 /**
+ * Logs a refused coach decision — the queue's analogue of chat's
+ * consent-refusal logging. Drafts the generic refusal notice, runs the SAME
+ * schema + SafetyCheck chain, and records the outcome. The notice's
+ * registered rule requires a claim that cannot exist on the branch that
+ * drafts it (see ASSISTANT_RULES), so the chain fails evidence linkage and
+ * the row lands with passed=false: the block itself is on the record. No
+ * OutreachDecision row is written — the item is already gone from the next
+ * queue render, and a refused click must not consume the (participant,
+ * signal, day) decision slot.
+ */
+async function logRefusedDecision(
+  participantId: string,
+  kind: "consent_refused" | "signal_gone",
+  signal: OutreachSignal,
+  status: "approved" | "skipped",
+  clockIso: string,
+  opts: { consented: boolean }
+): Promise<void> {
+  const draft = buildOutreachRefusalNotice(kind, signal);
+  const validation = validateRecommendationDraft(draft);
+  const bundle = extendBundle(
+    buildEvidenceBundle(participantId, clockIso, emptyInputs()),
+    { ...emptyAssistantContext(clockIso), consented: opts.consented }
+  );
+  const checks = runSafetyChain(draft, bundle, {
+    registry: CHAIN_REGISTRY,
+    requiredClaims: CHAIN_REQUIRED_CLAIMS,
+  });
+  await recordModelDecision({
+    participantId,
+    ruleId: `${draft.ruleId}#${signal}#${status}`,
+    guardrail: draft.guardrail,
+    model: draft.model,
+    modelVersion: draft.modelVersion,
+    schemaValid: validation.ok,
+    checks,
+    passed: validation.ok && safetyChainPassed(checks),
+    simDate: new Date(`${clockIso}T00:00:00Z`),
+  });
+}
+
+/**
  * Re-derives one participant's signal from CURRENT consent-gated data —
  * the revalidation approvals rest on. Returns null when the signal no
  * longer holds (data moved on, or consent was revoked).
@@ -603,9 +650,16 @@ async function revalidateSignal(
 /**
  * Records a coach decision on one queue item. Approve re-runs the FULL
  * pipeline (fresh consent-gated signal + schema + safety chain) and
- * refuses when anything fails — the refusal is itself logged. Both
- * outcomes append a `…#approved` / `…#skipped` decision row to the model
- * log and an OutreachDecision row that retires the item for today.
+ * refuses when anything fails — and every refusal against a live record is
+ * itself logged: revoked consent writes an `outreach.consent_refused` model
+ * decision row, a signal that no longer re-derives writes
+ * `outreach.signal_gone`, and a failed safety chain keeps the failed
+ * `…#approved` row draftItem already wrote. Tombstoned / mid-deletion /
+ * unknown records are the one exception — refused with NO row at all, so no
+ * audit row is ever keyed to a deleted id (same privacy rule as the chat
+ * surface). Successful decisions append a `…#approved` / `…#skipped` row to
+ * the model log and an OutreachDecision row that retires the item for
+ * today.
  */
 export async function decideOutreach(
   participantId: string,
@@ -630,14 +684,24 @@ export async function decideOutreach(
 
   const grants = await loadGrants(participantId);
   if (!assistantConsentGranted(grants)) {
-    return { ok: false, reason: "Consent revoked — the item has left the queue" };
+    await logRefusedDecision(participantId, "consent_refused", signal, status, clockIso, {
+      consented: false,
+    });
+    return {
+      ok: false,
+      reason: "Consent revoked — send blocked (and logged); the item has left the queue",
+    };
   }
 
   const candidate = await revalidateSignal(participantId, signal, clock, grants);
   if (!candidate) {
+    await logRefusedDecision(participantId, "signal_gone", signal, status, clockIso, {
+      consented: true,
+    });
     return {
       ok: false,
-      reason: "Signal no longer present against current consent — item retired",
+      reason:
+        "Signal no longer present against current consent — send blocked (and logged); item retired",
     };
   }
 

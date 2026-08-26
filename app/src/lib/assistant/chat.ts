@@ -28,7 +28,8 @@ import { buildChatDraft, buildConsentRefusalNotice } from "./replies";
 
 /**
  * AI Care Assistant — chat orchestrator (Addendum A). One path for every
- * turn, the same governed pipeline recommendation cards take:
+ * turn against a live record, the same governed pipeline recommendation
+ * cards take:
  *
  *   consent gate → consent-gated reads → scripted draft → zod schema →
  *   SafetyCheck chain (denylist + evidence linkage + guardrail class) →
@@ -47,9 +48,13 @@ import { buildChatDraft, buildConsentRefusalNotice } from "./replies";
  *   decline-and-escalate reply (guardrail "discuss-with-provider"), which
  *   recordModelDecision queues for clinician review — the escalation is on
  *   the record by construction.
- * - LOGGING: every turn (answered, withheld, or refused) writes one
- *   ModelDecisionLog row; the turn id in the logged rule id keeps repeat
- *   turns distinct while page re-renders stay idempotent.
+ * - LOGGING: every turn against a live record (answered, withheld, or
+ *   consent-refused) writes one ModelDecisionLog row; the turn id in the
+ *   logged rule id keeps repeat turns distinct while page re-renders stay
+ *   idempotent. Turns addressed to tombstoned, mid-deletion, or unknown
+ *   ids are the deliberate exception: they are refused with NO row at all,
+ *   so no audit row is ever keyed to a deleted record (privacy by design —
+ *   see the lifecycle branch in runChatTurn).
  *
  * ENGINE MODE: the scripted rule-based engine is the only implemented mode
  * and the documented permanent fallback (same posture as RECS_MODE in the
