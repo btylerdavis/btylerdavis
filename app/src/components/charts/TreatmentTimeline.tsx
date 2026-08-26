@@ -3,10 +3,14 @@ import { eventColor } from "./eventStyles";
 
 /**
  * The treatment timeline band — the before/after visual anchor for the
- * trends page. Spans enrollment → sim today; markers are TreatmentEvents,
- * labels alternate above/below the track so near-simultaneous events
- * (Marcus: mattress day 13, CPAP day 14) stay readable. Pure HTML/CSS — no
- * chart library needed for a band.
+ * trends page. Spans enrollment → sim today; markers are TreatmentEvents.
+ * From the `sm` breakpoint up, labels alternate above/below the track so
+ * near-simultaneous events (Marcus: mattress day 13, CPAP day 14) stay
+ * readable. Below `sm` (phones, ~390px) there is no room for in-band
+ * labels at all — they collide with each other and with the endpoint
+ * labels — so the band collapses to colored dots and the labels move into
+ * a legend list underneath. Pure HTML/CSS — no chart library needed for a
+ * band.
  */
 
 export interface TimelineEvent {
@@ -37,7 +41,7 @@ export function TreatmentTimeline({
 
   return (
     <div>
-      <div className="relative h-24">
+      <div className="relative h-10 sm:h-24">
         {/* track */}
         <div className="absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2 rounded-full bg-cream" />
         {/* enrollment + today endpoints */}
@@ -59,7 +63,7 @@ export function TreatmentTimeline({
                 style={{ background: color }}
               />
               <div
-                className={`absolute left-1/2 w-max max-w-28 -translate-x-1/2 text-center ${
+                className={`absolute left-1/2 hidden w-max max-w-28 -translate-x-1/2 text-center sm:block ${
                   above ? "bottom-3.5" : "top-3.5"
                 }`}
               >
@@ -70,7 +74,42 @@ export function TreatmentTimeline({
           );
         })}
       </div>
+      {/* Mobile legend: the band's labels, as a list that cannot collide. */}
+      <ol className="mt-2 space-y-1.5 sm:hidden">
+        <LegendRow color="var(--color-navy)" label="Enrolled" dayIso={startIso} />
+        {sorted.map((event) => (
+          <LegendRow
+            key={`${event.type}-${event.day}`}
+            color={eventColor(event.type)}
+            label={event.label}
+            dayIso={event.day}
+          />
+        ))}
+        <LegendRow color="var(--color-navy)" label="Today (sim)" dayIso={endIso} />
+      </ol>
     </div>
+  );
+}
+
+function LegendRow({
+  color,
+  label,
+  dayIso,
+}: {
+  color: string;
+  label: string;
+  dayIso: string;
+}) {
+  return (
+    <li className="flex items-baseline gap-2 text-xs">
+      <span
+        aria-hidden
+        className="h-2.5 w-2.5 shrink-0 self-center rounded-full"
+        style={{ background: color }}
+      />
+      <span className="font-semibold text-navy">{label}</span>
+      <span className="text-[11px] text-graphite">{formatDay(dayIso)}</span>
+    </li>
   );
 }
 
@@ -93,7 +132,7 @@ function Endpoint({
         style={side === "left" ? { left: 0 } : { right: 0 }}
       />
       <div
-        className={`absolute top-3.5 w-max ${side === "left" ? "left-0 text-left" : "right-0 text-right"}`}
+        className={`absolute top-3.5 hidden w-max sm:block ${side === "left" ? "left-0 text-left" : "right-0 text-right"}`}
       >
         <p className="text-xs font-semibold text-navy">{title}</p>
         <p className="text-[11px] text-graphite">{formatDay(dayIso)}</p>

@@ -22,11 +22,29 @@ export const metadata: Metadata = { title: "Model decision log" };
 
 export const dynamic = "force-dynamic";
 
-const TIMESTAMP_FORMAT = new Intl.DateTimeFormat("en-US", {
+const LOGGED_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
+  timeZone: "UTC",
+});
+const LOGGED_TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
   timeZone: "UTC",
 });
+
+/**
+ * Long audit rule ids (`outreach.consent_refused#checkin_missed#approved`)
+ * get soft break opportunities after each "." and "#", so the Rule column
+ * wraps at sensible joints instead of forcing the Safety-checks column past
+ * the viewport edge at 1440px.
+ */
+function ruleIdWithBreaks(ruleId: string) {
+  return ruleId.split(/(?<=[.#])/).map((segment, index) => (
+    <span key={index}>
+      {index > 0 && <wbr />}
+      {segment}
+    </span>
+  ));
+}
 
 const BADGE_CLASSES: Record<GuardrailClass, string> = {
   comfort: "bg-sky text-white",
@@ -84,33 +102,39 @@ export default async function ModelLogPage() {
                 <table className="w-full min-w-[920px] text-sm">
                   <thead>
                     <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
-                      <th className="py-2 pr-4 font-semibold">Logged (UTC)</th>
-                      <th className="py-2 pr-4 font-semibold">Sim date</th>
-                      <th className="py-2 pr-4 font-semibold">Participant</th>
-                      <th className="py-2 pr-4 font-semibold">Rule</th>
-                      <th className="py-2 pr-4 font-semibold">Guardrail</th>
-                      <th className="py-2 pr-4 font-semibold">Engine</th>
-                      <th className="py-2 pr-4 font-semibold">Schema</th>
-                      <th className="py-2 pr-4 font-semibold">Safety checks</th>
+                      <th className="py-2 pr-3 font-semibold">Logged (UTC)</th>
+                      <th className="py-2 pr-3 font-semibold">Sim date</th>
+                      <th className="py-2 pr-3 font-semibold">Participant</th>
+                      <th className="py-2 pr-3 font-semibold">Rule</th>
+                      <th className="py-2 pr-3 font-semibold">Guardrail</th>
+                      <th className="py-2 pr-3 font-semibold">Engine</th>
+                      <th className="py-2 pr-3 font-semibold">Schema</th>
+                      <th className="py-2 pr-3 font-semibold">Safety checks</th>
                       <th className="py-2 font-semibold">Clinician review</th>
                     </tr>
                   </thead>
                   <tbody>
                     {entries.map((entry) => (
                       <tr key={entry.id} className="border-b border-hairline/60 last:border-0 align-top">
-                        <td className="py-2.5 pr-4 whitespace-nowrap text-graphite">
-                          {TIMESTAMP_FORMAT.format(entry.createdAt)}
+                        <td className="py-2.5 pr-3 text-graphite">
+                          {/* date / time stacked — narrow without mid-date wraps */}
+                          <span className="block whitespace-nowrap">
+                            {LOGGED_DATE_FORMAT.format(entry.createdAt)}
+                          </span>
+                          <span className="block text-xs">
+                            {LOGGED_TIME_FORMAT.format(entry.createdAt)}
+                          </span>
                         </td>
-                        <td className="py-2.5 pr-4 whitespace-nowrap text-graphite">
+                        <td className="py-2.5 pr-3 whitespace-nowrap text-graphite">
                           {formatDay(entry.simDate)}
                         </td>
-                        <td className="py-2.5 pr-4 font-mono text-xs whitespace-nowrap text-ink">
+                        <td className="py-2.5 pr-3 font-mono text-xs whitespace-nowrap text-ink">
                           {shortId(entry.participantId)}
                         </td>
-                        <td className="py-2.5 pr-4 font-mono text-xs whitespace-nowrap text-ink">
-                          {entry.ruleId}
+                        <td className="py-2.5 pr-3 font-mono text-xs text-ink">
+                          {ruleIdWithBreaks(entry.ruleId)}
                         </td>
-                        <td className="py-2.5 pr-4 whitespace-nowrap">
+                        <td className="py-2.5 pr-3 whitespace-nowrap">
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
                               BADGE_CLASSES[entry.guardrail as GuardrailClass] ??
@@ -121,13 +145,15 @@ export default async function ModelLogPage() {
                               entry.guardrail}
                           </span>
                         </td>
-                        <td className="py-2.5 pr-4 font-mono text-xs whitespace-nowrap text-graphite">
-                          {entry.model} · {entry.modelVersion}
+                        <td className="py-2.5 pr-3 font-mono text-xs text-graphite">
+                          {/* stacked so the table fits a 1440px viewport whole */}
+                          <span className="block">{entry.model}</span>
+                          <span className="block">{entry.modelVersion}</span>
                         </td>
-                        <td className="py-2.5 pr-4 whitespace-nowrap">
+                        <td className="py-2.5 pr-3 whitespace-nowrap">
                           <CheckChip passed={entry.schemaValid} label="zod" />
                         </td>
-                        <td className="py-2.5 pr-4">
+                        <td className="py-2.5 pr-3">
                           <div className="flex flex-wrap gap-1">
                             {entry.checks.map((check) => (
                               <span key={check.id} title={check.detail}>
@@ -136,7 +162,7 @@ export default async function ModelLogPage() {
                             ))}
                           </div>
                         </td>
-                        <td className="py-2.5 whitespace-nowrap">
+                        <td className="py-2.5">
                           {!entry.reviewQueued ? (
                             <span className="text-xs text-graphite">n/a</span>
                           ) : entry.reviewedAt !== null ? (

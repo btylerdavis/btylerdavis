@@ -21,7 +21,8 @@ import { BLUE_RAMP, CHROME, FONT, SERIES } from "./theme";
  * system as the participant and coach views: hairline grid, muted ticks,
  * legends whenever ≥ 2 series, values-first tooltips. Firmness bands are
  * ordinal, so they wear the ordered blue ramp; treatment-delivery reference
- * lines stay accentPurple like every other before/after anchor.
+ * lines wear the deep-gold secondary series color (SERIES.secondary) like
+ * every other before/after anchor.
  */
 
 const LINE_PROPS = {

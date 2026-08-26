@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Card } from "@/components/Card";
+import { Footer } from "@/components/Footer";
+import { SiteHeader } from "@/components/SiteHeader";
 import { internalStorageCounts } from "@/lib/consent";
 import { runConsentGateProbes } from "@/lib/consent/statusProbes";
 
@@ -9,6 +13,10 @@ import { runConsentGateProbes } from "@/lib/consent/statusProbes";
  * cohort participant ids, no identity-linked reads, no raw probe internals —
  * the consent gates are exercised against a throwaway synthetic probe
  * participant that is created and deleted within this request.
+ *
+ * Linked from every footer ("Build status"), so it wears the same
+ * Sleeptopia design language as every other route: site chrome, cream
+ * ground, white hairline cards, eyebrow labels, serif headings.
  */
 export const metadata: Metadata = { title: "Build status" };
 
@@ -22,74 +30,98 @@ export default async function DevStatusPage() {
   const probes = await runConsentGateProbes();
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10 font-mono text-sm">
-      <p className="mb-6 inline-block rounded bg-amber-100 px-2 py-1 text-xs font-semibold tracking-wide text-amber-800">
-        DEMO DATA — synthetic cohort
-      </p>
-      <h1 className="mb-8 text-2xl font-bold">Build status</h1>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1 bg-cream">
+        <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
+          {/* Header */}
+          <Card className="p-6 sm:p-8">
+            <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
+              Demo internals · build status
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">Build status</h1>
+            <p className="mt-2 max-w-2xl text-sm text-graphite">
+              Internal storage counts, the sim clock, and live pass/fail probes of the
+              consent gates — the plumbing check behind every product surface.
+            </p>
+            <p className="mt-4 inline-block rounded-full border border-watermark/50 px-3 py-1 text-[10px] font-semibold tracking-[0.18em] text-watermark uppercase">
+              Demo data — synthetic cohort
+            </p>
+          </Card>
 
-      <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Database (internal storage counts)</h2>
-        <p className="mb-3 text-xs text-gray-500">
-          Raw physical row counts (storage metric) — deliberately NOT
-          consent-filtered; every product surface uses consent-gated counts.
-        </p>
-        <table className="w-full border-collapse">
-          <tbody>
-            <Row label="participants" value={participants.toLocaleString()} />
-            <Row label="observations" value={observations.toLocaleString()} />
-            <Row label="sleep sessions" value={sleepSessions.toLocaleString()} />
-            <Row label="PRO responses" value={proResponses.toLocaleString()} />
-            <Row
-              label="sim clock"
-              value={simClockDate ? simClockDate.toISOString().slice(0, 10) : "NOT SEEDED"}
-            />
-          </tbody>
-        </table>
-      </section>
+          {/* Internal storage counts */}
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-navy">
+              Database — internal storage counts
+            </h2>
+            <p className="mt-1 text-xs text-graphite">
+              Raw physical row counts (storage metric) — deliberately NOT consent-filtered;
+              every product surface uses consent-gated counts.
+            </p>
+            <table className="mt-3 w-full border-collapse text-sm">
+              <tbody>
+                <Row label="Participants" value={participants.toLocaleString("en-US")} />
+                <Row label="Observations" value={observations.toLocaleString("en-US")} />
+                <Row label="Sleep sessions" value={sleepSessions.toLocaleString("en-US")} />
+                <Row label="PRO responses" value={proResponses.toLocaleString("en-US")} />
+                <Row
+                  label="Sim clock"
+                  value={simClockDate ? simClockDate.toISOString().slice(0, 10) : "NOT SEEDED"}
+                />
+              </tbody>
+            </table>
+          </Card>
 
-      <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Consent-gate checks</h2>
-        <p className="mb-3 text-xs text-gray-500">
-          Exercised on a throwaway synthetic probe participant, created and deleted for this
-          request — no cohort participant is read or shown here.
-        </p>
-        <ul className="space-y-2">
-          {probes.map((probe) => (
-            <li
-              key={probe.label}
-              className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-2 last:border-0"
-            >
-              <span className="text-gray-600">{probe.label}</span>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                  probe.pass
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {probe.pass ? "PASS" : "FAIL"} · {probe.detail}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+          {/* Consent-gate probes */}
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-navy">Consent-gate checks</h2>
+            <p className="mt-1 text-xs text-graphite">
+              Exercised on a throwaway synthetic probe participant, created and deleted for
+              this request — no cohort participant is read or shown here.
+            </p>
+            <ul className="mt-3">
+              {probes.map((probe) => (
+                <li
+                  key={probe.label}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/60 py-2 text-sm last:border-0"
+                >
+                  <span className="text-graphite">{probe.label}</span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-semibold ${
+                      probe.pass ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                    }`}
+                  >
+                    {probe.pass ? "✓ PASS" : "✗ FAIL"} · {probe.detail}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
 
-      <p className="text-xs text-gray-400">
-        Seed via <code>npm run seed</code>; advance the demo clock at <code>/timemachine</code>.
-      </p>
-      <p className="mt-2 text-xs text-gray-400">
-        Demonstration environment — synthetic cohort, no real patient data.
-      </p>
-    </main>
+          <p className="pb-2 text-center text-xs text-graphite">
+            Seed via{" "}
+            <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-navy">
+              npm run seed
+            </code>{" "}
+            · advance the demo clock at the{" "}
+            <Link href="/timemachine" className="underline underline-offset-4 hover:text-brand">
+              time machine
+            </Link>
+          </p>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <tr className="border-b border-gray-200 last:border-0">
-      <td className="py-1.5 pr-4 text-gray-600">{label}</td>
-      <td className="py-1.5 font-semibold">{value}</td>
+    <tr className="border-b border-hairline/60 last:border-0">
+      <td className="py-2 pr-4 text-graphite">{label}</td>
+      <td className="py-2 text-right font-mono text-sm font-semibold text-navy tabular-nums">
+        {value}
+      </td>
     </tr>
   );
 }

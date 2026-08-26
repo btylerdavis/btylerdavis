@@ -23,9 +23,12 @@ export const SERIES = {
   soft: "#5faedd",
 } as const;
 
+/** Mirrors the global semantic tokens in src/app/globals.css exactly
+ *  (--color-success / --color-warning / --color-danger) — one orange, one
+ *  green, one red across charts and chrome alike. */
 export const SEMANTIC = {
   success: "#2e7d4f",
-  warning: "#d97706",
+  warning: "#b45309",
   danger: "#b3261e",
 } as const;
 

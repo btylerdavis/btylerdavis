@@ -15,7 +15,7 @@ import type { Recommendation } from "@/lib/recommendations/rules";
  * here as plain data; the toggle only reveals them. A card whose draft
  * failed the schema or a safety check arrives with passed=false and renders
  * as a WITHHELD notice — the pipeline's refusal is itself demo material.
- * accentPurple per the reserve-layer convention.
+ * The lake-blue toggle marks the preview/reserve layer.
  */
 
 export interface NarrativeCardData {

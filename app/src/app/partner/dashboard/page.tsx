@@ -56,7 +56,8 @@ export default async function PartnerDashboardPage() {
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Research-tier aggregates only (research_deid consent scope). Every count is
-                  released as a <span className="font-semibold text-navy">band</span> (11–20 ·
+                  released as a <span className="font-semibold text-navy">band</span>{" "}
+                  (11–20 ·
                   21–50 · 51–200 · &gt;200), never an exact number, with small cells suppressed
                   at k&nbsp;&lt;&nbsp;{dash.threshold} — so released numbers cannot be
                   differenced against each other.{" "}
@@ -253,7 +254,7 @@ export default async function PartnerDashboardPage() {
               <li className="rounded-card bg-white/10 p-4">
                 <p className="font-semibold">Small cells — or exact counts at all</p>
                 <p className="mt-1 text-white/75">
-                  Any count of 1–{dash.threshold - 1} is withheld before release, and every
+                  Any count of 1–{dash.threshold - 1}{" "}is withheld before release, and every
                   released count is a band (11–20 · 21–50 · 51–200 · &gt;200) — subtracting
                   released numbers from each other yields ranges, never a hidden cell. Each
                   release is logged in the ledger.

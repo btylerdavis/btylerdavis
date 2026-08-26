@@ -15,7 +15,7 @@ import {
  * The kill-switch console (client): the danger button appends revoke events
  * for every consent server-side, and the returned report renders before →
  * after on one screen — cohort counts dropping, ingest gates throwing, read
- * gates blocking. The purple button is the demo-only reset: it restores via
+ * gates blocking. The navy button is the demo-only reset: it restores via
  * NEW ceiling-bounded events, so the audit trail (server-rendered below)
  * keeps the whole story.
  *
