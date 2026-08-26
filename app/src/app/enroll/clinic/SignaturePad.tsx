@@ -30,7 +30,7 @@ export function SignaturePad({
       ctx.lineWidth = 2;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.strokeStyle = "#1a2b4c";
+      ctx.strokeStyle = "#16304e";
     }
   }, []);
 
@@ -89,7 +89,7 @@ export function SignaturePad({
         aria-label="Signature pad"
       />
       <div className="mt-1.5 flex items-center justify-between">
-        <p className="text-xs text-muted">
+        <p className="text-xs text-graphite">
           {hasInk ? "Signature captured" : "Sign above — finger or mouse"}
         </p>
         <button

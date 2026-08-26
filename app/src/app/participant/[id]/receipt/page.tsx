@@ -72,19 +72,19 @@ export default async function ConsentReceiptPage({
       <div className="print:hidden">
         <SiteHeader variant="site" />
       </div>
-      <main className="flex-1 bg-pale-blue print:bg-white">
+      <main className="flex-1 bg-cream print:bg-white">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10 print:max-w-none print:space-y-3 print:px-0 print:py-0">
           {/* Screen-only header */}
           <Card className="p-6 sm:p-8 print:hidden">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
               Participant · consent receipt
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               Your consent receipt
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted">
+            <p className="mt-2 max-w-2xl text-sm text-graphite">
               Rendered from the immutable consent ledger — every signature, revocation and
-              restore, exactly as recorded. Use the browser&apos;s Print → Save as PDF for a
+              restore, exactly as recorded. Use the browser’s Print → Save as PDF for a
               copy.{" "}
               <Link
                 href={`/participant/${id}`}
@@ -96,7 +96,7 @@ export default async function ConsentReceiptPage({
           </Card>
 
           {/* Watermark banner — kept in print on purpose */}
-          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-body print:rounded-none print:border-x-0">
+          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-ink print:rounded-none print:border-x-0">
             <span className="font-semibold text-warning">Illustrative — synthetic cohort.</span>{" "}
             Production receipts are issued under the counsel-final instrument terms (SPEC §9.4).
           </div>
@@ -104,10 +104,10 @@ export default async function ConsentReceiptPage({
           {/* The receipt itself */}
           <Card className="p-6 sm:p-10 print:p-0 print:shadow-none">
             <article className="mx-auto max-w-2xl print:max-w-none">
-              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+              <p className="text-xs font-semibold tracking-[0.14em] text-graphite uppercase">
                 Sleep outcomes registry · joint venture of Sleeptopia, Inc. and The Mattress Hub
               </p>
-              <h2 className="mt-3 font-heading text-xl leading-snug font-semibold text-navy sm:text-2xl">
+              <h2 className="mt-3 font-display text-xl leading-snug font-semibold text-navy sm:text-2xl">
                 Consent Receipt
               </h2>
 
@@ -136,11 +136,11 @@ export default async function ConsentReceiptPage({
                 Consent instruments — current state
               </h3>
               {consents.length === 0 ? (
-                <p className="mt-2 text-sm text-muted">No consent records.</p>
+                <p className="mt-2 text-sm text-graphite">No consent records.</p>
               ) : (
                 <table className="mt-2 w-full text-sm">
                   <thead>
-                    <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                    <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                       <th className="py-2 pr-4 font-semibold">Instrument</th>
                       <th className="py-2 pr-4 font-semibold">Version</th>
                       <th className="py-2 pr-4 font-semibold">Status</th>
@@ -151,14 +151,14 @@ export default async function ConsentReceiptPage({
                     {consents.map((consent) => (
                       <tr
                         key={consent.instrumentType}
-                        className="border-b border-pale-blue/60 last:border-0"
+                        className="border-b border-hairline/60 last:border-0"
                       >
-                        <td className="py-1.5 pr-4 text-body">
+                        <td className="py-1.5 pr-4 text-ink">
                           {LANE_LABELS[consent.instrumentType] ?? consent.instrumentType}
                         </td>
-                        <td className="py-1.5 pr-4 text-muted">v{consent.instrumentVersion}</td>
+                        <td className="py-1.5 pr-4 text-graphite">v{consent.instrumentVersion}</td>
                         <td className="py-1.5 pr-4 font-semibold text-navy">{consent.status}</td>
-                        <td className="py-1.5 text-muted">
+                        <td className="py-1.5 text-graphite">
                           {formatDay(consent.revokedAt ?? consent.grantedAt)}
                         </td>
                       </tr>
@@ -175,7 +175,7 @@ export default async function ConsentReceiptPage({
                 {scopeHistory.map((entry) => (
                   <div
                     key={entry.dataClass}
-                    className="rounded-card border border-pale-blue/80 px-4 py-2.5 print:rounded-none print:border-x-0"
+                    className="rounded-card border border-hairline/80 px-4 py-2.5 print:rounded-none print:border-x-0"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <p className="text-sm font-semibold text-navy">
@@ -189,18 +189,18 @@ export default async function ConsentReceiptPage({
                         ) : entry.state === "revoked" ? (
                           <span className="text-danger">revoked (restorable — was signed)</span>
                         ) : (
-                          <span className="text-muted">
+                          <span className="text-graphite">
                             never authorized — requires a fresh signature
                           </span>
                         )}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-xs text-graphite">
                       {entry.state === "granted" ? "Revoking this: " : "While off: "}
                       {CLASS_DISABLES[entry.dataClass]}
                     </p>
                     {entry.events.length > 0 && (
-                      <ul className="mt-1.5 space-y-0.5 text-xs text-body">
+                      <ul className="mt-1.5 space-y-0.5 text-xs text-ink">
                         {entry.events.map((event, index) => (
                           <li key={index}>
                             <span
@@ -228,7 +228,7 @@ export default async function ConsentReceiptPage({
               </h3>
               <table className="mt-2 w-full text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Date</th>
                     <th className="py-2 pr-4 font-semibold">Instrument</th>
                     <th className="py-2 pr-4 font-semibold">Event</th>
@@ -237,18 +237,18 @@ export default async function ConsentReceiptPage({
                 </thead>
                 <tbody>
                   {ledger.map((record) => (
-                    <tr key={record.id} className="border-b border-pale-blue/60 last:border-0">
-                      <td className="py-1.5 pr-4 whitespace-nowrap text-muted">
+                    <tr key={record.id} className="border-b border-hairline/60 last:border-0">
+                      <td className="py-1.5 pr-4 whitespace-nowrap text-graphite">
                         {formatDay(record.revokedAt ?? record.grantedAt)}
                       </td>
-                      <td className="py-1.5 pr-4 whitespace-nowrap text-body">
+                      <td className="py-1.5 pr-4 whitespace-nowrap text-ink">
                         {record.instrumentType} v{record.instrumentVersion} · rev{" "}
                         {record.revision}
                       </td>
                       <td className="py-1.5 pr-4 whitespace-nowrap font-semibold text-navy">
                         {record.eventType.replace(/_/g, " ")}
                       </td>
-                      <td className="py-1.5 text-xs text-muted">
+                      <td className="py-1.5 text-xs text-graphite">
                         {[
                           ...new Set(parseScopeJson(record.scope).map((grant) => grant.dataClass)),
                         ]
@@ -260,7 +260,7 @@ export default async function ConsentReceiptPage({
                 </tbody>
               </table>
 
-              <p className="mt-6 border-t border-pale-blue pt-3 text-xs text-muted">
+              <p className="mt-6 border-t border-hairline pt-3 text-xs text-graphite">
                 Issued {formatDay(simDate)} (simulation clock). This receipt is a projection of
                 the append-only consent event ledger: no event on it is ever updated or
                 deleted, and administrative actions can never exceed the scopes you signed.
@@ -268,8 +268,8 @@ export default async function ConsentReceiptPage({
             </article>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted print:hidden">
-            Use the browser&rsquo;s Print → Save as PDF for the handout ·{" "}
+          <p className="pb-2 text-center text-xs text-graphite print:hidden">
+            Use the browser’s Print → Save as PDF for the handout ·{" "}
             <Link href={`/participant/${id}`} className="underline underline-offset-4">
               back to the record
             </Link>
@@ -294,7 +294,7 @@ function ReceiptField({
 }) {
   return (
     <div>
-      <dt className="text-xs font-semibold tracking-wide text-muted uppercase">{label}</dt>
+      <dt className="text-xs font-semibold tracking-wide text-graphite uppercase">{label}</dt>
       <dd className={`mt-0.5 text-navy ${mono ? "font-mono text-xs break-all" : "font-semibold"}`}>
         {value}
       </dd>

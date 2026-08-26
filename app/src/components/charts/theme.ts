@@ -1,47 +1,48 @@
 /**
  * Shared chart styling — the one place axis/grid/series styling lives so
- * every chart in the demo reads as one system (dataviz skill applied to
- * branding/tokens.json).
+ * every chart in the demo reads as one system, in the NEW Sleeptopia
+ * design language palette (sleeptopia-site design/DIRECTION.md).
  *
- * Series colors are validated (scripts/validate_palette.js, light surface):
- * brandBlue + accentPurple pass as a two-series pair in the CVD floor band,
- * which is legal ONLY with secondary encoding — so every multi-series chart
- * here carries a legend and tooltips list every series. skyBlue is reserved
- * for de-emphasis (reference bands, funnel mid-steps); primaryNavy failed
- * the chroma floor as a mark color and stays ink-only. success/warning/
+ * Series colors: brand blue + deep gold is a blue/yellow-family pair — the
+ * axis color-vision deficiency preserves — and both clear the 3:1 mark
+ * floor on white (brand #3f92ce ≈ 3.4:1, gold #b07c1f ≈ 3.7:1). Every
+ * multi-series chart still carries a legend and tooltips list every series
+ * (secondary encoding, never color alone). sky is reserved for de-emphasis
+ * (reference bands, funnel mid-steps) and is below 3:1 — always labeled.
+ * navy stays ink-only (headings/axis text), never a mark. success/warning/
  * danger are semantic states (goal met, flags, therapy gaps) — never
  * identity.
  */
 
 export const SERIES = {
-  /** slot 1 — brandBlue */
+  /** slot 1 — brand blue */
   primary: "#3f92ce",
-  /** slot 2 — accentPurple */
-  secondary: "#8a5ec1",
-  /** de-emphasis / reference — skyBlue (below 3:1 contrast: always labeled) */
+  /** slot 2 — deep gold (the sun family, darkened to clear the 3:1 mark floor) */
+  secondary: "#b07c1f",
+  /** de-emphasis / reference — sky (below 3:1 contrast: always labeled) */
   soft: "#5faedd",
 } as const;
 
 export const SEMANTIC = {
-  success: "#2e8b57",
+  success: "#2e7d4f",
   warning: "#d97706",
-  danger: "#b91c1c",
+  danger: "#b3261e",
 } as const;
 
 export const CHROME = {
-  /** hairline grid, one step off the white surface */
-  grid: "#e3eef7",
-  /** axis line + tick ink */
-  axis: "#94a3b8",
-  /** tick label ink (textMuted) */
-  tick: "#64748b",
-  /** heading ink (primaryNavy) — text only, never a mark */
-  ink: "#1b4a7a",
+  /** hairline grid, one warm step off the white surface */
+  grid: "#ece7dc",
+  /** axis line + tick marks — warm neutral */
+  axis: "#8f8879",
+  /** tick label ink (graphite) */
+  tick: "#47505e",
+  /** heading ink (navy) — text only, never a mark */
+  ink: "#16304e",
   surface: "#ffffff",
 } as const;
 
 /** Ordered blue ramp for the funnel's ordinal steps (light → dark). */
-export const BLUE_RAMP = ["#a9d9ef", "#5faedd", "#3f92ce", "#2b6da0"] as const;
+export const BLUE_RAMP = ["#a9d6f0", "#5faedd", "#3f92ce", "#2c6ba0"] as const;
 
 /** Generous, projector-friendly type sizes. */
 export const FONT = { tick: 12, label: 13 } as const;

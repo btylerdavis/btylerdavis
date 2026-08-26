@@ -38,17 +38,17 @@ export default async function DeletionCertificatePage({
       <div className="print:hidden">
         <SiteHeader variant="compliance" />
       </div>
-      <main className="flex-1 bg-pale-blue print:bg-white">
+      <main className="flex-1 bg-cream print:bg-white">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10 print:max-w-none print:space-y-3 print:px-0 print:py-0">
           {/* Console header (screen only) */}
           <Card className="p-6 sm:p-8 print:hidden">
-            <p className="text-xs font-semibold tracking-[0.14em] text-accent-purple uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-lake uppercase">
               Compliance · deletion certificate
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               Certificate of data deletion
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted">
+            <p className="mt-2 max-w-2xl text-sm text-graphite">
               Rendered from the execution record itself — the counts below were captured
               atomically when the request was executed. Print this page for the one-pager.{" "}
               <Link
@@ -61,7 +61,7 @@ export default async function DeletionCertificatePage({
           </Card>
 
           {/* Watermark banner — kept in print on purpose */}
-          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-body print:rounded-none print:border-x-0">
+          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-ink print:rounded-none print:border-x-0">
             <span className="font-semibold text-warning">Illustrative — synthetic cohort.</span>{" "}
             Production certificates are issued under the counsel-final instrument terms
             (SPEC §9.4).
@@ -70,10 +70,10 @@ export default async function DeletionCertificatePage({
           {/* The certificate itself */}
           <Card className="p-6 sm:p-10 print:p-0 print:shadow-none">
             <article className="mx-auto max-w-2xl print:max-w-none">
-              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+              <p className="text-xs font-semibold tracking-[0.14em] text-graphite uppercase">
                 Sleep outcomes registry · joint venture of Sleeptopia, Inc. and The Mattress Hub
               </p>
-              <h2 className="mt-3 font-heading text-xl leading-snug font-semibold text-navy sm:text-2xl">
+              <h2 className="mt-3 font-display text-xl leading-snug font-semibold text-navy sm:text-2xl">
                 Certificate of Data Deletion
               </h2>
 
@@ -107,15 +107,15 @@ export default async function DeletionCertificatePage({
               </h3>
               <table className="mt-2 w-full text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Record class</th>
                     <th className="py-2 text-right font-semibold">Rows deleted</th>
                   </tr>
                 </thead>
                 <tbody>
                   {DELETION_TABLES.map((table) => (
-                    <tr key={table.key} className="border-b border-pale-blue/60 last:border-0">
-                      <td className="py-1.5 pr-4 text-body">{table.label}</td>
+                    <tr key={table.key} className="border-b border-hairline/60 last:border-0">
+                      <td className="py-1.5 pr-4 text-ink">{table.label}</td>
                       <td className="py-1.5 text-right font-semibold tabular-nums text-navy">
                         {counts[table.key].toLocaleString("en-US")}
                       </td>
@@ -131,12 +131,12 @@ export default async function DeletionCertificatePage({
               </table>
 
               <h3 className="mt-8 text-sm font-semibold tracking-wide text-navy uppercase">
-                Scope &amp; limits of this deletion
+                Scope & limits of this deletion
               </h3>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-body">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink">
                 <li>
                   Every consent instrument was revoked at execution; collection stopped the same
-                  instant and all read gates now refuse this subject&rsquo;s data.
+                  instant and all read gates now refuse this subject’s data.
                 </li>
                 <li>
                   This deletion is <span className="font-semibold">terminal</span>: the record
@@ -145,7 +145,7 @@ export default async function DeletionCertificatePage({
                 </li>
                 <li>
                   The immutable consent event ledger ({ledgerRecords.toLocaleString("en-US")}{" "}
-                  records at execution, captured in this certificate&apos;s snapshot) is retained
+                  records at execution, captured in this certificate’s snapshot) is retained
                   as a legal record of what was consented, revoked, and deleted, and when. No
                   ledger record is ever updated or deleted.
                 </li>
@@ -157,7 +157,7 @@ export default async function DeletionCertificatePage({
                 </li>
               </ul>
 
-              <p className="mt-6 border-t border-pale-blue pt-3 text-xs text-muted">
+              <p className="mt-6 border-t border-hairline pt-3 text-xs text-graphite">
                 Issued {formatDay(resolvedAt)} (simulation clock) by the registry
                 compliance console. Deletion executed atomically with consent revocation;
                 every figure on this certificate is the stored execution snapshot.
@@ -165,8 +165,8 @@ export default async function DeletionCertificatePage({
             </article>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted print:hidden">
-            Use the browser&rsquo;s Print → Save as PDF for the one-pager ·{" "}
+          <p className="pb-2 text-center text-xs text-graphite print:hidden">
+            Use the browser’s Print → Save as PDF for the one-pager ·{" "}
             <Link href="/compliance/deletions" className="underline underline-offset-4">
               all deletion requests
             </Link>
@@ -183,7 +183,7 @@ export default async function DeletionCertificatePage({
 function CertField({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <dt className="text-xs font-semibold tracking-wide text-muted uppercase">{label}</dt>
+      <dt className="text-xs font-semibold tracking-wide text-graphite uppercase">{label}</dt>
       <dd className={`mt-0.5 text-navy ${mono ? "font-mono text-xs break-all" : "font-semibold"}`}>
         {value}
       </dd>

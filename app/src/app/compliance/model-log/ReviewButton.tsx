@@ -20,7 +20,7 @@ export function ReviewButton({ logId }: { logId: string }) {
             if (!outcome.ok) setError(outcome.error ?? "Could not mark reviewed");
           })
         }
-        className="rounded-full bg-accent-purple px-3 py-1 text-xs font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="rounded-full bg-lake px-3 py-1 text-xs font-semibold whitespace-nowrap text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {pending ? "Marking…" : "Mark reviewed (demo)"}
       </button>

@@ -61,13 +61,13 @@ export default async function ResearchExplorerPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="research" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Research · cohort explorer
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
@@ -75,7 +75,7 @@ export default async function ResearchExplorerPage({
                   of {result.cohortTotal.toLocaleString("en-US")} research-consented
                   participants match
                 </h1>
-                <p className="mt-2 text-sm text-muted">
+                <p className="mt-2 text-sm text-graphite">
                   De-identified tier (research_deid) as of {formatDay(result.clockIso)} · consent
                   filtering applies to every count — a revoked participant vanishes from this page
                 </p>
@@ -99,14 +99,14 @@ export default async function ResearchExplorerPage({
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">Filters</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 Filters live in the URL — every cohort is a shareable, bookmarkable link.
                 {activeFilterCount > 0 && (
                   <>
                     {" "}
                     <Link
                       href={filtersHref({})}
-                      className="font-semibold text-brand-blue underline-offset-4 hover:underline"
+                      className="font-semibold text-brand underline-offset-4 hover:underline"
                     >
                       Clear all ({activeFilterCount})
                     </Link>
@@ -117,7 +117,7 @@ export default async function ResearchExplorerPage({
             <div className="mt-4 space-y-3">
               {groups.map((group) => (
                 <div key={group.key} className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
-                  <span className="w-36 shrink-0 text-xs font-semibold tracking-wide text-muted uppercase">
+                  <span className="w-36 shrink-0 text-xs font-semibold tracking-wide text-graphite uppercase">
                     {group.label}
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -182,7 +182,7 @@ export default async function ResearchExplorerPage({
             }))}
           />
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Cohort queries ran in {result.queryMs.toLocaleString("en-US")} ms across ~
             {(800_000).toLocaleString("en-US")} observations · deep-dive:{" "}
             <Link href="/research/positional" className="underline underline-offset-4">
@@ -214,8 +214,8 @@ function FilterPill({
       href={href}
       className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
         active
-          ? "bg-brand-blue text-white"
-          : "bg-pale-blue text-navy hover:bg-utility-bar"
+          ? "bg-brand text-white"
+          : "bg-cream text-navy hover:bg-hairline"
       }`}
     >
       {label}
@@ -244,11 +244,11 @@ function OutcomeCard({
   }
   return (
     <Card className="p-5">
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{title}</p>
+      <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{title}</p>
       <p className={`mt-2 text-3xl font-semibold tabular-nums ${tone}`}>
         {mean === null ? "—" : `${mean > 0 ? "+" : mean < 0 ? "−" : ""}${Math.abs(mean).toFixed(1)}${unit}`}
       </p>
-      <p className="mt-1 text-xs text-muted">
+      <p className="mt-1 text-xs text-graphite">
         {n > 0 ? `n = ${n.toLocaleString("en-US")} with data · ` : "no participants with data · "}
         {subtitle}
       </p>

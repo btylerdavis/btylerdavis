@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
-import { newDirectionClass } from "@/components/assistant/fonts";
 import {
   Display,
   Eyebrow,
@@ -33,7 +32,7 @@ export default async function OutreachQueuePage() {
   const queue = await loadOutreachQueue();
 
   return (
-    <div className={`flex min-h-screen flex-col bg-cream text-ink ${newDirectionClass}`}>
+    <div className="flex min-h-screen flex-col bg-cream text-ink">
       <SiteHeader variant="coach" />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
@@ -53,7 +52,7 @@ export default async function OutreachQueuePage() {
             </div>
             <Link
               href="/coach"
-              className="text-[15px] font-semibold text-brand underline-offset-4 hover:text-night hover:underline"
+              className="text-[15px] font-semibold text-brand underline-offset-4 hover:text-navy hover:underline"
             >
               ← Coach portal
             </Link>
@@ -63,7 +62,7 @@ export default async function OutreachQueuePage() {
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {OUTREACH_SIGNALS.map((signal) => (
               <HairlineCard key={signal} className="p-4 sm:p-5">
-                <p className="font-display text-[44px] font-medium leading-none text-night">
+                <p className="font-display text-[44px] font-medium leading-none text-navy">
                   {queue.totals[signal].toLocaleString("en-US")}
                 </p>
                 <p className="mt-2 text-[12.5px] font-semibold tracking-[0.14em] text-graphite uppercase">
@@ -93,7 +92,7 @@ export default async function OutreachQueuePage() {
                         <span className="text-[16px] font-semibold text-ink">
                           {item.displayName ?? `Participant ${shortId(item.participantId)}`}
                         </span>
-                        <span className="rounded-full bg-night px-2.5 py-0.5 text-[11.5px] font-semibold text-white">
+                        <span className="rounded-full bg-navy px-2.5 py-0.5 text-[11.5px] font-semibold text-white">
                           {item.signalLabel}
                         </span>
                         <span className="text-[13.5px] text-graphite">{item.signalDetail}</span>
@@ -153,7 +152,7 @@ export default async function OutreachQueuePage() {
           {/* Decided today */}
           {queue.decidedToday.length > 0 && (
             <HairlineCard className="mt-6 p-5 sm:p-6">
-              <p className="eyebrow font-grotesk">Decided today</p>
+              <p className="eyebrow font-sans">Decided today</p>
               <ul className="mt-3 divide-y divide-hairline">
                 {queue.decidedToday.map((decision) => (
                   <li
@@ -171,7 +170,7 @@ export default async function OutreachQueuePage() {
                     <span
                       className={
                         decision.status === "approved"
-                          ? "rounded-full bg-night px-2.5 py-0.5 text-[11.5px] font-semibold text-white"
+                          ? "rounded-full bg-navy px-2.5 py-0.5 text-[11.5px] font-semibold text-white"
                           : "rounded-full border border-ink px-2.5 py-0.5 text-[11.5px] font-semibold text-ink"
                       }
                     >

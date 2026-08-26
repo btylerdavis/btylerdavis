@@ -20,7 +20,7 @@ export default async function ClinicEnrollPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="coach" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
           <ClinicFlow simDateIso={toIsoDay(simDate)} />
         </div>

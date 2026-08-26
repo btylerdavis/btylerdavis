@@ -96,9 +96,9 @@ export function DemoNavigator() {
         <nav
           id="demo-navigator-acts"
           aria-label="Demo map — the eight acts"
-          className="mb-2 w-64 rounded-card border border-white/10 bg-hero-navy/95 p-3 text-white shadow-card-lg backdrop-blur-sm"
+          className="mb-2 w-64 rounded-card border border-white/10 bg-navy/95 p-3 text-white shadow-lift backdrop-blur-sm"
         >
-          <p className="px-1 text-[10px] font-semibold tracking-[0.18em] text-sky-blue uppercase">
+          <p className="px-1 text-[10px] font-semibold tracking-[0.18em] text-sky uppercase">
             The eight acts
           </p>
           <ol className="mt-1.5 space-y-0.5">
@@ -112,8 +112,8 @@ export function DemoNavigator() {
                   }`}
                 >
                   <span
-                    className={`font-heading text-xs font-semibold ${
-                      isCurrentAct ? "text-sky-blue" : "text-white/40"
+                    className={`font-sans text-xs font-semibold ${
+                      isCurrentAct ? "text-sky" : "text-white/40"
                     }`}
                     aria-hidden
                   >
@@ -134,7 +134,7 @@ export function DemoNavigator() {
                           }
                           className={`font-semibold underline-offset-4 hover:underline ${
                             linkIsCurrent(link.href, pathname ?? "")
-                              ? "text-sky-blue"
+                              ? "text-sky"
                               : "text-white/85 hover:text-white"
                           }`}
                         >
@@ -155,10 +155,10 @@ export function DemoNavigator() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls={open ? "demo-navigator-acts" : undefined}
-        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-hero-navy/95 px-3.5 py-1.5 font-heading text-xs font-semibold text-white shadow-card-lg backdrop-blur-sm transition-colors hover:bg-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-navy/95 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-lift backdrop-blur-sm transition-colors hover:bg-navy2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         Demo map
-        <span aria-hidden className="text-[9px] text-sky-blue">
+        <span aria-hidden className="text-[9px] text-sky">
           {open ? "▼" : "▲"}
         </span>
       </button>

@@ -30,19 +30,19 @@ export default async function AbstractPage() {
       <div className="print:hidden">
         <SiteHeader variant="research" />
       </div>
-      <main className="flex-1 bg-pale-blue print:bg-white">
+      <main className="flex-1 bg-cream print:bg-white">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10 print:max-w-none print:space-y-3 print:px-0 print:py-0">
           {/* Console header (screen only) */}
           <Card className="p-6 sm:p-8 print:hidden">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Research · publication ladder, rung 1 (SPEC §11.1)
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Conference abstract, auto-populated
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   AASM SLEEP-style structure; every number in Results is a live query against
                   the consent-filtered research cohort as of {formatDay(abstract.clockIso)}.
                   Print this page for the one-pager.
@@ -60,7 +60,7 @@ export default async function AbstractPage() {
           </Card>
 
           {/* Watermark banner — kept in print on purpose */}
-          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-body print:rounded-none print:border-x-0">
+          <div className="rounded-card border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-ink print:rounded-none print:border-x-0">
             <span className="font-semibold text-warning">Illustrative — synthetic cohort.</span>{" "}
             Production abstracts follow the SAP + authorship policy (SPEC §11).
           </div>
@@ -68,14 +68,14 @@ export default async function AbstractPage() {
           {/* The abstract itself */}
           <Card className="p-6 sm:p-10 print:p-0 print:shadow-none">
             <article className="mx-auto max-w-2xl print:max-w-none">
-              <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-                Abstract · sleep epidemiology — registries &amp; real-world data
+              <p className="text-xs font-semibold tracking-[0.14em] text-graphite uppercase">
+                Abstract · sleep epidemiology — registries & real-world data
               </p>
-              <h2 className="mt-3 font-heading text-xl leading-snug font-semibold text-navy sm:text-2xl">
+              <h2 className="mt-3 font-display text-xl leading-snug font-semibold text-navy sm:text-2xl">
                 {abstract.title}
               </h2>
-              <p className="mt-3 text-sm font-semibold text-body">{abstract.authors}</p>
-              <p className="text-sm text-muted italic">{abstract.affiliations}</p>
+              <p className="mt-3 text-sm font-semibold text-ink">{abstract.authors}</p>
+              <p className="text-sm text-graphite italic">{abstract.affiliations}</p>
 
               <div className="mt-6 space-y-4">
                 {abstract.sections.map((section) => (
@@ -83,12 +83,12 @@ export default async function AbstractPage() {
                     <h3 className="text-sm font-semibold tracking-wide text-navy uppercase">
                       {section.heading}
                     </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-body">{section.text}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink">{section.text}</p>
                   </section>
                 ))}
               </div>
 
-              <p className="mt-6 border-t border-pale-blue pt-3 text-xs text-muted">
+              <p className="mt-6 border-t border-hairline pt-3 text-xs text-graphite">
                 Support: joint venture of Sleeptopia, Inc. and The Mattress Hub. Registry data
                 are consent-provenanced; analyses use the de-identified research tier under
                 per-data-class scopes. Generated {formatDay(abstract.clockIso)} (simulation
@@ -98,7 +98,7 @@ export default async function AbstractPage() {
             </article>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted print:hidden">
+          <p className="pb-2 text-center text-xs text-graphite print:hidden">
             Cohort queries ran in {abstract.queryMs.toLocaleString("en-US")} ms · numbers refresh
             with the time machine ·{" "}
             <Link href="/research/positional" className="underline underline-offset-4">

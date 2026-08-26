@@ -86,19 +86,19 @@ export default async function RobustnessPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="research" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
-                  Research · bias &amp; robustness (audit level-up 11)
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
+                  Research · bias & robustness (audit level-up 11)
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Interrogate the headline before believing it
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Missingness by data class, consent churn straight from the immutable ledger,
                   a negative-control outcome, and sensitivity to unmeasured confounding — for
                   the{" "}
@@ -124,7 +124,7 @@ export default async function RobustnessPage() {
           {/* Scenario banner (level-up 11 scenario sweep hook) */}
           {scenario.mismatch ? (
             <Card tone="wash" className="border border-warning/50 p-4">
-              <p className="text-sm text-body">
+              <p className="text-sm text-ink">
                 <span className="font-semibold text-warning">Scenario mismatch:</span> this
                 server is running with{" "}
                 <span className="font-mono font-semibold">
@@ -139,8 +139,8 @@ export default async function RobustnessPage() {
               </p>
             </Card>
           ) : (
-            <Card tone="wash" className="border border-sky-blue/40 p-4">
-              <p className="text-sm text-body">
+            <Card tone="wash" className="border border-sky/40 p-4">
+              <p className="text-sm text-ink">
                 <span className="font-semibold text-navy">Scenario:</span> this database was
                 seeded with{" "}
                 <span className="font-semibold text-navy">
@@ -180,7 +180,7 @@ export default async function RobustnessPage() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Data class</th>
                     {months.map((month) => (
                       <th key={month} className="py-2 pr-4 font-semibold">
@@ -191,7 +191,7 @@ export default async function RobustnessPage() {
                 </thead>
                 <tbody>
                   {NIGHTLY_CLASSES.map((dataClass) => (
-                    <tr key={dataClass} className="border-b border-pale-blue/60 last:border-0">
+                    <tr key={dataClass} className="border-b border-hairline/60 last:border-0">
                       <td className="py-2.5 pr-4 font-semibold text-navy">
                         {NIGHTLY_CLASS_LABELS[dataClass]}
                       </td>
@@ -203,13 +203,13 @@ export default async function RobustnessPage() {
                         return (
                           <td key={month} className="py-2.5 pr-4 tabular-nums">
                             {!cell || cell.pctPresent === null ? (
-                              <span className="text-muted">—</span>
+                              <span className="text-graphite">—</span>
                             ) : (
                               <>
                                 <span className="font-semibold text-navy">
                                   {cell.pctPresent.toFixed(1)}%
                                 </span>{" "}
-                                <span className="text-xs text-muted">
+                                <span className="text-xs text-graphite">
                                   {cell.presentNights.toLocaleString("en-US")}/
                                   {cell.expectedNights.toLocaleString("en-US")} nights
                                 </span>
@@ -223,7 +223,7 @@ export default async function RobustnessPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Expected nights = every night from instrument start (enrollment for wearables and
               the under-mattress sensor; setup for CPAP) to the sim clock, for participants
               holding a current research grant on the class. HST, PRO, and purchase classes are
@@ -239,7 +239,7 @@ export default async function RobustnessPage() {
             subtitle="per sim-month, projected from the immutable consent event ledger"
           >
             <ConsentTimelineChart points={dash.timeline} />
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Enrollments come from the registry record; every other bar is a ledger event —
               full instrument revocations, per-class scope revisions (classes removed /
               restored), signed re-consents, and executed deletions. Because the ledger is
@@ -271,7 +271,7 @@ export default async function RobustnessPage() {
                 domain={[-4, 4]}
               />
             </div>
-            <div className="mt-4 rounded-card bg-pale-blue/60 p-4 text-sm text-body">
+            <div className="mt-4 rounded-card bg-cream/60 p-4 text-sm text-ink">
               <p>
                 <span className="font-semibold text-navy">Why flat is reassuring:</span> a
                 mattress has no physiological pathway to resting heart rate — its causal
@@ -288,20 +288,20 @@ export default async function RobustnessPage() {
           </ChartCard>
 
           {/* Sensitivity to unmeasured confounding */}
-          <Card tone="wash" className="border border-sky-blue/40 p-5 sm:p-6">
+          <Card tone="wash" className="border border-sky/40 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">
               Sensitivity to unmeasured confounding (E-value)
             </h2>
             {sensitivity.eValue === null ||
             sensitivity.medium.mean === null ||
             sensitivity.others.mean === null ? (
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 Not enough members with pre/post supine windows in both band groups to compute
                 the E-value yet — advance the clock.
               </p>
             ) : (
               <>
-                <p className="mt-2 max-w-3xl text-sm text-body">
+                <p className="mt-2 max-w-3xl text-sm text-ink">
                   Flagship delta: medium-band supine change{" "}
                   <span className="font-semibold tabular-nums">
                     {fmtSigned(sensitivity.medium.mean)} pp
@@ -320,7 +320,7 @@ export default async function RobustnessPage() {
                   </span>
                   .
                 </p>
-                <p className="mt-2 max-w-3xl text-sm text-body">
+                <p className="mt-2 max-w-3xl text-sm text-ink">
                   <span className="font-semibold text-navy">In plain language:</span> to
                   explain this delta away with no real mattress effect, a hidden confounder
                   would have to be associated with <em>both</em> firmness-band choice and
@@ -328,8 +328,8 @@ export default async function RobustnessPage() {
                   {sensitivity.eValue.eValue.toFixed(1)}× each — far stronger than plausible
                   lifestyle or severity differences between mattress shoppers.
                 </p>
-                <p className="mt-2 text-xs text-muted">
-                  E-value per VanderWeele &amp; Ding (2017), from the standardized mean
+                <p className="mt-2 text-xs text-graphite">
+                  E-value per VanderWeele & Ding (2017), from the standardized mean
                   difference via RR ≈ e^(0.91·d). Synthetic demonstration cohort — the method,
                   not the number, is the exhibit.
                 </p>
@@ -337,7 +337,7 @@ export default async function RobustnessPage() {
             )}
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Robustness queries ran in {dash.queryMs.toLocaleString("en-US")} ms ·{" "}
             <Link href="/research/positional" className="underline underline-offset-4">
               flagship dashboard

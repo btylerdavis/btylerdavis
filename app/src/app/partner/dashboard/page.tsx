@@ -42,19 +42,19 @@ export default async function PartnerDashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="partner" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Partner console · de-identified, DUA-gated
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Tempur-Pedic outcomes vs category
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Research-tier aggregates only (research_deid consent scope). Every count is
                   released as a <span className="font-semibold text-navy">band</span> (11–20 ·
                   21–50 · 51–200 · &gt;200), never an exact number, with small cells suppressed
@@ -78,7 +78,7 @@ export default async function PartnerDashboardPage() {
                   <ButtonLink href="/partner/proposal" size="sm">
                     Draft a study proposal
                   </ButtonLink>
-                  <span className="ml-3 text-xs text-muted">
+                  <span className="ml-3 text-xs text-graphite">
                     SPEC §6.3–6.4 presets · live cohort feasibility · §12.4 price band
                   </span>
                 </div>
@@ -95,7 +95,7 @@ export default async function PartnerDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {dash.tiles.map((tile) => (
               <Card key={tile.group} className="p-5 sm:p-6">
-                <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">
+                <h2 className="text-sm font-semibold tracking-wide text-graphite uppercase">
                   {tile.group}
                 </h2>
                 <div className="mt-3 grid grid-cols-2 gap-4">
@@ -122,13 +122,13 @@ export default async function PartnerDashboardPage() {
               <h2 className="text-lg font-semibold text-navy">
                 Supine-time improvement distribution
               </h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 per-participant change, pre → post delivery ·{" "}
                 {dash.suppressedDistributionCells} cell
                 {dash.suppressedDistributionCells === 1 ? "" : "s"} suppressed below
               </p>
             </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-body">
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-ink">
               <span className="flex items-center gap-1.5">
                 <span
                   aria-hidden
@@ -167,7 +167,7 @@ export default async function PartnerDashboardPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Cell counts are released as bands; bars are APPROXIMATE shares computed from band
               midpoints (negative = less supine time), so a share can never be inverted into an
               exact count. Cells with 1–{dash.threshold - 1} participants are withheld and
@@ -179,14 +179,14 @@ export default async function PartnerDashboardPage() {
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">Your model lines</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 rows under n={dash.threshold} suppressed — {dash.suppressedModelRows} below
               </p>
             </div>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Line</th>
                     <th className="py-2 pr-4 font-semibold">n</th>
                     <th className="py-2 pr-4 font-semibold">Mean supine change</th>
@@ -195,21 +195,21 @@ export default async function PartnerDashboardPage() {
                 </thead>
                 <tbody>
                   {dash.modelRows.map((row) => (
-                    <tr key={row.line} className="border-b border-pale-blue/60 last:border-0">
+                    <tr key={row.line} className="border-b border-hairline/60 last:border-0">
                       <td className="py-2.5 pr-4 font-semibold text-navy">TEMPUR-{row.line}</td>
                       <td className="py-2.5 pr-4 tabular-nums">
                         <CellValue cell={row.n} />
                       </td>
                       <td className="py-2.5 pr-4 tabular-nums">
                         {row.n.suppressed ? (
-                          <span className="text-muted italic">withheld</span>
+                          <span className="text-graphite italic">withheld</span>
                         ) : (
                           fmtChange(row.meanSupineChange, "pp")
                         )}
                       </td>
                       <td className="py-2.5 pr-4 tabular-nums">
                         {row.n.suppressed ? (
-                          <span className="text-muted italic">withheld</span>
+                          <span className="text-graphite italic">withheld</span>
                         ) : (
                           fmtChange(row.meanEssChange, "pts")
                         )}
@@ -237,9 +237,9 @@ export default async function PartnerDashboardPage() {
                 </p>
               </li>
               <li className="rounded-card bg-white/10 p-4">
-                <p className="font-semibold">Other brands&apos; model detail</p>
+                <p className="font-semibold">Other brands’ model detail</p>
                 <p className="mt-1 text-white/75">
-                  Competitors appear only as &ldquo;{CATEGORY_LABEL}&rdquo; in aggregate — never
+                  Competitors appear only as “{CATEGORY_LABEL}” in aggregate — never
                   by brand, line, or SKU.
                 </p>
               </li>
@@ -262,7 +262,7 @@ export default async function PartnerDashboardPage() {
             </ul>
           </Card>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pb-2 text-xs text-muted">
+          <div className="flex flex-wrap items-center justify-center gap-3 pb-2 text-xs text-graphite">
             <span>
               Cohort queries ran in {dash.queryMs.toLocaleString("en-US")} ms · de-identified
               tier · DUA dua-demo-v1 accepted this session ·{" "}
@@ -273,9 +273,9 @@ export default async function PartnerDashboardPage() {
             <form action={leaveDua}>
               <button
                 type="submit"
-                className="font-semibold text-brand-blue underline underline-offset-4"
+                className="font-semibold text-brand underline underline-offset-4"
               >
-                Leave &amp; re-arm the DUA gate
+                Leave & re-arm the DUA gate
               </button>
             </form>
           </div>
@@ -315,7 +315,7 @@ function OutcomeStat({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{label}</p>
+      <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{label}</p>
       {stat.n.suppressed ? (
         <p className="mt-1">
           <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
@@ -327,7 +327,7 @@ function OutcomeStat({
           <p className="mt-1 text-2xl font-semibold text-navy tabular-nums">
             {fmtChange(stat.mean, unit)}
           </p>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-graphite">
             n={stat.n.display} · {note}
           </p>
         </>
@@ -360,14 +360,14 @@ function DistBar({
   const width = pct === null ? 0 : Math.max(pct, pct > 0 ? 2 : 0);
   return (
     <div className="flex items-center gap-2">
-      <div className="h-4 flex-1 overflow-hidden rounded-full bg-pale-blue/70">
+      <div className="h-4 flex-1 overflow-hidden rounded-full bg-cream/70">
         <div
           className="h-full rounded-full"
           style={{ width: `${width}%`, background: color }}
           aria-hidden
         />
       </div>
-      <span className="w-28 shrink-0 text-[11px] text-muted tabular-nums">
+      <span className="w-28 shrink-0 text-[11px] text-graphite tabular-nums">
         {pct === null ? "—" : `${pct.toFixed(1)}%`} · {cell.display}
         <span className="sr-only"> {group}</span>
       </span>

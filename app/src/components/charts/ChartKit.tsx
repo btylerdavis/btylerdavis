@@ -81,8 +81,8 @@ export function NightTooltip({
   const rows = payload.filter((entry) => entry.value !== null && entry.value !== undefined);
   if (rows.length === 0) return null;
   return (
-    <div className="rounded-card border border-pale-blue bg-white px-3.5 py-2.5 shadow-card">
-      <p className="text-xs font-semibold text-muted">
+    <div className="rounded-card border border-hairline bg-white px-3.5 py-2.5 shadow-lift">
+      <p className="text-xs font-semibold text-graphite">
         {typeof label === "string" && /^\d{4}-\d{2}-\d{2}/.test(label)
           ? formatDay(label)
           : String(label ?? "")}
@@ -108,7 +108,7 @@ export function NightTooltip({
                 {typeof entry.value === "number" ? formatValue(entry.value) : entry.value}
                 {unitByKey[key] ?? ""}
               </span>
-              <span className="text-xs text-muted">{entry.name}</span>
+              <span className="text-xs text-graphite">{entry.name}</span>
             </li>
           );
         })}
@@ -137,7 +137,7 @@ export function ChartLegend({ items }: { items: LegendItem[] }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
       {items.map((item) => (
-        <span key={item.label} className="flex items-center gap-1.5 text-xs font-medium text-body">
+        <span key={item.label} className="flex items-center gap-1.5 text-xs font-medium text-ink">
           <LegendSwatch item={item} />
           {item.label}
         </span>

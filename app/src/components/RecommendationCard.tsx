@@ -15,9 +15,9 @@ import type { RecommendationsResult } from "@/lib/recommendations/queries";
  * One AI-recommendation card (DEMO.md Act 7): the suggestion in warm plain
  * language, a "why" section showing the actual data behind it (stat chips +
  * a mini sparkline), the SPEC §10.3 guardrail-class badge, and the
- * non-device-CDS boundary line as a footer. Badge colors follow the theme:
- * comfort = skyBlue, adherence-support = brandBlue,
- * discuss-with-provider = accentPurple.
+ * non-device-CDS boundary line as a footer. Badge colors follow the new
+ * palette as an escalating light→dark blue scale: comfort = skylight,
+ * adherence-support = lake, discuss-with-provider = navy.
  *
  * With `showNarrative` + `narrative` set, the card also renders the drafted
  * AI-narrative preview (template-composed from the same evidence bundle —
@@ -31,9 +31,9 @@ import type { RecommendationsResult } from "@/lib/recommendations/queries";
  */
 
 const BADGE_CLASSES: Record<GuardrailClass, string> = {
-  comfort: "bg-sky-blue text-white",
-  "adherence-support": "bg-brand-blue text-white",
-  "discuss-with-provider": "bg-accent-purple text-white",
+  comfort: "bg-skylight text-navy",
+  "adherence-support": "bg-lake text-white",
+  "discuss-with-provider": "bg-navy text-white",
 };
 
 /** Sparkline stroke per guardrail class (same trio, chart-side). */
@@ -111,28 +111,28 @@ export function RecommendationCard({
             ))}
         </div>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-body">{rec.body}</p>
+      <p className="mt-2 text-sm leading-relaxed text-ink">{rec.body}</p>
 
       {showNarrative && narrative && (
-        <div className="mt-4 rounded-card border border-accent-purple/30 bg-accent-purple/5 p-4">
-          <p className="text-xs font-semibold tracking-[0.12em] text-accent-purple uppercase">
+        <div className="mt-4 rounded-card border border-lake/30 bg-lake/5 p-4">
+          <p className="text-xs font-semibold tracking-[0.12em] text-lake uppercase">
             AI narrative (preview)
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-body">{narrative}</p>
-          <p className="mt-2 text-[11px] text-muted">{NARRATIVE_DISCLAIMER}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink">{narrative}</p>
+          <p className="mt-2 text-[11px] text-graphite">{NARRATIVE_DISCLAIMER}</p>
         </div>
       )}
 
       {/* Why: the actual data behind the suggestion */}
-      <div className="mt-4 rounded-card bg-pale-blue/60 p-4">
-        <p className="text-xs font-semibold tracking-[0.12em] text-sky-blue uppercase">
-          Why you&apos;re seeing this
+      <div className="mt-4 rounded-card bg-cream/60 p-4">
+        <p className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
+          Why you’re seeing this
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           {rec.whyChips.map((chip) => (
             <span
               key={chip.label}
-              className="rounded-full bg-white px-2.5 py-1 text-xs text-muted shadow-card"
+              className="rounded-full border border-hairline bg-white px-2.5 py-1 text-xs text-graphite"
             >
               {chip.label}:{" "}
               <span className="font-semibold text-navy tabular-nums">{chip.value}</span>
@@ -147,23 +147,23 @@ export function RecommendationCard({
               name={spark.name}
               color={SPARK_COLORS[rec.guardrail]}
             />
-            <p className="text-[11px] text-muted">{spark.name} · last 6 weeks</p>
+            <p className="text-[11px] text-graphite">{spark.name} · last 6 weeks</p>
           </div>
         )}
 
         {/* View evidence: claim → data table (evidence-first pipeline) */}
         {claims && claims.length > 0 && (
           <details className="group mt-3">
-            <summary className="cursor-pointer text-xs font-semibold text-brand-blue underline-offset-4 select-none hover:underline">
+            <summary className="cursor-pointer text-xs font-semibold text-brand underline-offset-4 select-none hover:underline">
               View evidence ({claims.length} claim{claims.length === 1 ? "" : "s"})
             </summary>
             <div className="mt-2 space-y-3">
               {claims.map((claim) => (
-                <div key={claim.id} className="rounded-card bg-white p-3 shadow-card">
+                <div key={claim.id} className="rounded-card border border-hairline bg-white p-3">
                   <p className="text-sm font-semibold text-navy">{claim.statement}</p>
                   <table className="mt-2 w-full text-xs">
                     <thead>
-                      <tr className="border-b border-pale-blue text-left tracking-wide text-muted uppercase">
+                      <tr className="border-b border-hairline text-left tracking-wide text-graphite uppercase">
                         <th className="py-1 pr-3 font-semibold">Metric</th>
                         <th className="py-1 pr-3 font-semibold">Period</th>
                         <th className="py-1 font-semibold">Value</th>
@@ -173,10 +173,10 @@ export function RecommendationCard({
                       {claim.points.map((point) => (
                         <tr
                           key={`${point.metric}|${point.period}`}
-                          className="border-b border-pale-blue/60 last:border-0"
+                          className="border-b border-hairline/60 last:border-0"
                         >
-                          <td className="py-1.5 pr-3 text-body">{point.metric}</td>
-                          <td className="py-1.5 pr-3 text-muted">{point.period}</td>
+                          <td className="py-1.5 pr-3 text-ink">{point.metric}</td>
+                          <td className="py-1.5 pr-3 text-graphite">{point.period}</td>
                           <td className="py-1.5 font-semibold text-navy tabular-nums">
                             {point.value}
                           </td>
@@ -184,7 +184,7 @@ export function RecommendationCard({
                       ))}
                     </tbody>
                   </table>
-                  <p className="mt-1.5 font-mono text-[10px] break-all text-muted">
+                  <p className="mt-1.5 font-mono text-[10px] break-all text-graphite">
                     {claim.id} · {claim.dataClass} · {claim.query}
                   </p>
                 </div>
@@ -194,7 +194,7 @@ export function RecommendationCard({
         )}
       </div>
 
-      <p className="mt-3 border-t border-pale-blue pt-2.5 text-[11px] text-muted">
+      <p className="mt-3 border-t border-hairline pt-2.5 text-[11px] text-graphite">
         {GUARDRAIL_FOOTER}
       </p>
     </Card>

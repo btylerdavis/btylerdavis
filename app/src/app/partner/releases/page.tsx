@@ -42,17 +42,17 @@ export default async function ReleaseLedgerPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="partner" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
               Partner console · release ledger · DUA-gated
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               Every count that ever left this tier
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted">
+            <p className="mt-2 max-w-2xl text-sm text-graphite">
               {total.toLocaleString("en-US")} recorded release
               {total === 1 ? "" : "s"}. Each row is one partner-facing count release: the
               surface, the canonical query, the metric, and the band that was actually
@@ -72,13 +72,13 @@ export default async function ReleaseLedgerPage() {
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">Recorded releases</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 newest first · showing {Math.min(entries.length, total).toLocaleString("en-US")}{" "}
                 of {total.toLocaleString("en-US")}
               </p>
             </div>
             {entries.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">
+              <p className="mt-3 text-sm text-graphite">
                 No releases recorded yet — open the partner dashboard or generate a proposal,
                 and every released count will appear here.
               </p>
@@ -86,7 +86,7 @@ export default async function ReleaseLedgerPage() {
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[760px] text-sm">
                   <thead>
-                    <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                    <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                       <th className="py-2 pr-4 font-semibold">Released (UTC)</th>
                       <th className="py-2 pr-4 font-semibold">Sim clock</th>
                       <th className="py-2 pr-4 font-semibold">Surface</th>
@@ -97,20 +97,20 @@ export default async function ReleaseLedgerPage() {
                   </thead>
                   <tbody>
                     {entries.map((entry) => (
-                      <tr key={entry.id} className="border-b border-pale-blue/60 last:border-0">
-                        <td className="py-2 pr-4 whitespace-nowrap text-muted">
+                      <tr key={entry.id} className="border-b border-hairline/60 last:border-0">
+                        <td className="py-2 pr-4 whitespace-nowrap text-graphite">
                           {TIMESTAMP_FORMAT.format(entry.createdAt)}
                         </td>
-                        <td className="py-2 pr-4 whitespace-nowrap text-muted">
+                        <td className="py-2 pr-4 whitespace-nowrap text-graphite">
                           {formatDay(entry.clockDate)}
                         </td>
-                        <td className="py-2 pr-4 whitespace-nowrap text-body">
+                        <td className="py-2 pr-4 whitespace-nowrap text-ink">
                           {SURFACE_LABELS[entry.surface] ?? entry.surface}
                         </td>
-                        <td className="py-2 pr-4 font-mono text-xs break-all text-muted">
+                        <td className="py-2 pr-4 font-mono text-xs break-all text-graphite">
                           {entry.query}
                         </td>
-                        <td className="py-2 pr-4 whitespace-nowrap font-medium text-body">
+                        <td className="py-2 pr-4 whitespace-nowrap font-medium text-ink">
                           {entry.metric}
                         </td>
                         <td className="py-2 whitespace-nowrap">
@@ -119,7 +119,7 @@ export default async function ReleaseLedgerPage() {
                               entry.band.includes("suppressed") ||
                               entry.band.includes("withheld")
                                 ? "bg-warning/10 text-warning"
-                                : "bg-pale-blue text-navy"
+                                : "bg-cream text-navy"
                             }`}
                           >
                             {entry.band}
@@ -131,7 +131,7 @@ export default async function ReleaseLedgerPage() {
                 </table>
               </div>
             )}
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Bands: &lt;11 (suppressed) · 11–20 · 21–50 · 51–200 · &gt;200 · withheld
               (complementary suppression). Exact counts never appear here because exact counts
               are never released.

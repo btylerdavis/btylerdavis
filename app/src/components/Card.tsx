@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 /**
- * White 16px-radius card with a soft navy-tinted shadow — the site's card
- * pattern (tokens.json shape.cardRadius). `tone` variants cover the two
- * other panel styles seen on sleeptopia.com: pale-blue washes and the dark
- * heroNavy overlay card.
+ * The new design language's card (sleeptopia-site design/DIRECTION.md):
+ * white 16px-radius surface with a 1px hairline — shadowless, elevation by
+ * surface contrast (white ↔ cream ↔ navy). `tone` variants cover the two
+ * other panel styles: the nested vellum wash and the dark navy proof panel.
  */
 export function Card({
   children,
@@ -16,9 +16,9 @@ export function Card({
   tone?: "surface" | "wash" | "dark";
 }) {
   const tones = {
-    surface: "bg-surface text-body shadow-card",
-    wash: "bg-pale-blue text-body",
-    dark: "bg-hero-navy text-white shadow-card-lg",
+    surface: "border border-hairline bg-white text-ink",
+    wash: "border border-hairline bg-vellum text-ink",
+    dark: "bg-navy text-white",
   } as const;
   return (
     <div className={`rounded-card ${tones[tone]} ${className}`}>{children}</div>

@@ -65,7 +65,7 @@ export function SavedCohortsCard({
     <Card className="p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold text-navy">Saved cohorts</h2>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-graphite">
           demo-prep bookmarks — a name on a filter URL, never participant ids
         </p>
       </div>
@@ -84,7 +84,7 @@ export function SavedCohortsCard({
           onChange={(event) => setName(event.target.value)}
           maxLength={60}
           placeholder={`Name this cohort (${currentSummary.toLowerCase()})`}
-          className="w-full max-w-sm rounded-card border border-pale-blue px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none"
+          className="w-full max-w-sm rounded-card border border-hairline px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand focus:outline-none"
         />
         <Button type="submit" size="sm" disabled={pending || name.trim().length === 0}>
           {pending ? "Saving…" : `Save this cohort (n = ${matched.toLocaleString("en-US")})`}
@@ -97,7 +97,7 @@ export function SavedCohortsCard({
 
       {/* The bookmark list */}
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">
+        <p className="mt-4 text-sm text-graphite">
           Nothing saved yet — set some filters above and give the cohort a name.
         </p>
       ) : (
@@ -105,16 +105,16 @@ export function SavedCohortsCard({
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex items-start justify-between gap-2 rounded-card bg-pale-blue/60 px-4 py-2.5"
+              className="flex items-start justify-between gap-2 rounded-card bg-cream/60 px-4 py-2.5"
             >
               <div className="min-w-0">
                 <Link
                   href={item.href}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   {item.name}
                 </Link>
-                <p className="mt-0.5 text-xs text-muted">
+                <p className="mt-0.5 text-xs text-graphite">
                   {item.summary} · n = {item.matched.toLocaleString("en-US")} at save (
                   {item.clockLabel})
                 </p>
@@ -123,7 +123,7 @@ export function SavedCohortsCard({
                 type="button"
                 disabled={pending}
                 onClick={() => remove(item.id)}
-                className="shrink-0 text-xs font-semibold text-muted underline-offset-4 hover:text-danger hover:underline disabled:opacity-45"
+                className="shrink-0 text-xs font-semibold text-graphite underline-offset-4 hover:text-danger hover:underline disabled:opacity-45"
                 aria-label={`Delete saved cohort ${item.name}`}
               >
                 Delete

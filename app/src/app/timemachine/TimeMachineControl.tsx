@@ -114,7 +114,7 @@ export function TimeMachineControl({
           </Button>
         ))}
         <Button
-          variant="purple"
+          variant="navy"
           onClick={() => advance(daysToMarcusDay90)}
           disabled={jumpDisabled}
           title={
@@ -123,11 +123,11 @@ export function TimeMachineControl({
               : undefined
           }
         >
-          Jump to day 90 of Marcus&apos;s journey
+          Jump to day 90 of Marcus’s journey
         </Button>
       </div>
       {daysToMarcusDay90 === 0 && (
-        <p className="text-center text-xs text-muted">
+        <p className="text-center text-xs text-graphite">
           Marcus is on day {dayNumber} of his journey — day 90 is already behind him.
         </p>
       )}
@@ -139,17 +139,17 @@ export function TimeMachineControl({
             <p className="text-sm font-semibold text-navy">
               Generating night data — {run.daysDone} of {run.totalDays} days
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-graphite">
               ~2,000 participants per night · clock at {formatDay(run.currentDateIso)}
             </p>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
             <div
-              className="h-full rounded-full bg-brand-blue transition-all duration-500"
+              className="h-full rounded-full bg-brand transition-all duration-500"
               style={{ width: `${Math.max(4, (run.daysDone / run.totalDays) * 100)}%` }}
             />
           </div>
-          <p className="mt-2 text-xs text-muted">
+          <p className="mt-2 text-xs text-graphite">
             Every write passes the consent ingest gate — a revoked participant accrues nothing.
           </p>
         </Card>
@@ -165,10 +165,10 @@ export function TimeMachineControl({
       {/* Delta card */}
       {delta && !running && (
         <Card className="p-5 sm:p-6">
-          <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+          <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
             What just happened
           </p>
-          <p className="mt-1 text-sm text-body">
+          <p className="mt-1 text-sm text-ink">
             Advanced <span className="font-semibold text-navy">{delta.daysAdvanced} days</span>{" "}
             ({formatDay(delta.fromIso)} → {formatDay(delta.toIso)}) in {delta.seconds.toFixed(1)}s.
           </p>
@@ -190,8 +190,8 @@ export function TimeMachineControl({
 
 function DeltaStat({ label, value, hint }: { label: string; value: number; hint?: string }) {
   return (
-    <div className="rounded-card bg-pale-blue/60 px-4 py-3" title={hint}>
-      <dt className="text-xs font-medium text-muted">{label}</dt>
+    <div className="rounded-card bg-cream/60 px-4 py-3" title={hint}>
+      <dt className="text-xs font-medium text-graphite">{label}</dt>
       <dd className="mt-0.5 text-xl font-semibold text-navy">{value.toLocaleString("en-US")}</dd>
     </div>
   );

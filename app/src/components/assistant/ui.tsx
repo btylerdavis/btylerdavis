@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 /**
  * New Sleeptopia design language primitives — ported from the new site's
  * src/components/ui.tsx with exact values (design/DIRECTION.md, approved
- * Aug 18 2026). This module sets the standard the rest of the app moves to:
+ * Aug 18 2026). This module set the standard the rest of the app now follows:
  *
  * - cream ground, white cards with 1px hairlines, 14–20px radii;
  * - elevation by surface contrast (white ↔ cream ↔ night navy), no shadows
@@ -12,7 +12,7 @@ import type { ComponentProps, ReactNode } from "react";
  * - Playfair Display serif for display statements, Hanken Grotesk for
  *   everything functional;
  * - the sun pill (#F6C453, near-black text) as THE action color; ghost
- *   pills for secondary actions; brand-blue arrow links for "go deeper".
+ *   pills for secondary actions; brand arrow links for "go deeper".
  *
  * The `compact` pill size is a console-scale addition (same shape, colors,
  * and weights; smaller type) — the site's 17.5px hero pill is oversized for
@@ -21,10 +21,10 @@ import type { ComponentProps, ReactNode } from "react";
 
 /* Exact pill base from the new site (ui.tsx pillBase). */
 export const pillBase =
-  "inline-flex items-center justify-center rounded-full font-grotesk font-semibold text-[17.5px] px-8 py-4 transition-[transform,background-color] duration-150 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100";
+  "inline-flex items-center justify-center rounded-full font-sans font-semibold text-[17.5px] px-8 py-4 transition-[transform,background-color] duration-150 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100";
 
 const pillCompact =
-  "inline-flex items-center justify-center rounded-full font-grotesk font-semibold text-[15px] px-5 py-2.5 transition-[transform,background-color] duration-150 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100";
+  "inline-flex items-center justify-center rounded-full font-sans font-semibold text-[15px] px-5 py-2.5 transition-[transform,background-color] duration-150 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100";
 
 const sunClasses =
   "bg-sun text-[#161616] shadow-[0_8px_26px_rgba(235,181,59,0.35)] hover:bg-sun2";
@@ -64,12 +64,12 @@ export function PillGhostLink({ href, children, size = "full", className = "" }:
   );
 }
 
-/** The site's arrow-link affordance — brand-blue semibold, trailing arrow. */
+/** The site's arrow-link affordance — brand semibold, trailing arrow. */
 export function ArrowLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
   return (
     <Link
       href={href}
-      className={`inline-block text-[16.5px] font-semibold text-brand underline-offset-4 hover:text-night hover:underline ${className}`}
+      className={`inline-block text-[16.5px] font-semibold text-brand underline-offset-4 hover:text-navy hover:underline ${className}`}
     >
       {children} →
     </Link>
@@ -78,7 +78,7 @@ export function ArrowLink({ href, children, className = "" }: { href: string; ch
 
 /** Uppercase eyebrow — 13.5px / 600 / 0.16em / brand (globals `.eyebrow`). */
 export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`eyebrow font-grotesk ${className}`}>{children}</div>;
+  return <div className={`eyebrow font-sans ${className}`}>{children}</div>;
 }
 
 /** Serif display heading, exact clamp from the new site's H2. */
@@ -126,5 +126,5 @@ export function VellumPanel({ children, className = "" }: { children: ReactNode;
 
 /** Night band — the dark proof-point surface (navy #16304E). */
 export function NightBand({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-2xl bg-night text-white ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl bg-navy text-white ${className}`}>{children}</div>;
 }

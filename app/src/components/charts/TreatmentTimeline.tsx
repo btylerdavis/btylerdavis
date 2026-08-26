@@ -39,7 +39,7 @@ export function TreatmentTimeline({
     <div>
       <div className="relative h-24">
         {/* track */}
-        <div className="absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2 rounded-full bg-pale-blue" />
+        <div className="absolute top-1/2 right-0 left-0 h-0.5 -translate-y-1/2 rounded-full bg-cream" />
         {/* enrollment + today endpoints */}
         <Endpoint side="left" title="Enrolled" dayIso={startIso} />
         <Endpoint side="right" title="Today (sim)" dayIso={endIso} />
@@ -64,7 +64,7 @@ export function TreatmentTimeline({
                 }`}
               >
                 <p className="text-xs leading-tight font-semibold text-navy">{event.label}</p>
-                <p className="text-[11px] text-muted">{formatDay(event.day)}</p>
+                <p className="text-[11px] text-graphite">{formatDay(event.day)}</p>
               </div>
             </div>
           );
@@ -89,14 +89,14 @@ function Endpoint({
     >
       <span
         aria-hidden
-        className="absolute top-0 block h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-hero-navy"
+        className="absolute top-0 block h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-navy"
         style={side === "left" ? { left: 0 } : { right: 0 }}
       />
       <div
         className={`absolute top-3.5 w-max ${side === "left" ? "left-0 text-left" : "right-0 text-right"}`}
       >
         <p className="text-xs font-semibold text-navy">{title}</p>
-        <p className="text-[11px] text-muted">{formatDay(dayIso)}</p>
+        <p className="text-[11px] text-graphite">{formatDay(dayIso)}</p>
       </div>
     </div>
   );

@@ -99,19 +99,19 @@ export default async function RevocationPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="compliance" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header + picker */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-accent-purple uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-lake uppercase">
                   Compliance · revocation kill switch
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Consent enforcement, live: {label}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Not a slide — the button below revokes real consent records, and every gate in
                   the system re-checks them: ingest throws, reads block, cohort counts drop.
                   Reversible for the next demo run; the ledger keeps it all.
@@ -123,8 +123,8 @@ export default async function RevocationPage({
                       href={`/compliance/revocation?participant=${pid}`}
                       className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                         pid === id
-                          ? "bg-accent-purple text-white"
-                          : "bg-pale-blue text-navy hover:bg-utility-bar"
+                          ? "bg-lake text-white"
+                          : "bg-cream text-navy hover:bg-hairline"
                       }`}
                     >
                       {names.get(pid) ?? shortId(pid)}
@@ -143,11 +143,11 @@ export default async function RevocationPage({
           {/* Live state: consents / rows / trend */}
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="p-5">
-              <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">
+              <h2 className="text-sm font-semibold tracking-wide text-graphite uppercase">
                 Consent states now
               </h2>
               <ul className="mt-3 space-y-2">
-                {states.length === 0 && <li className="text-sm text-muted">No records.</li>}
+                {states.length === 0 && <li className="text-sm text-graphite">No records.</li>}
                 {states.map((state) => (
                   <li key={state.instrumentType} className="flex items-center gap-2 text-sm">
                     <span
@@ -160,13 +160,13 @@ export default async function RevocationPage({
                       {state.status}
                     </span>
                     <span className="font-semibold text-navy">{state.instrumentType}</span>
-                    <span className="text-xs text-muted">
+                    <span className="text-xs text-graphite">
                       {state.historyCount} record{state.historyCount === 1 ? "" : "s"}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted">
+              <p className="mt-3 text-xs text-graphite">
                 In the research mart: {snapshot.researchDataClasses.length} data classes exported ·
                 flagship cohort membership{" "}
                 {snapshot.positionalCohortCount > 0 ? "counted" : "n/a"} — see before/after on
@@ -175,14 +175,14 @@ export default async function RevocationPage({
             </Card>
 
             <Card className="p-5">
-              <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">
+              <h2 className="text-sm font-semibold tracking-wide text-graphite uppercase">
                 Rows at rest · {totalRows.toLocaleString("en-US")} total
               </h2>
               <table className="mt-3 w-full text-sm">
                 <tbody>
                   {rowCounts.map((row) => (
-                    <tr key={row.dataClass} className="border-b border-pale-blue/60 last:border-0">
-                      <td className="py-1.5 pr-2 text-body">{CLASS_LABELS[row.dataClass]}</td>
+                    <tr key={row.dataClass} className="border-b border-hairline/60 last:border-0">
+                      <td className="py-1.5 pr-2 text-ink">{CLASS_LABELS[row.dataClass]}</td>
                       <td className="py-1.5 pr-2 text-right font-semibold tabular-nums text-navy">
                         {row.rows.toLocaleString("en-US")}
                       </td>
@@ -207,13 +207,13 @@ export default async function RevocationPage({
                   class — quarantined, never readable (fail closed).
                 </p>
               )}
-              <p className="mt-2 text-xs text-muted">
+              <p className="mt-2 text-xs text-graphite">
                 Revocation never deletes rows — it seals them behind the read gates.
               </p>
             </Card>
 
             <Card className="p-5">
-              <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">
+              <h2 className="text-sm font-semibold tracking-wide text-graphite uppercase">
                 Sleep efficiency · last 30 nights
               </h2>
               {sparkRead.blocked ? (
@@ -223,13 +223,13 @@ export default async function RevocationPage({
                   </span>
                 </div>
               ) : sparkPoints.length === 0 ? (
-                <p className="mt-3 text-sm text-muted">No nights in the window.</p>
+                <p className="mt-3 text-sm text-graphite">No nights in the window.</p>
               ) : (
                 <div className="mt-2">
                   <TrendSparkline points={sparkPoints} unit="%" />
                 </div>
               )}
-              <p className="mt-2 text-xs text-muted">
+              <p className="mt-2 text-xs text-graphite">
                 Identified-tier read (view_identified) — this panel goes red the moment consent is
                 revoked.{" "}
                 <Link
@@ -245,7 +245,7 @@ export default async function RevocationPage({
           {/* The kill switch */}
           <Card className="border border-danger/30 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">The kill switch</h2>
-            <p className="mt-1 mb-4 text-sm text-muted">
+            <p className="mt-1 mb-4 text-sm text-graphite">
               Revokes Lane A, B and C in one stroke — or just one data class from the grid —
               then re-probes every gate and recounts the cohorts: before and after, on one
               screen.
@@ -268,7 +268,7 @@ export default async function RevocationPage({
               <h2 className="text-lg font-semibold text-navy">
                 Audit trail · immutable consent event ledger
               </h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 {history.length} event{history.length === 1 ? "" : "s"} — every grant,
                 revocation and scope revision is a NEW record; nothing is ever updated or
                 deleted
@@ -277,7 +277,7 @@ export default async function RevocationPage({
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">#</th>
                     <th className="py-2 pr-4 font-semibold">Instrument</th>
                     <th className="py-2 pr-4 font-semibold">Event</th>
@@ -289,22 +289,22 @@ export default async function RevocationPage({
                 </thead>
                 <tbody>
                   {history.map((record, index) => (
-                    <tr key={record.id} className="border-b border-pale-blue/60 last:border-0">
-                      <td className="py-2 pr-4 tabular-nums text-muted">{index + 1}</td>
+                    <tr key={record.id} className="border-b border-hairline/60 last:border-0">
+                      <td className="py-2 pr-4 tabular-nums text-graphite">{index + 1}</td>
                       <td className="py-2 pr-4 font-semibold text-navy">
                         {record.instrumentType}
-                        <span className="ml-1 text-xs font-normal text-muted">
+                        <span className="ml-1 text-xs font-normal text-graphite">
                           r{record.revision}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 text-muted">
+                      <td className="py-2 pr-4 text-graphite">
                         {record.eventType.replace(/_/g, " ")}
                       </td>
-                      <td className="py-2 pr-4 text-muted">{record.instrumentVersion}</td>
-                      <td className="py-2 pr-4 whitespace-nowrap text-body">
+                      <td className="py-2 pr-4 text-graphite">{record.instrumentVersion}</td>
+                      <td className="py-2 pr-4 whitespace-nowrap text-ink">
                         {formatDay(record.grantedAt)}
                       </td>
-                      <td className="py-2 pr-4 whitespace-nowrap text-body">
+                      <td className="py-2 pr-4 whitespace-nowrap text-ink">
                         {record.revokedAt ? formatDay(record.revokedAt) : "—"}
                       </td>
                       <td className="py-2">
@@ -325,7 +325,7 @@ export default async function RevocationPage({
             </div>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Watch the numbers move elsewhere too:{" "}
             <Link href="/coach" className="underline underline-offset-4">
               coach portal

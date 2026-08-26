@@ -62,19 +62,19 @@ export default async function DeletionsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="compliance" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-accent-purple uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-lake uppercase">
                   Compliance · deletion requests
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   The consumer right, executed for real
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   {pendingCount.toLocaleString("en-US")} pending request
                   {pendingCount === 1 ? "" : "s"} as of {formatDay(clock)}. Deletion is
                   stronger than revocation: the{" "}
@@ -97,11 +97,11 @@ export default async function DeletionsPage() {
           </Card>
 
           {/* Semantics card — what deletion does and does not do */}
-          <Card tone="wash" className="border border-accent-purple/30 p-5 sm:p-6">
+          <Card tone="wash" className="border border-lake/30 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">
               What execution deletes — and what it lawfully cannot
             </h2>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-body">
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink">
               <li>
                 <span className="font-semibold">Deleted:</span> every identified-tier row —
                 observations, sleep sessions, questionnaires, devices, purchases, treatment
@@ -126,19 +126,19 @@ export default async function DeletionsPage() {
           {/* The console */}
           <Card className="border border-danger/30 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-navy">Requests</h2>
-            <p className="mt-1 mb-4 text-sm text-muted">
+            <p className="mt-1 mb-4 text-sm text-graphite">
               Execution revokes every consent, hard-deletes the identified-tier rows (counts
               shown per table), tombstones the participant, and issues a printable certificate.
             </p>
             <DeletionsConsole rows={rows} />
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             File a request from any{" "}
             <Link href="/coach" className="underline underline-offset-4">
               participant snapshot
             </Link>{" "}
-            (&ldquo;Your data rights&rdquo; card) · compare with{" "}
+            (“Your data rights” card) · compare with{" "}
             <Link href="/compliance/revocation" className="underline underline-offset-4">
               revocation
             </Link>

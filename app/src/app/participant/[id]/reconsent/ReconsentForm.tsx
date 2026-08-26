@@ -34,10 +34,10 @@ export function ReconsentForm({
   }
 
   return (
-    <div className="rounded-card border border-pale-blue bg-white p-4">
+    <div className="rounded-card border border-hairline bg-white p-4">
       <p className="text-sm font-semibold text-navy">{label}</p>
-      <p className="mt-1 text-xs text-muted">{description}</p>
-      <label className="mt-3 flex items-start gap-2 text-xs text-body">
+      <p className="mt-1 text-xs text-graphite">{description}</p>
+      <label className="mt-3 flex items-start gap-2 text-xs text-ink">
         <input
           type="checkbox"
           checked={agreed}

@@ -109,7 +109,7 @@ export function WeeklySupineByBandChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xs text-muted">
+      <p className="text-xs text-graphite">
         Weeks relative to mattress delivery · nightly under-mattress supine %, averaged per
         participant-week, then across participants.
       </p>
@@ -216,7 +216,7 @@ export function BrandDumbbellChart({ pairs }: { pairs: BrandPairView[] }) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xs text-muted">
+      <p className="text-xs text-graphite">
         Mean supine % per participant: 4 weeks pre-delivery vs days +8 to +35 (the first week
         post-delivery is an adjustment ramp and is excluded). Hollow dot = before, filled = after.
       </p>
@@ -297,7 +297,7 @@ export function EssChangeDistributionChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xs text-muted">
+      <p className="text-xs text-graphite">
         ESS change, baseline → latest follow-up (day 90 where reached, else day 30), as % of each
         group. Negative = less daytime sleepiness.
       </p>
@@ -390,7 +390,7 @@ export function ArmChangeColumns({
   const nByLabel = Object.fromEntries(points.map((point) => [point.label, point.n]));
   return (
     <div>
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{caption}</p>
+      <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{caption}</p>
       <div className="mt-1 h-60">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={points} margin={{ top: 18, right: 8, bottom: 18, left: 0 }}>

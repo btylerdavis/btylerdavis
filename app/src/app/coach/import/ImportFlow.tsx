@@ -122,7 +122,7 @@ export function ImportFlow() {
       {/* Step 1: participant */}
       {step === 0 && (
         <div className="mt-6 space-y-4">
-          <p className="text-sm text-body">
+          <p className="text-sm text-ink">
             Whose data is this? Search by name — retail and clinic enrollees both appear.
           </p>
           <div className="flex gap-2">
@@ -131,14 +131,14 @@ export function ImportFlow() {
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && search()}
               placeholder="e.g. Marcus Reed"
-              className="w-full rounded-full border border-pale-blue px-4 py-2 text-sm outline-none focus:border-brand-blue"
+              className="w-full rounded-full border border-hairline px-4 py-2 text-sm outline-none focus:border-brand"
             />
             <Button size="sm" onClick={search} disabled={pending || query.trim().length < 2}>
               {pending ? "Searching…" : "Search"}
             </Button>
           </div>
           {matches !== null && matches.length === 0 && (
-            <p className="text-sm text-muted">
+            <p className="text-sm text-graphite">
               No matches — try the first or last name on its own.
             </p>
           )}
@@ -152,10 +152,10 @@ export function ImportFlow() {
                       setPatient(match);
                       setStep(1);
                     }}
-                    className="flex w-full items-center justify-between gap-3 rounded-card bg-pale-blue/60 px-4 py-2.5 text-left text-sm hover:bg-pale-blue"
+                    className="flex w-full items-center justify-between gap-3 rounded-card bg-cream/60 px-4 py-2.5 text-left text-sm hover:bg-cream"
                   >
                     <span className="font-semibold text-navy">{match.displayName}</span>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted uppercase">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-graphite uppercase">
                       {match.enrollmentTouchpoint} door
                     </span>
                   </button>
@@ -169,7 +169,7 @@ export function ImportFlow() {
       {/* Step 2: file */}
       {step === 1 && patient && (
         <div className="mt-6 space-y-4">
-          <p className="text-sm text-body">
+          <p className="text-sm text-ink">
             Importing for <span className="font-semibold text-navy">{patient.displayName}</span>.
             Two formats are understood: an Apple Health <code>export.xml</code> and an AirView
             nightly compliance CSV. Big exports are fine — the file streams through the parser.
@@ -178,13 +178,13 @@ export function ImportFlow() {
             ref={fileRef}
             type="file"
             accept=".xml,.csv,.txt"
-            className="block w-full text-sm text-body file:mr-3 file:rounded-full file:border-0 file:bg-brand-blue file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-navy"
+            className="block w-full text-sm text-ink file:mr-3 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-navy"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={uploadFile} disabled={pending}>
               {pending ? "Parsing…" : "Parse file"}
             </Button>
-            <span className="text-xs text-muted">or use a bundled sample:</span>
+            <span className="text-xs text-graphite">or use a bundled sample:</span>
             <Button size="sm" variant="outline" onClick={() => pickSample("apple_health")} disabled={pending}>
               Apple Health sample
             </Button>
@@ -195,7 +195,7 @@ export function ImportFlow() {
           <button
             type="button"
             onClick={() => setStep(0)}
-            className="text-xs font-semibold text-muted underline-offset-4 hover:underline"
+            className="text-xs font-semibold text-graphite underline-offset-4 hover:underline"
           >
             ← different patient
           </button>
@@ -205,7 +205,7 @@ export function ImportFlow() {
       {/* Step 3: review + confirm */}
       {step === 2 && patient && preview && (
         <div className="mt-6 space-y-4">
-          <div className="rounded-card bg-pale-blue/60 p-4">
+          <div className="rounded-card bg-cream/60 p-4">
             <p className="text-sm font-semibold text-navy">
               {KIND_LABELS[preview.summary.kind]} · {preview.sourceName}
             </p>
@@ -228,7 +228,7 @@ export function ImportFlow() {
               {Object.entries(preview.summary.recordCounts).map(([type, count]) => (
                 <li
                   key={type}
-                  className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-body"
+                  className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-ink"
                 >
                   {RECORD_LABELS[type] ?? type}: {count.toLocaleString("en-US")}
                 </li>
@@ -241,7 +241,7 @@ export function ImportFlow() {
               {/* Consent-impact preview (audit v2 fix 11): what class this
                   writes and which grant admits it, BEFORE confirmation. */}
               {preview.impact.authority ? (
-                <p className="rounded-card border border-brand-blue/25 bg-brand-blue/5 px-4 py-2.5 text-sm text-body">
+                <p className="rounded-card border border-brand/25 bg-brand/5 px-4 py-2.5 text-sm text-ink">
                   This will write{" "}
                   <span className="font-semibold text-navy">
                     {preview.impact.rowCount.toLocaleString("en-US")}{" "}
@@ -257,7 +257,7 @@ export function ImportFlow() {
                   . The grant is re-checked inside every write transaction at confirmation.
                 </p>
               ) : (
-                <p className="rounded-card border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm text-body">
+                <p className="rounded-card border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm text-ink">
                   {patient.displayName} has{" "}
                   <span className="font-semibold text-danger">
                     no current {classLabel(preview.impact.dataClass)} (
@@ -266,16 +266,16 @@ export function ImportFlow() {
                   — the ingest gate will refuse this import if you confirm it.
                 </p>
               )}
-              <label className="flex items-start gap-2.5 text-sm text-body">
+              <label className="flex items-start gap-2.5 text-sm text-ink">
                 <input
                   type="checkbox"
                   checked={align}
                   onChange={(event) => setAlign(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-brand-blue"
+                  className="mt-0.5 h-4 w-4 accent-brand"
                 />
                 <span>
                   Align to the demo clock — shift the nights so the newest lands on sim
-                  &ldquo;today&rdquo; and shows up in the 90-day trend window right away
+                  “today” and shows up in the 90-day trend window right away
                   (rows are flagged <code>date_shifted</code>).
                 </span>
               </label>
@@ -289,7 +289,7 @@ export function ImportFlow() {
                     setPreview(null);
                     setStep(1);
                   }}
-                  className="text-xs font-semibold text-muted underline-offset-4 hover:underline"
+                  className="text-xs font-semibold text-graphite underline-offset-4 hover:underline"
                 >
                   ← different file
                 </button>
@@ -302,9 +302,9 @@ export function ImportFlow() {
               <span className="rounded-full border border-danger/40 bg-white px-2.5 py-0.5 text-xs font-semibold text-danger">
                 Refused
               </span>
-              <p className="mt-2 text-sm text-body">{result.reason}</p>
-              <p className="mt-1 text-xs text-muted">
-                That&rsquo;s the import trust boundary doing its job — fix the consent (or
+              <p className="mt-2 text-sm text-ink">{result.reason}</p>
+              <p className="mt-1 text-xs text-graphite">
+                That’s the import trust boundary doing its job — fix the consent (or
                 re-preview the file) and try again.
               </p>
             </div>
@@ -338,13 +338,13 @@ export function ImportFlow() {
                   mono
                 />
               </dl>
-              <p className="mt-3 text-sm text-body">
+              <p className="mt-3 text-sm text-ink">
                 The nights are live on the charts already.{" "}
                 <Link
                   href={`/participant/${patient.participantId}/trends`}
-                  className="font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="font-semibold text-brand underline-offset-4 hover:underline"
                 >
-                  View {patient.displayName}&rsquo;s trends →
+                  View {patient.displayName}’s trends →
                 </Link>
               </p>
             </div>
@@ -358,7 +358,7 @@ export function ImportFlow() {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dt className="text-xs font-medium text-graphite">{label}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-navy">{value}</dd>
     </div>
   );
@@ -367,8 +367,8 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 function ReceiptRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-baseline gap-2">
-      <dt className="shrink-0 font-medium text-muted">{label}:</dt>
-      <dd className={`truncate text-body ${mono ? "font-mono" : "font-semibold"}`}>{value}</dd>
+      <dt className="shrink-0 font-medium text-graphite">{label}:</dt>
+      <dd className={`truncate text-ink ${mono ? "font-mono" : "font-semibold"}`}>{value}</dd>
     </div>
   );
 }

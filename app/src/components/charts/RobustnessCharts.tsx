@@ -150,7 +150,7 @@ export function ConsentTimelineChart({ points }: { points: TimelinePoint[] }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div>
-        <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+        <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
           Enrollments per month
         </p>
         <div className="mt-2 h-52">
@@ -183,7 +183,7 @@ export function ConsentTimelineChart({ points }: { points: TimelinePoint[] }) {
         </div>
       </div>
       <div>
-        <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+        <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
           Consent-change events per month (stacked)
         </p>
         {anyEvents ? (
@@ -228,7 +228,7 @@ export function ConsentTimelineChart({ points }: { points: TimelinePoint[] }) {
             </div>
           </div>
         ) : (
-          <p className="mt-2 rounded-card bg-pale-blue/60 px-4 py-3 text-sm text-muted">
+          <p className="mt-2 rounded-card bg-cream/60 px-4 py-3 text-sm text-graphite">
             No consent-change events in the ledger yet — run the revocation console (full or
             per-class), the re-consent flow, or a deletion, and each event lands in its
             sim-month here.
@@ -295,7 +295,7 @@ export function BandDeltaChart({
   const data = points.map((point) => ({ ...point, value: point.mean }));
   return (
     <div>
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{caption}</p>
+      <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{caption}</p>
       <div className="mt-1 h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 14, right: 8, bottom: 18, left: 0 }}>
@@ -332,7 +332,7 @@ export function BandDeltaChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <ul className="mt-1 space-y-0.5 text-xs text-muted">
+      <ul className="mt-1 space-y-0.5 text-xs text-graphite">
         {points.map((point) => (
           <li key={point.band} className="tabular-nums">
             <span className="font-semibold text-navy">{point.label}</span>:{" "}

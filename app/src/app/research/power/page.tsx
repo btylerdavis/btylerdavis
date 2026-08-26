@@ -46,19 +46,19 @@ export default async function PowerCalculatorPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="research" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Research · power calculator (SPEC §6.3 sketch, interactive)
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   How many participants per comparison group?
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Two-sample normal approximation for a difference in mean supine sleep time.
                   The SPEC §6.3 sketch — 10 pp effect, SD ≈ 20, α = 0.05, 80% power — lands at
                   ≈ 64 per group; the instrumented cohort is sized in multiples of it (§13
@@ -78,13 +78,13 @@ export default async function PowerCalculatorPage({
             {/* Inputs */}
             <Card className="p-5 sm:p-6 lg:col-span-2">
               <h2 className="text-lg font-semibold text-navy">Assumptions</h2>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-graphite">
                 Stored in the URL — every scenario is a shareable link.
               </p>
               <form method="get" className="mt-4 space-y-3">
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">Detectable effect</span>
-                  <span className="text-muted"> · pp of supine sleep time</span>
+                  <span className="text-graphite"> · pp of supine sleep time</span>
                   <input
                     type="number"
                     name="effect"
@@ -92,12 +92,12 @@ export default async function PowerCalculatorPage({
                     max={50}
                     step={1}
                     defaultValue={inputs.effectPp}
-                    className="mt-1 w-28 rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                    className="mt-1 w-28 rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                   />
                 </label>
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">Standard deviation</span>
-                  <span className="text-muted"> · pp (SPEC sketch: ≈ 20)</span>
+                  <span className="text-graphite"> · pp (SPEC sketch: ≈ 20)</span>
                   <input
                     type="number"
                     name="sd"
@@ -105,7 +105,7 @@ export default async function PowerCalculatorPage({
                     max={100}
                     step={1}
                     defaultValue={inputs.sd}
-                    className="mt-1 w-28 rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                    className="mt-1 w-28 rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                   />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -114,7 +114,7 @@ export default async function PowerCalculatorPage({
                     <select
                       name="alpha"
                       defaultValue={String(inputs.alpha)}
-                      className="mt-1 w-full rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                      className="mt-1 w-full rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                     >
                       {ALPHA_OPTIONS.map((alpha) => (
                         <option key={alpha} value={alpha}>
@@ -128,7 +128,7 @@ export default async function PowerCalculatorPage({
                     <select
                       name="power"
                       defaultValue={String(inputs.power)}
-                      className="mt-1 w-full rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                      className="mt-1 w-full rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                     >
                       {POWER_OPTIONS.map((power) => (
                         <option key={power} value={power}>
@@ -142,7 +142,7 @@ export default async function PowerCalculatorPage({
                   Recompute
                 </button>
               </form>
-              <p className="mt-4 text-xs text-muted">
+              <p className="mt-4 text-xs text-graphite">
                 n per group = 2 · ((z₁₋α/2 + z₁₋β) · SD / Δ)² — a planning approximation, not a
                 SAP. Production analyses pre-specify the full plan (SPEC §11.2).
               </p>
@@ -154,26 +154,26 @@ export default async function PowerCalculatorPage({
               <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
                 <div>
                   <p className="text-4xl font-semibold text-navy tabular-nums">{n}</p>
-                  <p className="text-xs text-muted">per comparison group</p>
+                  <p className="text-xs text-graphite">per comparison group</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-body tabular-nums">{n * 2}</p>
-                  <p className="text-xs text-muted">two-group total</p>
+                  <p className="text-2xl font-semibold text-ink tabular-nums">{n * 2}</p>
+                  <p className="text-xs text-graphite">two-group total</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold text-body tabular-nums">{n * 2 * 2}</p>
-                  <p className="text-xs text-muted">at the §13 Phase-2 bar (≥ 2× target)</p>
+                  <p className="text-2xl font-semibold text-ink tabular-nums">{n * 2 * 2}</p>
+                  <p className="text-xs text-graphite">at the §13 Phase-2 bar (≥ 2× target)</p>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-muted">
+              <p className="mt-2 text-xs text-graphite">
                 Detecting a {inputs.effectPp} pp change (SD {inputs.sd}) at α = {inputs.alpha},{" "}
                 {Math.round(inputs.power * 100)}% power.
               </p>
 
-              <h3 className="mt-6 text-sm font-semibold tracking-wide text-muted uppercase">
+              <h3 className="mt-6 text-sm font-semibold tracking-wide text-graphite uppercase">
                 Live instrumented cohort vs this target · by firmness band
               </h3>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-graphite">
                 Supine-predominant participants with a delivered mattress AND under-mattress
                 sensor nights (consent-filtered, research tier) — the same membership rule as
                 the{" "}
@@ -200,7 +200,7 @@ export default async function PowerCalculatorPage({
                           <span className="font-semibold text-navy">
                             {count.toLocaleString("en-US")}
                           </span>{" "}
-                          <span className="text-muted">of {n}</span>{" "}
+                          <span className="text-graphite">of {n}</span>{" "}
                           <span
                             className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                               met ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
@@ -210,10 +210,10 @@ export default async function PowerCalculatorPage({
                           </span>
                         </p>
                       </div>
-                      <div className="relative mt-1.5 h-3 rounded-full bg-pale-blue">
+                      <div className="relative mt-1.5 h-3 rounded-full bg-cream">
                         <div
                           className={`absolute inset-y-0 left-0 rounded-full ${
-                            met ? "bg-success/70" : "bg-brand-blue/70"
+                            met ? "bg-success/70" : "bg-brand/70"
                           }`}
                           style={{ width: `${pct}%` }}
                           aria-hidden
@@ -223,7 +223,7 @@ export default async function PowerCalculatorPage({
                   );
                 })}
               </ul>
-              <p className="mt-3 text-xs text-muted">
+              <p className="mt-3 text-xs text-graphite">
                 Instrumented flagship cohort: {positional.instrumentedCount.toLocaleString("en-US")}{" "}
                 of {positional.cohortCount.toLocaleString("en-US")} members · a band meeting the
                 bar here still needs the pre-specified SAP before any claim (SPEC §11.2).
@@ -231,7 +231,7 @@ export default async function PowerCalculatorPage({
             </Card>
           </div>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Cohort queries ran in {cohort.queryMs.toLocaleString("en-US")} ms ·{" "}
             <Link href="/research/positional" className="underline underline-offset-4">
               flagship dashboard

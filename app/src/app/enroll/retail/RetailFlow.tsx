@@ -140,13 +140,13 @@ export function RetailFlow({
       {/* ------------------------------------------------ Step 1: Welcome */}
       {step === 0 && (
         <Card className="p-6 sm:p-8">
-          <span className="inline-block rounded-full bg-pale-blue px-3 py-1 text-xs font-semibold text-navy">
+          <span className="inline-block rounded-full bg-cream px-3 py-1 text-xs font-semibold text-navy">
             You’re at The Mattress Hub — Wichita
           </span>
           <h1 className="mt-4 text-2xl font-semibold text-navy sm:text-3xl">
             Curious how you actually sleep?
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-body sm:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-ink sm:text-base">
             You scanned the code by the pillow wall — nice. Sleeptopia and The
             Mattress Hub are studying how mattresses, sleep positions, and
             therapy change real nights of sleep. It starts with a two-minute
@@ -161,9 +161,9 @@ export function RetailFlow({
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="First and last name"
             autoComplete="name"
-            className="mt-2 w-full rounded-full border border-pale-blue bg-white px-5 py-3 text-base text-body outline-none focus:border-brand-blue"
+            className="mt-2 w-full rounded-full border border-hairline bg-white px-5 py-3 text-base text-ink outline-none focus:border-brand"
           />
-          <p className="mt-2 text-xs text-muted">
+          <p className="mt-2 text-xs text-graphite">
             Demo identity — a display name is all we need today.
           </p>
           <div className="mt-6">
@@ -186,7 +186,7 @@ export function RetailFlow({
             <h1 className="text-xl font-semibold text-navy sm:text-2xl">
               The STOP-BANG sleep check
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-graphite">
               Eight quick yes/no questions — a validated screener for sleep
               apnea. Answer honestly; nobody at the store sees this.
             </p>
@@ -197,14 +197,14 @@ export function RetailFlow({
             return (
               <Card key={item.key} className="p-5">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-pale-blue font-heading text-sm font-semibold text-navy">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cream font-sans text-sm font-semibold text-navy">
                     {item.letter}
                   </span>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold tracking-wide text-sky-blue uppercase">
+                    <p className="text-xs font-semibold tracking-wide text-brand uppercase">
                       {index + 1} of 8 · {item.label}
                     </p>
-                    <p className="mt-1 text-sm font-medium text-body sm:text-base">
+                    <p className="mt-1 text-sm font-medium text-ink sm:text-base">
                       {item.question}
                     </p>
                     <div className="mt-3 flex gap-2">
@@ -216,10 +216,10 @@ export function RetailFlow({
                             setScreener(null);
                             setAnswers((a) => ({ ...a, [item.key]: choice }));
                           }}
-                          className={`flex-1 rounded-full border px-4 py-2.5 font-heading text-sm font-semibold transition-colors sm:flex-none sm:px-8 ${
+                          className={`flex-1 rounded-full border px-4 py-2.5 font-sans text-sm font-semibold transition-colors sm:flex-none sm:px-8 ${
                             value === choice
-                              ? "border-brand-blue bg-brand-blue text-white"
-                              : "border-pale-blue bg-white text-navy hover:bg-pale-blue"
+                              ? "border-brand bg-brand text-white"
+                              : "border-hairline bg-white text-navy hover:bg-cream"
                           }`}
                         >
                           {choice ? "Yes" : "No"}
@@ -250,7 +250,7 @@ export function RetailFlow({
           {screener && (
             <Card className="p-6">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-heading text-3xl font-semibold text-navy">
+                <span className="font-display text-3xl font-semibold text-navy">
                   {screener.score}/8
                 </span>
                 <span
@@ -260,12 +260,12 @@ export function RetailFlow({
                 </span>
               </div>
               {screener.band === "low" ? (
-                <p className="mt-3 text-sm text-body">
+                <p className="mt-3 text-sm text-ink">
                   Good news — your answers suggest a low chance of sleep apnea.
                   You can still join the study and see your own sleep data.
                 </p>
               ) : (
-                <p className="mt-3 text-sm text-body">
+                <p className="mt-3 text-sm text-ink">
                   Your answers suggest a{" "}
                   {screener.band === "high" ? "high" : "raised"} chance of
                   obstructive sleep apnea. Worth checking properly — and it’s
@@ -278,7 +278,7 @@ export function RetailFlow({
           {/* The referral-funnel moment — the site's "Don't Have A Doctor?" card */}
           {screener && screener.band !== "low" && (
             <Card tone="dark" className="p-6 sm:p-8">
-              <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+              <p className="text-xs font-semibold tracking-[0.14em] text-skylight uppercase">
                 Don’t have a sleep doctor?
               </p>
               <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
@@ -293,7 +293,7 @@ export function RetailFlow({
                 <Button onClick={() => setStep(2)} disabled={pending}>
                   Yes — set me up with a home sleep test
                 </Button>
-                <Button variant="quiet" className="text-white" onClick={() => setStep(2)}>
+                <Button variant="light" size="sm" onClick={() => setStep(2)}>
                   Maybe later — keep going
                 </Button>
               </div>
@@ -317,7 +317,7 @@ export function RetailFlow({
           <h1 className="max-w-md text-2xl font-semibold text-navy">
             Your data, your call
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-body">
+          <p className="mt-3 text-sm leading-relaxed text-ink">
             {displayName.trim().split(" ")[0]}, here’s the deal in plain
             English: you choose exactly what the study may collect. Everything
             below is optional, you can change your mind any time, and saying no
@@ -331,11 +331,11 @@ export function RetailFlow({
               return (
                 <div
                   key={dataClass}
-                  className="flex items-start justify-between gap-4 rounded-card bg-pale-blue/60 p-4"
+                  className="flex items-start justify-between gap-4 rounded-card bg-cream/60 p-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-navy">{copy.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-muted sm:text-sm">
+                    <p className="mt-0.5 text-xs leading-relaxed text-graphite sm:text-sm">
                       {copy.description}
                     </p>
                   </div>
@@ -348,7 +348,7 @@ export function RetailFlow({
                       setToggles((t) => ({ ...t, [dataClass]: !t[dataClass] }))
                     }
                     className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${
-                      on ? "bg-brand-blue" : "bg-watermark/40"
+                      on ? "bg-brand" : "bg-watermark/40"
                     }`}
                   >
                     <span
@@ -362,7 +362,7 @@ export function RetailFlow({
             })}
           </div>
 
-          <p className="mt-4 text-xs leading-relaxed text-muted">
+          <p className="mt-4 text-xs leading-relaxed text-graphite">
             What you allow is recorded as a consent record and enforced by the
             platform — data types you leave off are refused at the door, not
             just hidden. Revoking later stops collection immediately.
@@ -400,7 +400,7 @@ export function RetailFlow({
         <div className="space-y-4">
           {!enrollment.screenerStored && (
             <Card tone="wash" className="p-4">
-              <p className="text-sm text-body">
+              <p className="text-sm text-ink">
                 <span className="font-semibold text-navy">Heads up:</span> you
                 opted out of questionnaires, so tonight’s screener answers were{" "}
                 <span className="font-semibold">not stored</span> — the consent
@@ -412,7 +412,7 @@ export function RetailFlow({
             <h1 className="text-2xl font-semibold text-navy">
               Bring your own sleep data
             </h1>
-            <p className="mt-2 text-sm text-body">
+            <p className="mt-2 text-sm text-ink">
               Already wear a watch or ring to bed? Connect it and your nightly
               sleep joins your study record automatically.
             </p>
@@ -439,14 +439,14 @@ export function RetailFlow({
                     }
                     className={`rounded-card border p-4 text-left transition-colors disabled:opacity-40 ${
                       isConnected
-                        ? "border-brand-blue bg-pale-blue"
-                        : "border-pale-blue bg-white hover:bg-pale-blue/50"
+                        ? "border-brand bg-cream"
+                        : "border-hairline bg-white hover:bg-cream/50"
                     }`}
                   >
-                    <p className="font-heading text-sm font-semibold text-navy">
+                    <p className="font-sans text-sm font-semibold text-navy">
                       {provider.label}
                     </p>
-                    <p className="mt-1 text-xs text-muted">
+                    <p className="mt-1 text-xs text-graphite">
                       {isConnected
                         ? connected?.dataConsented
                           ? "Connected ✓"
@@ -457,12 +457,12 @@ export function RetailFlow({
                 );
               })}
             </div>
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Demo: simulated connection — live OAuth in reserve.
             </p>
             {connected && !connected.dataConsented && (
-              <p className="mt-3 rounded-card bg-pale-blue/60 p-3 text-xs text-body">
-                Not registered — you didn&rsquo;t opt into wearable sleep sharing, so
+              <p className="mt-3 rounded-card bg-cream/60 p-3 text-xs text-ink">
+                Not registered — you didn’t opt into wearable sleep sharing, so
                 the consent gate refused the device registration itself (no
                 record was created). Opt in via re-consent to connect it.
               </p>
@@ -483,7 +483,7 @@ export function RetailFlow({
           <h1 className="text-2xl font-semibold text-navy">
             Found the one?
           </h1>
-          <p className="mt-2 text-sm text-body">
+          <p className="mt-2 text-sm text-ink">
             When your new mattress rings up, it joins your study record too —
             model, firmness, and delivery date. That’s how the research
             connects mattresses to real sleep.
@@ -493,16 +493,16 @@ export function RetailFlow({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search the floor — brand or model"
-            className="mt-5 w-full rounded-full border border-pale-blue bg-white px-5 py-3 text-sm text-body outline-none focus:border-brand-blue"
+            className="mt-5 w-full rounded-full border border-hairline bg-white px-5 py-3 text-sm text-ink outline-none focus:border-brand"
           />
 
           <div className="mt-4 max-h-80 space-y-4 overflow-y-auto pr-1">
             {filteredCatalog.length === 0 && (
-              <p className="text-sm text-muted">No matches — try another search.</p>
+              <p className="text-sm text-graphite">No matches — try another search.</p>
             )}
             {filteredCatalog.map(([brand, rows]) => (
               <div key={brand}>
-                <p className="text-xs font-semibold tracking-wide text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-wide text-brand uppercase">
                   {brand}
                 </p>
                 <div className="mt-2 space-y-2">
@@ -513,20 +513,20 @@ export function RetailFlow({
                       onClick={() => setSelectedSku(row.sku)}
                       className={`w-full rounded-card border p-3 text-left transition-colors ${
                         selectedSku === row.sku
-                          ? "border-brand-blue bg-pale-blue"
-                          : "border-pale-blue bg-white hover:bg-pale-blue/50"
+                          ? "border-brand bg-cream"
+                          : "border-hairline bg-white hover:bg-cream/50"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-semibold text-navy">
                           {row.model}{" "}
-                          <span className="font-normal text-muted">· {row.size}</span>
+                          <span className="font-normal text-graphite">· {row.size}</span>
                         </p>
-                        <span className="shrink-0 rounded-full bg-pale-blue px-2.5 py-0.5 text-xs font-semibold text-navy">
+                        <span className="shrink-0 rounded-full bg-cream px-2.5 py-0.5 text-xs font-semibold text-navy">
                           Firmness {row.firmnessRating}/10
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-muted">
+                      <p className="mt-0.5 text-xs text-graphite">
                         {MATERIAL_LABELS[row.materialClass] ?? row.materialClass}
                       </p>
                     </button>
@@ -536,7 +536,7 @@ export function RetailFlow({
             ))}
           </div>
 
-          <div className="mt-4 rounded-card bg-pale-blue/60 p-4 text-sm text-body">
+          <div className="mt-4 rounded-card bg-cream/60 p-4 text-sm text-ink">
             <p>
               <span className="font-semibold text-navy">Purchase date:</span>{" "}
               {formatDay(simDateIso)} (today)
@@ -578,22 +578,22 @@ export function RetailFlow({
       {done && enrollment && (
         <div className="space-y-4">
           <Card className="p-6 sm:p-8">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-success/10 font-heading text-lg font-semibold text-success">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-success/10 font-sans text-lg font-semibold text-success">
               ✓
             </span>
             <h1 className="mt-3 text-2xl font-semibold text-navy">
               You’re in, {displayName.trim().split(" ")[0]}.
             </h1>
             {purchase && !purchase.blocked ? (
-              <p className="mt-2 text-sm text-body">
+              <p className="mt-2 text-sm text-ink">
                 {purchase.brand} {purchase.model} ({purchase.size}) — purchased{" "}
                 {formatDay(purchase.purchaseDateIso)}, delivery{" "}
                 {formatDay(purchase.deliveryDateIso)}.
               </p>
             ) : purchase?.blocked ? (
-              <p className="mt-2 text-sm text-body">{purchase.reason}</p>
+              <p className="mt-2 text-sm text-ink">{purchase.reason}</p>
             ) : (
-              <p className="mt-2 text-sm text-body">
+              <p className="mt-2 text-sm text-ink">
                 No purchase today — your study profile is live whenever the
                 right mattress finds you.
               </p>
@@ -602,7 +602,7 @@ export function RetailFlow({
 
           {purchase && !purchase.blocked && (
             <Card tone="dark" className="p-6 sm:p-8">
-              <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+              <p className="text-xs font-semibold tracking-[0.14em] text-skylight uppercase">
                 Why the wait works for you
               </p>
               <h2 className="mt-2 text-xl font-semibold">

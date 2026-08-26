@@ -73,16 +73,16 @@ export default async function ReconsentPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="site" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           <Card className="p-6 sm:p-8">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
               Expand data sharing · re-consent
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               Participant {shortId(id)}
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-graphite">
               These data types were <span className="font-semibold">never part of a consent
               you signed</span>. Nobody can switch them on for you — not even the compliance
               console. Enabling one records a brand-new signed consent in your ledger; you can
@@ -101,7 +101,7 @@ export default async function ReconsentPage({
             </Card>
           ) : neverAuthorized.length === 0 ? (
             <Card className="p-6">
-              <p className="text-sm text-muted">
+              <p className="text-sm text-graphite">
                 Every data class has been covered by a signed consent at some point. Anything
                 currently off can be restored from the{" "}
                 <Link

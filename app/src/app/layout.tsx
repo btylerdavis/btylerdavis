@@ -5,26 +5,27 @@ import { DemoNavigator } from "@/components/DemoNavigator";
 import { DemoWatermark } from "@/components/DemoWatermark";
 
 /**
- * Self-hosted fonts (no Google-hosted font loader — builds never fetch fonts).
- * Both files are latin-subset variable woff2 slices vendored into
- * src/fonts/; the declared weight ranges cover every weight the UI uses
- * (Fredoka 600/700 headings, Source Sans 3 400/600/700 body).
+ * Self-hosted fonts (no Google-hosted font loader — builds never fetch
+ * fonts). The new Sleeptopia design language type pair (sleeptopia-site
+ * design/DIRECTION.md): Playfair Display for serif display statements,
+ * Hanken Grotesk for everything functional. Both are latin-subset variable
+ * woff2 slices vendored into src/fonts/.
  */
 
-/** Headings: bold rounded sans (brand.md visual match for the site). */
-const fredoka = localFont({
-  src: "../fonts/fredoka-latin-wght.woff2",
-  weight: "300 700",
+/** Serif display — Playfair Display. */
+const playfair = localFont({
+  src: "../fonts/playfair-display-latin-wght.woff2",
+  weight: "400 900",
   style: "normal",
-  variable: "--font-fredoka",
+  variable: "--font-playfair",
 });
 
-/** Body: clean humanist sans. */
-const sourceSans = localFont({
-  src: "../fonts/source-sans-3-latin-wght.woff2",
-  weight: "200 900",
+/** Functional sans — Hanken Grotesk. */
+const hanken = localFont({
+  src: "../fonts/hanken-grotesk-latin-wght.woff2",
+  weight: "100 900",
   style: "normal",
-  variable: "--font-source-sans",
+  variable: "--font-hanken",
 });
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fredoka.variable} ${sourceSans.variable} h-full antialiased`}
+      className={`${playfair.variable} ${hanken.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         {children}

@@ -25,10 +25,10 @@ export default async function PartnerLandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="partner" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           <Card tone="dark" className="p-6 sm:p-10">
-            <p className="text-xs font-semibold tracking-[0.16em] text-sky-blue uppercase">
+            <p className="text-xs font-semibold tracking-[0.16em] text-skylight uppercase">
               Partner portal · Tempur-Sealy view
             </p>
             <h1 className="mt-3 text-3xl leading-tight font-semibold sm:text-4xl">
@@ -45,39 +45,39 @@ export default async function PartnerLandingPage() {
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-xl font-semibold text-navy">Data Use Agreement — Demo</h2>
-              <span className="rounded-full bg-pale-blue px-2.5 py-0.5 text-xs font-semibold text-navy">
+              <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs font-semibold text-navy">
                 dua-demo-v1 · illustrative instrument
               </span>
             </div>
 
             <dl className="mt-4 space-y-4 text-sm">
               <div>
-                <dt className="text-xs font-semibold tracking-[0.12em] text-sky-blue uppercase">
+                <dt className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
                   Parties
                 </dt>
-                <dd className="mt-1 text-body">
-                  The Sleeptopia × Mattress Hub sleep outcomes registry (&ldquo;Data
-                  Provider&rdquo;) and Tempur-Sealy International, Inc. (&ldquo;Data
-                  Recipient&rdquo;), for demonstration purposes only.
+                <dd className="mt-1 text-ink">
+                  The Sleeptopia × Mattress Hub sleep outcomes registry (“Data
+                  Provider”) and Tempur-Sealy International, Inc. (“Data
+                  Recipient”), for demonstration purposes only.
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold tracking-[0.12em] text-sky-blue uppercase">
+                <dt className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
                   Permitted use
                 </dt>
-                <dd className="mt-1 text-body">
+                <dd className="mt-1 text-ink">
                   De-identified <span className="font-semibold text-navy">aggregates only</span>:
-                  outcome summaries for the Recipient&apos;s product lines against category
+                  outcome summaries for the Recipient’s product lines against category
                   averages, with small-cell suppression (k&nbsp;&lt;&nbsp;11) applied to every
                   released count. Internal product and outcomes evaluation only.
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold tracking-[0.12em] text-sky-blue uppercase">
+                <dt className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
                   Prohibitions
                 </dt>
                 <dd className="mt-1">
-                  <ul className="list-disc space-y-1 pl-5 text-body">
+                  <ul className="list-disc space-y-1 pl-5 text-ink">
                     <li>
                       <span className="font-semibold text-navy">No re-identification</span> —
                       no attempt to identify any participant, alone or combined with other data.
@@ -97,22 +97,22 @@ export default async function PartnerLandingPage() {
               </div>
             </dl>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-pale-blue pt-5">
+            <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-hairline pt-5">
               <form action={acceptDua}>
                 <button type="submit" className={buttonClasses("primary", "lg")}>
-                  Accept &amp; enter (demo)
+                  Accept & enter (demo)
                 </button>
               </form>
               {accepted && (
                 <Link
                   href="/partner/dashboard"
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   Already accepted this session — open the dashboard →
                 </Link>
               )}
             </div>
-            <p className="mt-3 text-xs text-muted">
+            <p className="mt-3 text-xs text-graphite">
               Demo instrument, pre-counsel. Production DUAs are counsel-executed contracts with
               audit rights; the enforcement you are about to see (de-identified tier only,
               suppression everywhere) is the same either way.

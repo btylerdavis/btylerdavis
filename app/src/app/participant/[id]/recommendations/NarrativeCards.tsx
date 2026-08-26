@@ -41,7 +41,7 @@ export function NarrativeCards({
       <div className="flex items-center justify-end gap-2.5">
         <span
           className={`text-sm font-semibold ${
-            showNarrative ? "text-accent-purple" : "text-muted"
+            showNarrative ? "text-lake" : "text-graphite"
           }`}
         >
           AI narrative (preview)
@@ -52,12 +52,12 @@ export function NarrativeCards({
           aria-checked={showNarrative}
           aria-label="AI narrative (preview)"
           onClick={() => setShowNarrative((value) => !value)}
-          className={`relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple ${
-            showNarrative ? "bg-accent-purple" : "bg-pale-blue"
+          className={`relative h-6 w-11 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lake ${
+            showNarrative ? "bg-lake" : "bg-cream"
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-card transition-all ${
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${
               showNarrative ? "left-[22px]" : "left-0.5"
             }`}
           />
@@ -85,7 +85,7 @@ export function NarrativeCards({
                 A drafted card did not clear the checks
               </h2>
             </div>
-            <p className="mt-2 text-sm text-body">
+            <p className="mt-2 text-sm text-ink">
               The draft for rule <span className="font-mono">{card.recommendation.ruleId}</span>{" "}
               failed schema validation or a safety check and was not rendered. The full check
               trail is in the model decision log.

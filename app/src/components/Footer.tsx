@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** heroNavy footer with the co-brand line (tokens.json coBranding rule). */
+/** Navy footer (the site's night surface) with the co-brand line. */
 export function Footer() {
   return (
-    <footer className="mt-auto bg-hero-navy text-white">
+    <footer className="mt-auto bg-navy text-white">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
         <div className="space-y-3">
           <Image
@@ -13,7 +13,7 @@ export function Footer() {
             width={175}
             height={40}
           />
-          <p className="font-heading text-sm font-semibold text-sky-blue">
+          <p className="font-display text-sm font-semibold text-skylight">
             Sleeptopia × The Mattress Hub
           </p>
           <p className="max-w-xs text-sm text-white/70">
@@ -22,7 +22,7 @@ export function Footer() {
           </p>
         </div>
         <div className="space-y-1 text-sm text-white/70">
-          <p className="font-heading font-semibold text-white">Visit us</p>
+          <p className="font-display font-semibold text-white">Visit us</p>
           <p>411 S Pattie St, Wichita, KS 67211</p>
           <p>(316) 573-5699</p>
           <p>

@@ -83,7 +83,7 @@ export default async function ParticipantPage({
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader variant="site" />
-        <main className="flex-1 bg-pale-blue">
+        <main className="flex-1 bg-cream">
           <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
             <Card className="border border-danger/30 p-6 sm:p-8">
               <p className="text-xs font-semibold tracking-[0.14em] text-danger uppercase">
@@ -92,7 +92,7 @@ export default async function ParticipantPage({
               <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                 Participant {shortId(id)}
               </h1>
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 A deletion request was executed on {formatDay(participant.deletedAt)}: every
                 identified-tier row was hard-deleted and all consents were revoked. This
                 tombstone row and the append-only consent ledger below are all that remain —
@@ -125,15 +125,15 @@ export default async function ParticipantPage({
                 Consent ledger (retained, append-only)
               </h2>
               {consents.length === 0 ? (
-                <p className="mt-2 text-sm text-muted">No consent records.</p>
+                <p className="mt-2 text-sm text-graphite">No consent records.</p>
               ) : (
                 <ul className="mt-3 space-y-2">
                   {consents.map((consent) => (
                     <li
                       key={consent.instrumentType}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-cream/60 px-4 py-2.5 text-sm"
                     >
-                      <span className="font-medium text-body">
+                      <span className="font-medium text-ink">
                         {LANE_LABELS[consent.instrumentType] ?? consent.instrumentType}
                       </span>
                       <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">
@@ -144,7 +144,7 @@ export default async function ParticipantPage({
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-muted">
+              <p className="mt-3 text-xs text-graphite">
                 The ledger is a legal record of what was consented, revoked and deleted — it is
                 never deleted itself.
               </p>
@@ -212,24 +212,24 @@ export default async function ParticipantPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="site" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+              <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                 Participant snapshot
               </p>
               <span className="flex flex-wrap items-center gap-3">
                 <Link
                   href={`/participant/${id}/assistant`}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   Care assistant →
                 </Link>
                 <Link
                   href={`/participant/${id}/trends`}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   View trends →
                 </Link>
@@ -238,7 +238,7 @@ export default async function ParticipantPage({
             <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
               {displayName ?? `Participant ${shortId(id)}`}
             </h1>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-graphite">
               {displayName ? (
                 <>Identified view via Lane C linkage · </>
               ) : (
@@ -275,15 +275,15 @@ export default async function ParticipantPage({
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-navy">Consent</h2>
             {consents.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">No consent records.</p>
+              <p className="mt-2 text-sm text-graphite">No consent records.</p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {consents.map((consent) => (
                   <li
                     key={consent.instrumentType}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-cream/60 px-4 py-2.5 text-sm"
                   >
-                    <span className="font-medium text-body">
+                    <span className="font-medium text-ink">
                       {LANE_LABELS[consent.instrumentType] ?? consent.instrumentType}
                     </span>
                     <span
@@ -306,9 +306,9 @@ export default async function ParticipantPage({
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h2 className="text-lg font-semibold text-navy">
-                  What you&apos;ve agreed to, class by class
+                  What you’ve agreed to, class by class
                 </h2>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-sm text-graphite">
                   Replayed from your immutable consent ledger: every signature, revocation and
                   restore, with dates and instrument versions. A class you never signed for
                   can only be enabled by a fresh signature — never by an administrator.
@@ -337,16 +337,16 @@ export default async function ParticipantPage({
                   Blocked — no current view consent covers device registrations.
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-muted">No devices connected yet.</p>
+                <p className="mt-2 text-sm text-graphite">No devices connected yet.</p>
               )
             ) : (
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {devices.data.map((device) => (
-                  <li key={device.id} className="rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm">
+                  <li key={device.id} className="rounded-card bg-cream/60 px-4 py-2.5 text-sm">
                     <p className="font-semibold text-navy">
                       {device.make} {device.model}
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-graphite">
                       {device.deviceClass.replace(/_/g, " ")} · since{" "}
                       {formatDay(device.assignedAt)}
                     </p>
@@ -364,16 +364,16 @@ export default async function ParticipantPage({
                 Blocked — no current view consent for mattress purchase details.
               </p>
             ) : purchases.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">No purchases on file.</p>
+              <p className="mt-2 text-sm text-graphite">No purchases on file.</p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {purchases.map((purchase) => (
-                  <li key={purchase.id} className="rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm">
+                  <li key={purchase.id} className="rounded-card bg-cream/60 px-4 py-2.5 text-sm">
                     <p className="font-semibold text-navy">
                       {purchase.catalogItem.brand} {purchase.catalogItem.model} (
                       {purchase.catalogItem.size})
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-graphite">
                       Firmness {purchase.catalogItem.firmnessRating}/10 · purchased{" "}
                       {formatDay(purchase.purchaseDate)}
                       {purchase.deliveryDate &&
@@ -389,7 +389,7 @@ export default async function ParticipantPage({
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-navy">Nightly data</h2>
             {conceptRows.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 {observations.blocked
                   ? "Some data classes are blocked by consent; nothing viewable yet."
                   : "No observations yet — data accrues as the time machine advances."}
@@ -398,7 +398,7 @@ export default async function ParticipantPage({
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[480px] text-sm">
                   <thead>
-                    <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                    <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                       <th className="py-2 pr-4 font-semibold">Concept</th>
                       <th className="py-2 pr-4 font-semibold">Nights</th>
                       <th className="py-2 pr-4 font-semibold">Latest</th>
@@ -407,16 +407,16 @@ export default async function ParticipantPage({
                   </thead>
                   <tbody>
                     {conceptRows.map(([concept, summary]) => (
-                      <tr key={concept} className="border-b border-pale-blue/60 last:border-0">
-                        <td className="py-2 pr-4 font-medium text-body">
+                      <tr key={concept} className="border-b border-hairline/60 last:border-0">
+                        <td className="py-2 pr-4 font-medium text-ink">
                           {concept.replace(/_/g, " ")}
                         </td>
-                        <td className="py-2 pr-4 text-muted">{summary.count}</td>
+                        <td className="py-2 pr-4 text-graphite">{summary.count}</td>
                         <td className="py-2 pr-4 font-semibold text-navy">
                           {summary.latest.value ?? "—"}
                           {summary.latest.unit ? ` ${summary.latest.unit}` : ""}
                         </td>
-                        <td className="py-2 text-xs text-muted">
+                        <td className="py-2 text-xs text-graphite">
                           {formatDay(summary.first)} – {formatDay(summary.latest.date)}
                         </td>
                       </tr>
@@ -435,16 +435,16 @@ export default async function ParticipantPage({
                 Blocked — no current view consent for questionnaires.
               </p>
             ) : latestPro.size === 0 ? (
-              <p className="mt-2 text-sm text-muted">No responses yet.</p>
+              <p className="mt-2 text-sm text-graphite">No responses yet.</p>
             ) : (
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {[...latestPro.values()].map((pro) => (
-                  <li key={pro.instrument} className="rounded-card bg-pale-blue/60 px-4 py-2.5 text-sm">
+                  <li key={pro.instrument} className="rounded-card bg-cream/60 px-4 py-2.5 text-sm">
                     <p className="font-semibold text-navy">
                       {pro.instrument.replace(/_/g, "-")}:{" "}
-                      <span className="text-brand-blue">{pro.totalScore}</span>
+                      <span className="text-brand">{pro.totalScore}</span>
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-graphite">
                       latest {formatDay(pro.administeredAt)} ·{" "}
                       {pros.data.filter((p) => p.instrument === pro.instrument).length}{" "}
                       response(s)
@@ -458,14 +458,14 @@ export default async function ParticipantPage({
           {/* Data rights: the deletion request (SPEC §9.4) */}
           <Card className="border border-danger/20 p-6">
             <h2 className="text-lg font-semibold text-navy">Your data rights</h2>
-            <p className="mt-2 text-sm text-muted">
+            <p className="mt-2 text-sm text-graphite">
               You can withdraw at any time, and you can request deletion — which is stronger:
               collection stops immediately and your identified data is deleted, not just sealed.
               The consent ledger is retained as a legal record, and research releases already
               published in de-identified form cannot be recalled — you were told this up front,
               in plain language (SPEC §9.4).
             </p>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-2 text-xs text-graphite">
               Request lifecycle: pending → executing → executed, or declined. A failed
               execution attempt stays visible here and remains retryable. Once executed,
               deletion is <span className="font-semibold text-danger">terminal</span> — no
@@ -493,7 +493,7 @@ export default async function ParticipantPage({
                   </p>
                 )}
                 {deletionState.pending.note && (
-                  <p className="mt-1 text-xs text-muted">
+                  <p className="mt-1 text-xs text-graphite">
                     Your note: {deletionState.pending.note}
                   </p>
                 )}
@@ -501,7 +501,7 @@ export default async function ParticipantPage({
             ) : (
               <>
                 {deletionState.declined && (
-                  <div className="mt-4 rounded-card bg-pale-blue/70 px-4 py-3 text-sm">
+                  <div className="mt-4 rounded-card bg-cream/70 px-4 py-3 text-sm">
                     <p className="font-semibold text-navy">
                       Your deletion request from{" "}
                       {formatDay(deletionState.declined.requestedAt)} was declined
@@ -512,7 +512,7 @@ export default async function ParticipantPage({
                       request below at any time.
                     </p>
                     {deletionState.declined.note && (
-                      <p className="mt-1 text-xs text-muted">
+                      <p className="mt-1 text-xs text-graphite">
                         Reason on file: {deletionState.declined.note}
                       </p>
                     )}
@@ -522,13 +522,13 @@ export default async function ParticipantPage({
                 <input type="hidden" name="participantId" value={id} />
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">Note</span>
-                  <span className="text-muted"> · optional</span>
+                  <span className="text-graphite"> · optional</span>
                   <textarea
                     name="note"
                     rows={2}
                     maxLength={500}
                     placeholder="Anything you want the compliance team to know"
-                    className="mt-1 w-full rounded-card border border-pale-blue px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                    className="mt-1 w-full rounded-card border border-hairline px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:outline-none"
                   />
                 </label>
                 <button type="submit" className={buttonClasses("danger", "sm")}>
@@ -558,9 +558,9 @@ function ScopeHistoryRow({
       ? "bg-success/10 text-success"
       : entry.state === "revoked"
         ? "bg-danger/10 text-danger"
-        : "bg-pale-blue text-muted";
+        : "bg-cream text-graphite";
   return (
-    <li className="rounded-card bg-pale-blue/50 px-4 py-3">
+    <li className="rounded-card bg-cream/50 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge}`}>
@@ -571,24 +571,24 @@ function ScopeHistoryRow({
           </span>
         </div>
         {entry.currentUses.length > 0 && (
-          <span className="text-xs text-muted">
+          <span className="text-xs text-graphite">
             in force: {entry.currentUses.map((use) => USE_LABELS[use] ?? use).join(" · ")}
           </span>
         )}
       </div>
 
       {/* Preview of what a change to this class disables */}
-      <p className="mt-1.5 text-xs text-muted">
+      <p className="mt-1.5 text-xs text-graphite">
         {entry.state === "granted" ? "Revoking this: " : "While off: "}
         {CLASS_DISABLES[entry.dataClass]}
       </p>
 
       {entry.events.length === 0 ? (
-        <p className="mt-1.5 text-xs text-muted">
+        <p className="mt-1.5 text-xs text-graphite">
           Never part of any consent you signed — no one can switch it on for you;{" "}
           <Link
             href={`/participant/${participantId}/reconsent`}
-            className="font-semibold text-accent-purple underline underline-offset-2"
+            className="font-semibold text-lake underline underline-offset-2"
           >
             a fresh signature (re-consent) is the only way to enable it
           </Link>
@@ -597,7 +597,7 @@ function ScopeHistoryRow({
       ) : (
         <ul className="mt-1.5 space-y-0.5">
           {entry.events.map((event, index) => (
-            <li key={index} className="text-xs text-body">
+            <li key={index} className="text-xs text-ink">
               <span
                 className={`font-semibold ${
                   event.action === "revoked" ? "text-danger" : "text-navy"
@@ -608,7 +608,7 @@ function ScopeHistoryRow({
               {formatDay(event.date)} · {event.instrumentType} v{event.instrumentVersion} ·{" "}
               {event.eventType.replace(/_/g, " ")}
               {event.uses.length > 0 && (
-                <span className="text-muted">
+                <span className="text-graphite">
                   {" "}
                   → {event.uses.map((use) => USE_LABELS[use] ?? use).join(", ")}
                 </span>

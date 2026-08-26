@@ -63,11 +63,11 @@ export function DentiTracPanel() {
 
   return (
     <Card className="p-6 sm:p-8">
-      <div className="rounded-card border border-accent-purple/40 bg-accent-purple/5 px-4 py-3">
-        <p className="text-sm font-semibold text-accent-purple">
+      <div className="rounded-card border border-lake/40 bg-lake/5 px-4 py-3">
+        <p className="text-sm font-semibold text-lake">
           Pilot integration — reserve; objective adherence per DEMO.md §3
         </p>
-        <p className="mt-1 text-xs text-body">
+        <p className="mt-1 text-xs text-ink">
           DentiTrac is the micro-recorder inside the oral appliance: temperature-verified
           wear time, night by night. This tab parses a real-format export and previews it —{" "}
           <span className="font-semibold text-navy">nothing is written to the registry</span>;
@@ -82,17 +82,17 @@ export function DentiTracPanel() {
       )}
 
       <div className="mt-5 space-y-4">
-        <p className="text-sm text-body">
+        <p className="text-sm text-ink">
           Use the bundled sample export, or upload a DentiTrac wear-time CSV.
         </p>
         <input
           ref={fileRef}
           type="file"
           accept=".csv,.txt"
-          className="block w-full text-sm text-body file:mr-3 file:rounded-full file:border-0 file:bg-brand-blue file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-navy"
+          className="block w-full text-sm text-ink file:mr-3 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-navy"
         />
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="purple" onClick={loadSample} disabled={pending}>
+          <Button size="sm" variant="navy" onClick={loadSample} disabled={pending}>
             {pending ? "Parsing…" : "Load bundled DentiTrac export"}
           </Button>
           <Button size="sm" variant="outline" onClick={uploadFile} disabled={pending}>
@@ -103,11 +103,11 @@ export function DentiTracPanel() {
 
       {preview && parsed && (
         <div className="mt-6 space-y-4">
-          <div className="rounded-card bg-pale-blue/60 p-4">
+          <div className="rounded-card bg-cream/60 p-4">
             <p className="text-sm font-semibold text-navy">
               DentiTrac wear-time export · {preview.sourceName}
               {parsed.deviceSerial && (
-                <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-muted">
+                <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-graphite">
                   device {parsed.deviceSerial}
                 </span>
               )}
@@ -135,7 +135,7 @@ export function DentiTracPanel() {
                 }
               />
             </dl>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-2 text-xs text-graphite">
               {parsed.firstDay && parsed.lastDay
                 ? `${formatDay(parsed.firstDay)} – ${formatDay(parsed.lastDay)}`
                 : "No dated rows"}{" "}
@@ -147,7 +147,7 @@ export function DentiTracPanel() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[420px] text-sm">
               <thead>
-                <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                   <th className="py-1.5 pr-4 font-semibold">Night</th>
                   <th className="py-1.5 pr-4 font-semibold">Wear time</th>
                   <th className="py-1.5 font-semibold">Temperature verified</th>
@@ -155,8 +155,8 @@ export function DentiTracPanel() {
               </thead>
               <tbody>
                 {parsed.rows.map((night) => (
-                  <tr key={night.day} className="border-b border-pale-blue/60 last:border-0">
-                    <td className="py-1.5 pr-4 whitespace-nowrap text-body">
+                  <tr key={night.day} className="border-b border-hairline/60 last:border-0">
+                    <td className="py-1.5 pr-4 whitespace-nowrap text-ink">
                       {formatDay(night.day)}
                     </td>
                     <td className="py-1.5 pr-4 font-semibold tabular-nums text-navy">
@@ -164,7 +164,7 @@ export function DentiTracPanel() {
                     </td>
                     <td className="py-1.5">
                       {night.verified === null ? (
-                        <span className="text-xs text-muted">—</span>
+                        <span className="text-xs text-graphite">—</span>
                       ) : (
                         <span
                           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
@@ -183,7 +183,7 @@ export function DentiTracPanel() {
             </table>
           </div>
 
-          <p className="text-xs text-muted">
+          <p className="text-xs text-graphite">
             Preview only — no confirm button by design. The registry keeps running on the
             consented self-report PROs until the DentiTrac feed is under agreement.
           </p>
@@ -196,7 +196,7 @@ export function DentiTracPanel() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dt className="text-xs font-medium text-graphite">{label}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-navy">{value}</dd>
     </div>
   );

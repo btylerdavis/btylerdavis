@@ -59,19 +59,19 @@ export default async function TreatmentComparePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="research" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Research · treatment comparisons (SPEC §6.4)
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   CPAP vs appliance vs mattress vs combinations
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   {result.totalWithArm.toLocaleString("en-US")} research-consented participants
                   with a determinable arm as of {formatDay(result.clockIso)} · unadjusted group
                   means, shown with their covariates on purpose
@@ -110,7 +110,7 @@ export default async function TreatmentComparePage() {
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Arm</th>
                     <th className="py-2 pr-4 font-semibold">ESS change ± 95% CI</th>
                     <th className="py-2 font-semibold">Sleep-efficiency change ± 95% CI</th>
@@ -118,7 +118,7 @@ export default async function TreatmentComparePage() {
                 </thead>
                 <tbody>
                   {result.arms.map((arm) => (
-                    <tr key={arm.arm} className="border-b border-pale-blue/60 last:border-0">
+                    <tr key={arm.arm} className="border-b border-hairline/60 last:border-0">
                       <td className="py-2 pr-4 font-semibold text-navy">{arm.label}</td>
                       <td className="py-2 pr-4 tabular-nums">
                         {fmtCi(arm.essChange.mean, arm.essChangeCi95, arm.essChange.n, " pts")}
@@ -137,14 +137,14 @@ export default async function TreatmentComparePage() {
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">Covariates by arm</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 the confounding-by-indication check — who actually ends up in each arm?
               </p>
             </div>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full min-w-[680px] text-sm">
                 <thead>
-                  <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+                  <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
                     <th className="py-2 pr-4 font-semibold">Arm</th>
                     <th className="py-2 pr-4 font-semibold">n</th>
                     <th className="py-2 pr-4 font-semibold">Mean age</th>
@@ -154,7 +154,7 @@ export default async function TreatmentComparePage() {
                 </thead>
                 <tbody>
                   {result.arms.map((arm) => (
-                    <tr key={arm.arm} className="border-b border-pale-blue/60 last:border-0">
+                    <tr key={arm.arm} className="border-b border-hairline/60 last:border-0">
                       <td className="py-2.5 pr-4 font-semibold text-navy">{arm.label}</td>
                       <td className="py-2.5 pr-4 tabular-nums">{arm.n.toLocaleString("en-US")}</td>
                       <td className="py-2.5 pr-4 tabular-nums">
@@ -182,14 +182,14 @@ export default async function TreatmentComparePage() {
             <h2 className="text-lg font-semibold text-navy">
               Read with care: confounding by indication
             </h2>
-            <p className="mt-2 max-w-3xl text-sm text-body">
+            <p className="mt-2 max-w-3xl text-sm text-ink">
               Treatment arms are <span className="font-semibold">chosen, not randomized</span>. In
               real-world data, sicker patients get CPAP and wealthier customers buy premium
               mattresses — so raw arm-to-arm differences mix treatment effect with who selected
               each treatment. This synthetic cohort assigns arms near-independently of severity
               (check the table above), which is exactly what real data will <em>not</em> do.
             </p>
-            <p className="mt-2 max-w-3xl text-sm text-body">
+            <p className="mt-2 max-w-3xl text-sm text-ink">
               <span className="font-semibold">Production method (SPEC §6.4):</span> pre-specified
               covariate capture (age, sex, BMI, baseline AHI/severity, comorbidities,
               socioeconomic proxies) feeding{" "}
@@ -199,7 +199,7 @@ export default async function TreatmentComparePage() {
             </p>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Comparison queries ran in {result.queryMs.toLocaleString("en-US")} ms ·{" "}
             <Link href="/research" className="underline underline-offset-4">
               build your own cohort in the explorer

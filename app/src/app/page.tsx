@@ -78,10 +78,10 @@ export default async function Home() {
 
       <main className="flex-1">
         {/* Hero — the site's dark-navy-card-over-light pattern */}
-        <section className="bg-pale-blue">
+        <section className="bg-cream">
           <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
             <Card tone="dark" className="px-6 py-10 sm:px-12 sm:py-14">
-              <p className="text-xs font-semibold tracking-[0.16em] text-sky-blue uppercase">
+              <p className="text-xs font-semibold tracking-[0.16em] text-skylight uppercase">
                 Prepared for Sleeptopia × The Mattress Hub · August 2026
               </p>
               <h1 className="mt-3 max-w-2xl text-4xl leading-tight font-semibold sm:text-5xl">
@@ -92,14 +92,14 @@ export default async function Home() {
                 the sleep clinic — and measures what actually helps them sleep.
               </p>
 
-              <h2 className="mt-10 font-heading text-xl font-semibold text-white sm:text-2xl">
+              <h2 className="mt-10 font-display text-xl font-semibold text-white sm:text-2xl">
                 Where does the journey begin?
               </h2>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/enroll/retail" size="lg">
                   At the mattress store
                 </ButtonLink>
-                <ButtonLink href="/enroll/clinic" variant="purple" size="lg">
+                <ButtonLink href="/enroll/clinic" variant="light" size="lg">
                   At the sleep clinic
                 </ButtonLink>
               </div>
@@ -114,7 +114,7 @@ export default async function Home() {
 
         {/* One. Two. Done. — the site's step pattern, retold for the study */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <p className="text-xs font-semibold tracking-[0.16em] text-sky-blue uppercase">
+          <p className="text-xs font-semibold tracking-[0.16em] text-brand uppercase">
             One. Two. Done.
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
@@ -123,21 +123,21 @@ export default async function Home() {
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <Card className="p-6">
               <StepLabel n={1} title="Screen in the store" />
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 A QR code at The Mattress Hub, eight friendly questions, and a
                 home sleep test offer for the people who need one.
               </p>
             </Card>
             <Card className="p-6">
               <StepLabel n={2} title="Confirm at the clinic" />
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 The sleep coach reads the home sleep test, records consent, and
                 sets up therapy — CPAP, appliance, or both.
               </p>
             </Card>
             <Card className="p-6">
               <StepLabel n={3} title="Watch outcomes accrue" />
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-graphite">
                 Wearables, CPAP telemetry, and an under-mattress sensor stream
                 nightly — the before-and-after, measured.
               </p>
@@ -146,17 +146,17 @@ export default async function Home() {
         </section>
 
         {/* The two doors, described */}
-        <section className="bg-pale-blue">
+        <section className="bg-cream">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
             <div className="grid gap-4 md:grid-cols-2">
               <Card className="flex flex-col p-6 sm:p-8">
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   The retail door
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-navy">
                   Shopping for a mattress
                 </h3>
-                <p className="mt-2 flex-1 text-sm text-muted">
+                <p className="mt-2 flex-1 text-sm text-graphite">
                   Take the STOP-BANG sleep screener on your phone, choose what
                   data you’re comfortable sharing, connect a wearable, and let
                   your new mattress join the study at checkout.
@@ -166,25 +166,25 @@ export default async function Home() {
                 </div>
               </Card>
               <Card className="flex flex-col p-6 sm:p-8">
-                <p className="text-xs font-semibold tracking-[0.14em] text-accent-purple uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-lake uppercase">
                   The clinic door
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-navy">
                   Sitting with the sleep coach
                 </h3>
-                <p className="mt-2 flex-1 text-sm text-muted">
+                <p className="mt-2 flex-1 text-sm text-graphite">
                   Coach-led enrollment: combined consent and authorization with
                   a real signature, home-sleep-test intake with automatic
                   positional-OSA flagging, CPAP setup, and record linkage.
                 </p>
                 <div className="mt-5">
-                  <ButtonLink href="/enroll/clinic" variant="purple">
+                  <ButtonLink href="/enroll/clinic" variant="navy">
                     Open the coach screen
                   </ButtonLink>
                 </div>
               </Card>
             </div>
-            <p className="mt-6 text-sm text-muted">
+            <p className="mt-6 text-sm text-graphite">
               Under the hood:{" "}
               <a
                 href={`/participant/${MARCUS_REED_PARTICIPANT_ID}`}
@@ -198,35 +198,35 @@ export default async function Home() {
 
         {/* Demo map — the 8 acts of DEMO.md §2, act → route, for rehearsal */}
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <p className="text-xs font-semibold tracking-[0.16em] text-sky-blue uppercase">
+          <p className="text-xs font-semibold tracking-[0.16em] text-brand uppercase">
             Demo map
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
             The eight acts, in order
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted">
+          <p className="mt-2 max-w-2xl text-sm text-graphite">
             One narrative, two doors, one person — every act of the arc, with the screen it
             plays on.
           </p>
           <ol className="mt-6 grid gap-3 sm:grid-cols-2">
             {DEMO_ACTS.map((act, index) => (
-              <li key={act.title} className="flex gap-4 rounded-card bg-pale-blue/60 p-4">
-                <span className="font-heading text-2xl leading-none font-semibold text-accent-purple">
+              <li key={act.title} className="flex gap-4 rounded-card bg-cream/60 p-4">
+                <span className="font-display text-2xl leading-none font-semibold text-lake">
                   {index + 1}
                 </span>
                 <div>
-                  <p className="font-heading font-semibold text-navy">{act.title}</p>
+                  <p className="font-display font-semibold text-navy">{act.title}</p>
                   <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm">
                     {act.links.map((link) => (
                       <a
                         key={link.href}
                         href={link.href}
-                        className="font-semibold text-brand-blue underline-offset-4 hover:underline"
+                        className="font-semibold text-brand underline-offset-4 hover:underline"
                       >
                         {link.label}
                       </a>
                     ))}
-                    {act.note && <span className="text-muted">{act.note}</span>}
+                    {act.note && <span className="text-graphite">{act.note}</span>}
                   </p>
                 </div>
               </li>
@@ -234,8 +234,8 @@ export default async function Home() {
           </ol>
 
           {/* Deep dives — the phase 3–4 screens the eight acts reach for on request */}
-          <div className="mt-4 rounded-card bg-pale-blue/60 p-4">
-            <p className="font-heading font-semibold text-navy">Deep dives</p>
+          <div className="mt-4 rounded-card bg-cream/60 p-4">
+            <p className="font-display font-semibold text-navy">Deep dives</p>
             <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm">
               {[
                 { label: "Robustness & bias", href: "/research/robustness" },
@@ -251,7 +251,7 @@ export default async function Home() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   {link.label}
                 </a>

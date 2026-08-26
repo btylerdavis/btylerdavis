@@ -2,10 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Site chrome mirroring sleeptopia.com's header: a utilityBar-colored top
- * strip (Submit Rx / Pay My Bill / Reorder Supplies + purple "Sleeptopia
- * Direct" pill — inert, for authenticity) over a white nav band with the
- * logo top-left, plus a slim console strip linking the Research and
+ * Site chrome in the new Sleeptopia design language (sleeptopia-site
+ * design/DIRECTION.md): a navy utility strip (the site's "night band"
+ * surface) with the service-desk links (Submit Rx / Pay My Bill / Reorder
+ * Supplies — inert, for authenticity), a white nav band with the logo over
+ * a 1px hairline, and a slim console strip linking the Research and
  * Compliance screens (DEMO.md Acts 5–6).
  *
  * Variants:
@@ -46,6 +47,19 @@ const UTILITY_HEADLINES: Record<string, string> = {
   exec: "Executive Console — funnel, growth, and the data asset",
 };
 
+/** Variant badge chips — one palette family, surface-contrast identity. */
+const VARIANT_BADGES: Record<string, { label: string; classes: string }> = {
+  retail: {
+    label: "In-store enrollment",
+    classes: "border border-hairline bg-cream text-navy",
+  },
+  coach: { label: "Coach portal", classes: "bg-navy text-white" },
+  research: { label: "Research", classes: "bg-brand text-white" },
+  compliance: { label: "Compliance", classes: "bg-lake text-white" },
+  partner: { label: "Partner · Tempur-Sealy", classes: "bg-ink text-white" },
+  exec: { label: "Executive", classes: "border border-navy text-navy" },
+};
+
 export function SiteHeader({
   variant = "site",
 }: {
@@ -59,13 +73,14 @@ export function SiteHeader({
     "CPAP Supplies",
     "Resources",
   ];
+  const badge = VARIANT_BADGES[variant];
 
   return (
     <header className="w-full">
-      {/* Utility bar */}
-      <div className="bg-utility-bar text-hero-navy">
+      {/* Utility strip — the navy service-desk band */}
+      <div className="bg-navy text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 text-xs sm:px-6">
-          <span className="truncate font-medium">
+          <span className="truncate font-medium text-skylight">
             {UTILITY_HEADLINES[variant] ?? "Better Sleep Starts with Sleeptopia."}
           </span>
           <nav aria-label="Utility" className="flex items-center gap-3 sm:gap-4">
@@ -74,20 +89,20 @@ export function SiteHeader({
                 key={label}
                 href="#"
                 aria-disabled="true"
-                className="hidden whitespace-nowrap hover:underline sm:inline"
+                className="hidden whitespace-nowrap text-white/75 hover:text-white hover:underline sm:inline"
               >
                 {label}
               </a>
             ))}
-            <span className="rounded-full bg-accent-purple px-3 py-0.5 font-semibold whitespace-nowrap text-white">
+            <span className="rounded-full border border-white/40 px-3 py-0.5 font-semibold whitespace-nowrap text-white">
               Sleeptopia Direct
             </span>
           </nav>
         </div>
       </div>
 
-      {/* Nav band */}
-      <div className="border-b border-pale-blue bg-surface">
+      {/* Nav band — white bar over a hairline */}
+      <div className="border-b border-hairline bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center gap-3">
             <Image
@@ -98,7 +113,7 @@ export function SiteHeader({
               priority
             />
             {variant === "retail" && (
-              <span className="hidden border-l border-pale-blue pl-3 text-sm font-semibold text-muted sm:inline">
+              <span className="hidden border-l border-hairline pl-3 text-sm font-semibold text-graphite sm:inline">
                 × The Mattress Hub
               </span>
             )}
@@ -110,91 +125,68 @@ export function SiteHeader({
               className="hidden items-center gap-5 text-sm font-semibold text-navy lg:flex"
             >
               {navLinks.map((label) => (
-                <a key={label} href="#" aria-disabled="true" className="hover:text-brand-blue">
+                <a key={label} href="#" aria-disabled="true" className="hover:text-brand">
                   {label}
                 </a>
               ))}
             </nav>
           )}
-          {variant === "retail" && (
-            <span className="rounded-full bg-pale-blue px-3 py-1 text-xs font-semibold text-navy sm:text-sm">
-              In-store enrollment
-            </span>
-          )}
-          {variant === "coach" && (
-            <span className="rounded-full bg-hero-navy px-3 py-1 text-xs font-semibold text-white sm:text-sm">
-              Coach portal
-            </span>
-          )}
-          {variant === "research" && (
-            <span className="rounded-full bg-brand-blue px-3 py-1 text-xs font-semibold text-white sm:text-sm">
-              Research
-            </span>
-          )}
-          {variant === "compliance" && (
-            <span className="rounded-full bg-accent-purple px-3 py-1 text-xs font-semibold text-white sm:text-sm">
-              Compliance
-            </span>
-          )}
-          {variant === "partner" && (
-            <span className="rounded-full bg-navy px-3 py-1 text-xs font-semibold text-white sm:text-sm">
-              Partner · Tempur-Sealy
-            </span>
-          )}
-          {variant === "exec" && (
-            <span className="rounded-full bg-hero-navy px-3 py-1 text-xs font-semibold text-white sm:text-sm">
-              Executive
+          {badge && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold sm:text-sm ${badge.classes}`}
+            >
+              {badge.label}
             </span>
           )}
         </div>
       </div>
 
       {/* Console strip — compact second-row links to the Act 5–6 screens */}
-      <div className="border-b border-pale-blue bg-surface">
+      <div className="border-b border-hairline bg-white">
         <nav
           aria-label="Consoles"
           className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-1.5 text-xs sm:px-6"
         >
-          <span className="font-semibold tracking-[0.12em] text-sky-blue uppercase">
+          <span className="font-semibold tracking-[0.14em] text-brand uppercase">
             Research
           </span>
           {RESEARCH_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-medium text-body hover:text-brand-blue"
+              className="font-medium text-graphite hover:text-brand"
             >
               {link.label}
             </Link>
           ))}
           <span
             aria-hidden
-            className="mx-1 hidden h-3.5 border-l border-pale-blue sm:inline-block"
+            className="mx-1 hidden h-3.5 border-l border-hairline sm:inline-block"
           />
-          <span className="font-semibold tracking-[0.12em] text-accent-purple uppercase">
+          <span className="font-semibold tracking-[0.14em] text-lake uppercase">
             Compliance
           </span>
           {COMPLIANCE_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-medium text-body hover:text-brand-blue"
+              className="font-medium text-graphite hover:text-brand"
             >
               {link.label}
             </Link>
           ))}
           <span
             aria-hidden
-            className="mx-1 hidden h-3.5 border-l border-pale-blue sm:inline-block"
+            className="mx-1 hidden h-3.5 border-l border-hairline sm:inline-block"
           />
-          <span className="font-semibold tracking-[0.12em] text-navy uppercase">
+          <span className="font-semibold tracking-[0.14em] text-navy uppercase">
             Business
           </span>
           {BUSINESS_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-medium text-body hover:text-brand-blue"
+              className="font-medium text-graphite hover:text-brand"
             >
               {link.label}
             </Link>

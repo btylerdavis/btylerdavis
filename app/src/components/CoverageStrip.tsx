@@ -44,24 +44,24 @@ export function CoverageStrip({
   context: string;
 }) {
   return (
-    <Card tone="wash" className="border border-pale-blue p-4">
+    <Card tone="wash" className="border border-hairline p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-xs font-semibold tracking-[0.12em] text-navy uppercase">
           Consent coverage · {tierLabel}
         </p>
-        <p className="text-xs text-muted">{context}</p>
+        <p className="text-xs text-graphite">{context}</p>
       </div>
       <dl className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {STAGES.map((stage, index) => (
-          <div key={stage.key} className="relative rounded-card bg-surface px-3 py-2.5 shadow-card">
-            <dt className="flex items-center gap-1 text-xs font-medium text-muted">
+          <div key={stage.key} className="relative rounded-card border border-hairline bg-white px-3 py-2.5">
+            <dt className="flex items-center gap-1 text-xs font-medium text-graphite">
               {index > 0 && <span aria-hidden>→</span>}
               {stage.label}
             </dt>
             <dd className="mt-0.5 text-xl font-semibold text-navy tabular-nums">
               {coverage[stage.key].toLocaleString("en-US")}
             </dd>
-            <dd className="mt-0.5 text-[11px] leading-tight text-muted">{stage.note}</dd>
+            <dd className="mt-0.5 text-[11px] leading-tight text-graphite">{stage.note}</dd>
           </div>
         ))}
       </dl>

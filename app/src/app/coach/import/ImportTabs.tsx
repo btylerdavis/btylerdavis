@@ -33,7 +33,7 @@ export function ImportTabs() {
             className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
               tab === entry.key
                 ? "bg-navy text-white"
-                : "bg-white text-navy hover:bg-utility-bar"
+                : "bg-white text-navy hover:bg-hairline"
             }`}
           >
             {entry.label}

@@ -182,19 +182,19 @@ export default async function ParticipantTrendsPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="site" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Sleep trends · last {WINDOW_DAYS} nights
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   {displayName ?? `Participant ${shortId(id)}`}
                 </h1>
-                <p className="mt-2 text-sm text-muted">
+                <p className="mt-2 text-sm text-graphite">
                   {displayName
                     ? "Identified view via Lane C linkage"
                     : "Pseudonymous — identity stays sealed without a Lane C grant"}{" "}
@@ -214,7 +214,7 @@ export default async function ParticipantTrendsPage({
                   {armBadges.map((badge) => (
                     <span
                       key={badge}
-                      className="rounded-full bg-pale-blue px-2.5 py-0.5 text-xs font-semibold text-navy"
+                      className="rounded-full bg-cream px-2.5 py-0.5 text-xs font-semibold text-navy"
                     >
                       {badge}
                     </span>
@@ -234,7 +234,7 @@ export default async function ParticipantTrendsPage({
                 />
                 <Link
                   href={`/participant/${id}`}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   View snapshot →
                 </Link>
@@ -256,19 +256,19 @@ export default async function ParticipantTrendsPage({
                     {recommendations.recommendations.map((rec) => (
                       <li key={rec.ruleId} className="flex flex-wrap items-center gap-2 text-sm">
                         <GuardrailBadge guardrail={rec.guardrail} />
-                        <span className="text-body">{rec.title}</span>
+                        <span className="text-ink">{rec.title}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <Link
                   href={`/participant/${id}/recommendations`}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   See why →
                 </Link>
               </div>
-              <p className="mt-3 border-t border-pale-blue pt-2 text-[11px] text-muted">
+              <p className="mt-3 border-t border-hairline pt-2 text-[11px] text-graphite">
                 Wellness guidance, not medical advice — runs on your identified data under your
                 consent (SPEC §10.2)
               </p>
@@ -362,7 +362,7 @@ export default async function ParticipantTrendsPage({
             <ProScoresChart points={proPoints} />
           </ChartCard>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             As of {formatDay(simDate)} · every series read through the consent gate ·{" "}
             <Link href={`/participant/${id}`} className="underline underline-offset-4">
               participant snapshot

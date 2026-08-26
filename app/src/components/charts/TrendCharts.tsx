@@ -76,7 +76,7 @@ function LinePanel({
   const data = toSeries(points, "value");
   return (
     <div>
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{caption}</p>
+      <p className="text-xs font-semibold tracking-wide text-graphite uppercase">{caption}</p>
       <div className="mt-1 h-44">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 18, right: 8, bottom: 0, left: 0 }}>

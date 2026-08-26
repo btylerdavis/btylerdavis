@@ -62,19 +62,19 @@ export default async function RecommendationsPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="site" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Your recommendations · rules-based, deterministic
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   {displayName ?? `Participant ${shortId(id)}`}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Recommendations require your consent to use your identified data — they run
                   on the <span className="font-semibold text-navy">identified tier</span> under
                   your <span className="font-semibold text-navy">view_identified</span> grants
@@ -90,7 +90,7 @@ export default async function RecommendationsPage({
                 />
                 <Link
                   href={`/participant/${id}/trends`}
-                  className="text-sm font-semibold text-brand-blue underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-brand underline-offset-4 hover:underline"
                 >
                   View trends →
                 </Link>
@@ -109,7 +109,7 @@ export default async function RecommendationsPage({
                   No current consent covers identified-tier use
                 </h2>
               </div>
-              <p className="mt-2 max-w-2xl text-sm text-body">
+              <p className="mt-2 max-w-2xl text-sm text-ink">
                 Per-participant recommendations cannot run on de-identified data (SPEC §10.2) —
                 and without a current <span className="font-semibold">view_identified</span>{" "}
                 grant they cannot run at all. Re-consent restores this page on the next visit;
@@ -121,7 +121,7 @@ export default async function RecommendationsPage({
               {/* Partial consent notice */}
               {result.blockedDataClasses.length > 0 && (
                 <Card tone="wash" className="border border-warning/30 p-4">
-                  <p className="text-sm text-body">
+                  <p className="text-sm text-ink">
                     <span className="font-semibold text-navy">Partial consent:</span> rules that
                     need{" "}
                     {result.blockedDataClasses
@@ -137,7 +137,7 @@ export default async function RecommendationsPage({
                   <h2 className="text-lg font-semibold text-navy">
                     Nothing to suggest right now
                   </h2>
-                  <p className="mt-2 text-sm text-muted">
+                  <p className="mt-2 text-sm text-graphite">
                     Every rule looked at the latest data and stayed quiet — sleep position,
                     therapy routine, and device signals all look steady. Cards appear here the
                     night the data says otherwise.
@@ -158,7 +158,7 @@ export default async function RecommendationsPage({
             </>
           )}
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             As of {formatDay(result.clockIso)} · queries ran in{" "}
             {result.queryMs.toLocaleString("en-US")} ms · engine {RECS_MODEL_ID} (
             {RECS_MODEL_VERSION}), deterministic — RECS_MODE=templates is the permanent

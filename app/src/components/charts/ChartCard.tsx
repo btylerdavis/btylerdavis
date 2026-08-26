@@ -28,7 +28,7 @@ export function ChartCard({
     <Card className="p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-lg font-semibold text-navy">{title}</h2>
-        {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-graphite">{subtitle}</p>}
       </div>
       <div className="mt-4">
         {blockedLabel ? (
@@ -36,12 +36,12 @@ export function ChartCard({
             <span className="rounded-full border border-danger/40 bg-danger/5 px-2.5 py-0.5 text-xs font-semibold text-danger">
               Blocked: {blockedLabel}
             </span>
-            <p className="text-sm text-body">
+            <p className="text-sm text-ink">
               No current consent covers viewing this data — the read gate refused it.
             </p>
           </div>
         ) : isEmpty ? (
-          <p className="rounded-card bg-pale-blue/60 px-4 py-3 text-sm text-muted">
+          <p className="rounded-card bg-cream/60 px-4 py-3 text-sm text-graphite">
             {emptyMessage ?? "No data yet — nights accrue as the time machine advances."}
           </p>
         ) : (

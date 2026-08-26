@@ -20,7 +20,7 @@ export default async function RetailEnrollPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="retail" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
           <RetailFlow simDateIso={toIsoDay(simDate)} catalog={catalog} />
         </div>

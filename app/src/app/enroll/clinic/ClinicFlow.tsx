@@ -99,7 +99,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
         <FlowProgress steps={STEPS} current={step} eyebrow="Sleep coach enrollment" />
       </div>
       {patientName && step > 0 && (
-        <p className="text-sm text-muted">
+        <p className="text-sm text-graphite">
           Patient: <span className="font-semibold text-navy">{patientName}</span>
           {" · "}visit date {formatDay(simDateIso)}
         </p>
@@ -109,7 +109,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
       {step === 0 && (
         <Card className="p-6 sm:p-8">
           <h1 className="text-2xl font-semibold text-navy">Patient intake</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-graphite">
             New referral, or someone who already screened at The Mattress Hub?
           </p>
 
@@ -124,10 +124,10 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                 key={key}
                 type="button"
                 onClick={() => setMode(key)}
-                className={`rounded-full px-4 py-2 font-heading text-sm font-semibold transition-colors ${
+                className={`rounded-full px-4 py-2 font-sans text-sm font-semibold transition-colors ${
                   mode === key
-                    ? "bg-hero-navy text-white"
-                    : "bg-pale-blue text-navy hover:bg-utility-bar"
+                    ? "bg-navy text-white"
+                    : "bg-cream text-navy hover:bg-hairline"
                 }`}
               >
                 {label}
@@ -146,7 +146,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="First and last name"
-                  className="mt-1.5 w-full rounded-full border border-pale-blue bg-white px-5 py-2.5 text-sm outline-none focus:border-brand-blue"
+                  className="mt-1.5 w-full rounded-full border border-hairline bg-white px-5 py-2.5 text-sm outline-none focus:border-brand"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -160,7 +160,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                     onChange={(e) => setNewYob(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     inputMode="numeric"
                     placeholder="1974"
-                    className="mt-1.5 w-full rounded-full border border-pale-blue bg-white px-5 py-2.5 text-sm outline-none focus:border-brand-blue"
+                    className="mt-1.5 w-full rounded-full border border-hairline bg-white px-5 py-2.5 text-sm outline-none focus:border-brand"
                   />
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                     id="newSex"
                     value={newSex}
                     onChange={(e) => setNewSex(e.target.value as typeof newSex)}
-                    className="mt-1.5 w-full rounded-full border border-pale-blue bg-white px-4 py-2.5 text-sm outline-none focus:border-brand-blue"
+                    className="mt-1.5 w-full rounded-full border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-brand"
                   >
                     <option value="">Select…</option>
                     <option value="male">Male</option>
@@ -191,7 +191,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   value={lookupQuery}
                   onChange={(e) => setLookupQuery(e.target.value)}
                   placeholder="Display name, e.g. Marcus Reed"
-                  className="w-full rounded-full border border-pale-blue bg-white px-5 py-2.5 text-sm outline-none focus:border-brand-blue"
+                  className="w-full rounded-full border border-hairline bg-white px-5 py-2.5 text-sm outline-none focus:border-brand"
                 />
                 <Button
                   size="sm"
@@ -206,14 +206,14 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   {pending ? "…" : "Search"}
                 </Button>
               </div>
-              <p className="mt-1.5 text-xs text-muted">
+              <p className="mt-1.5 text-xs text-graphite">
                 Identity match only — their retail <em>data</em> stays sealed
                 until linkage consent (step 5).
               </p>
               {matches !== null && (
                 <div className="mt-3 space-y-2">
                   {matches.length === 0 && (
-                    <p className="text-sm text-muted">
+                    <p className="text-sm text-graphite">
                       No retail participant by that name.
                     </p>
                   )}
@@ -224,12 +224,12 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                       onClick={() => setSelectedMatch(match)}
                       className={`w-full rounded-card border p-3 text-left text-sm transition-colors ${
                         selectedMatch?.participantId === match.participantId
-                          ? "border-brand-blue bg-pale-blue"
-                          : "border-pale-blue bg-white hover:bg-pale-blue/50"
+                          ? "border-brand bg-cream"
+                          : "border-hairline bg-white hover:bg-cream/50"
                       }`}
                     >
                       <span className="font-semibold text-navy">{match.displayName}</span>
-                      <span className="ml-2 text-xs text-muted">
+                      <span className="ml-2 text-xs text-graphite">
                         retail participant · {match.participantId.slice(0, 8)}…
                       </span>
                     </button>
@@ -256,15 +256,15 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
             Draft instrument — pre-counsel
           </span>
           <h1 className="max-w-lg text-2xl font-semibold text-navy">
-            Research consent &amp; HIPAA authorization
+            Research consent & HIPAA authorization
           </h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-graphite">
             Combined ICF + authorization, read together with the patient.
           </p>
 
-          <div className="mt-5 space-y-4 text-sm leading-relaxed text-body">
+          <div className="mt-5 space-y-4 text-sm leading-relaxed text-ink">
             <section>
-              <h2 className="font-heading text-base font-semibold text-navy">
+              <h2 className="font-display text-base font-semibold text-navy">
                 What we collect
               </h2>
               <p>
@@ -274,7 +274,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
               </p>
             </section>
             <section>
-              <h2 className="font-heading text-base font-semibold text-navy">
+              <h2 className="font-display text-base font-semibold text-navy">
                 How research uses it
               </h2>
               <p>
@@ -284,7 +284,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
               </p>
             </section>
             <section>
-              <h2 className="font-heading text-base font-semibold text-navy">
+              <h2 className="font-display text-base font-semibold text-navy">
                 Your rights
               </h2>
               <p>
@@ -331,7 +331,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
               Back
             </Button>
           </div>
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-3 text-xs text-graphite">
             Recorded to the consent engine as Lane A (clinical scope). Demo
             signature pad — e-signature vendor integration in reserve.
           </p>
@@ -342,7 +342,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
       {step === 2 && enrollment && (
         <Card className="p-6 sm:p-8">
           <h1 className="text-2xl font-semibold text-navy">Home sleep test intake</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-graphite">
             Upload the HST export — structured CSV or the interpretation
             report. The system parses it; you confirm before anything is
             written.
@@ -374,7 +374,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
             }
           >
             <label
-              className="block text-xs font-semibold tracking-wide text-muted uppercase"
+              className="block text-xs font-semibold tracking-wide text-graphite uppercase"
               htmlFor="hstFile"
             >
               Or upload a file
@@ -385,7 +385,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                 name="file"
                 type="file"
                 accept=".csv,.txt,text/csv,text/plain"
-                className="w-full rounded-full border border-pale-blue bg-white px-4 py-2 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-pale-blue file:px-3 file:py-1 file:font-semibold file:text-navy"
+                className="w-full rounded-full border border-hairline bg-white px-4 py-2 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-3 file:py-1 file:font-semibold file:text-navy"
               />
               <Button type="submit" size="sm" disabled={pending}>
                 Parse
@@ -396,21 +396,21 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
           {error && <p className="mt-3 text-sm font-semibold text-danger">{error}</p>}
 
           {preview && (
-            <div className="mt-5 rounded-card bg-pale-blue/60 p-4">
+            <div className="mt-5 rounded-card bg-cream/60 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-navy">
                   Extracted from {preview.sourceName}{" "}
-                  <span className="font-normal text-muted">
+                  <span className="font-normal text-graphite">
                     ({preview.format === "csv" ? "structured CSV" : "text report"})
                   </span>
                 </p>
                 {preview.supinePredominant && (
-                  <span className="rounded-full bg-accent-purple px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-lake px-3 py-1 text-xs font-semibold text-white">
                     Positional OSA — supine ≥ 2× non-supine
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-graphite">
                 Study date: {formatDay(preview.parsed.studyDate)}
               </p>
               <div className="mt-3 overflow-x-auto">
@@ -418,12 +418,12 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   <tbody>
                     {preview.rows.map((row) => (
                       <tr key={row.concept} className="border-b border-white last:border-0">
-                        <td className="py-1.5 pr-4 text-muted">{row.label}</td>
+                        <td className="py-1.5 pr-4 text-graphite">{row.label}</td>
                         <td
                           className={`py-1.5 font-semibold ${
                             (row.concept === "supine_ahi" || row.concept === "nonsupine_ahi") &&
                             preview.supinePredominant
-                              ? "text-accent-purple"
+                              ? "text-lake"
                               : "text-navy"
                           }`}
                         >
@@ -483,7 +483,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
       {step === 3 && enrollment && (
         <Card className="p-6 sm:p-8">
           <h1 className="text-2xl font-semibold text-navy">CPAP setup</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-graphite">
             Record the machine going home with the patient.
           </p>
 
@@ -496,14 +496,14 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                 disabled={cpap !== null}
                 className={`rounded-card border p-4 text-left transition-colors disabled:opacity-60 ${
                   cpapChoice === model.key
-                    ? "border-brand-blue bg-pale-blue"
-                    : "border-pale-blue bg-white hover:bg-pale-blue/50"
+                    ? "border-brand bg-cream"
+                    : "border-hairline bg-white hover:bg-cream/50"
                 }`}
               >
-                <p className="text-xs font-semibold tracking-wide text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-wide text-brand uppercase">
                   {model.make}
                 </p>
-                <p className="mt-1 font-heading text-sm font-semibold text-navy">
+                <p className="mt-1 font-sans text-sm font-semibold text-navy">
                   {model.model}
                 </p>
               </button>
@@ -513,12 +513,12 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
           {error && <p className="mt-3 text-sm font-semibold text-danger">{error}</p>}
 
           {cpap ? (
-            <div className="mt-4 rounded-card bg-pale-blue/60 p-4 text-sm text-body">
+            <div className="mt-4 rounded-card bg-cream/60 p-4 text-sm text-ink">
               <p className="font-semibold text-success">
                 ✓ CPAP setup recorded — {cpap.make} {cpap.model},{" "}
                 {formatDay(cpap.setupDateIso)}.
               </p>
-              <p className="mt-1 text-muted">
+              <p className="mt-1 text-graphite">
                 Nightly telemetry (usage hours, residual AHI, mask leak) starts
                 flowing as the time machine advances.
               </p>
@@ -565,7 +565,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
           {!enrollment.fromRetail ? (
             <Card className="p-6 sm:p-8">
               <h1 className="text-2xl font-semibold text-navy">Record linkage</h1>
-              <p className="mt-2 text-sm text-body">
+              <p className="mt-2 text-sm text-ink">
                 {patientName} enrolled directly through the clinic door — there’s
                 no Mattress Hub retail record to link today. If they screen at
                 the store later, the linkage consent happens then.
@@ -582,7 +582,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                 <h1 className="text-2xl font-semibold text-navy">
                   Link the retail and clinical records
                 </h1>
-                <p className="mt-2 text-sm text-body">
+                <p className="mt-2 text-sm text-ink">
                   {patientName} screened at The Mattress Hub before this visit.
                   Their retail record (purchase, screener) and today’s clinical
                   record live apart until the patient authorizes the join —
@@ -609,10 +609,10 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   <p className="text-xs font-semibold tracking-wide text-danger uppercase">
                     Join refused {joined ? "— before linkage consent" : ""}
                   </p>
-                  <p className="mt-1.5 font-mono text-sm text-body">
+                  <p className="mt-1.5 font-mono text-sm text-ink">
                     {refusal.blockedReason}
                   </p>
-                  <p className="mt-2 text-xs text-muted">
+                  <p className="mt-2 text-xs text-graphite">
                     Not a UI rule — the query itself is consent-gated. No Lane C
                     grant, no join.
                   </p>
@@ -627,18 +627,18 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                   <h2 className="text-xl font-semibold text-navy">
                     Linkage consent (Lane C)
                   </h2>
-                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-body">
-                    &ldquo;Connect my Mattress Hub shopping record with my
+                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-ink">
+                    “Connect my Mattress Hub shopping record with my
                     Sleeptopia clinical record, so my care team and the research
                     registry can see my whole sleep story. I can undo this at
-                    any time.&rdquo;
+                    any time.”
                   </p>
                   {error && (
                     <p className="mt-3 text-sm font-semibold text-danger">{error}</p>
                   )}
                   <Button
                     className="mt-5"
-                    variant="purple"
+                    variant="navy"
                     size="lg"
                     disabled={pending}
                     onClick={() =>
@@ -660,29 +660,29 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                       ✓ Lane C granted — join open
                     </span>
                     {joined.identity && (
-                      <span className="rounded-full bg-pale-blue px-3 py-1 text-xs font-semibold text-navy">
+                      <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-navy">
                         {joined.identity.displayName}
                       </span>
                     )}
                   </div>
-                  <p className="mt-2 text-xs text-muted">
+                  <p className="mt-2 text-xs text-graphite">
                     Rendered by the same query that was refused above —
                     getLinkedProfile, identified tier.
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-card bg-pale-blue/60 p-4">
-                      <p className="text-xs font-semibold tracking-wide text-sky-blue uppercase">
+                    <div className="rounded-card bg-cream/60 p-4">
+                      <p className="text-xs font-semibold tracking-wide text-brand uppercase">
                         Retail record — The Mattress Hub
                       </p>
                       {joined.retail.purchases.length === 0 ? (
-                        <p className="mt-2 text-sm text-muted">No purchase on file.</p>
+                        <p className="mt-2 text-sm text-graphite">No purchase on file.</p>
                       ) : (
                         joined.retail.purchases.map((purchase) => (
-                          <div key={purchase.sku} className="mt-2 text-sm text-body">
+                          <div key={purchase.sku} className="mt-2 text-sm text-ink">
                             <p className="font-semibold text-navy">
                               {purchase.brand} {purchase.model}
                             </p>
-                            <p className="text-xs text-muted">
+                            <p className="text-xs text-graphite">
                               Firmness {purchase.firmnessRating}/10 · purchased{" "}
                               {formatDay(purchase.purchaseDateIso)}
                               {purchase.deliveryDateIso &&
@@ -693,7 +693,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                       )}
                       <div className="mt-3 border-t border-white pt-3 text-sm">
                         {joined.retail.stopBang ? (
-                          <p className="text-body">
+                          <p className="text-ink">
                             STOP-BANG{" "}
                             <span className="font-semibold text-navy">
                               {joined.retail.stopBang.score}/8
@@ -702,7 +702,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                             {formatDay(joined.retail.stopBang.administeredAtIso)}
                           </p>
                         ) : (
-                          <p className="text-muted">
+                          <p className="text-graphite">
                             {joined.retail.stopBangBlocked
                               ? "STOP-BANG blocked — no questionnaire consent."
                               : "No screener on file."}
@@ -710,18 +710,18 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                         )}
                       </div>
                     </div>
-                    <div className="rounded-card bg-pale-blue/60 p-4">
-                      <p className="text-xs font-semibold tracking-wide text-accent-purple uppercase">
+                    <div className="rounded-card bg-cream/60 p-4">
+                      <p className="text-xs font-semibold tracking-wide text-lake uppercase">
                         Clinical record — Sleeptopia
                       </p>
                       {joined.clinical.hst.length === 0 ? (
-                        <p className="mt-2 text-sm text-muted">No HST on file.</p>
+                        <p className="mt-2 text-sm text-graphite">No HST on file.</p>
                       ) : (
                         <table className="mt-2 w-full text-sm">
                           <tbody>
                             {joined.clinical.hst.map((row) => (
                               <tr key={`${row.concept}-${row.dateIso}`}>
-                                <td className="py-0.5 pr-2 text-muted">{row.label}</td>
+                                <td className="py-0.5 pr-2 text-graphite">{row.label}</td>
                                 <td className="py-0.5 font-semibold text-navy">
                                   {row.value} {row.unit}
                                 </td>
@@ -731,7 +731,7 @@ export function ClinicFlow({ simDateIso }: { simDateIso: string }) {
                         </table>
                       )}
                       {joined.clinical.events.length > 0 && (
-                        <div className="mt-3 border-t border-white pt-3 text-xs text-muted">
+                        <div className="mt-3 border-t border-white pt-3 text-xs text-graphite">
                           {joined.clinical.events.map((event) => (
                             <p key={`${event.type}-${event.dateIso}`}>
                               {event.type.replace(/_/g, " ")} · {formatDay(event.dateIso)}

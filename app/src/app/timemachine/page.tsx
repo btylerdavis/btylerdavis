@@ -29,18 +29,18 @@ export default async function TimeMachinePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="site" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8 sm:px-6 sm:py-12">
           {/* The clock */}
           <Card className="p-6 text-center sm:p-10">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
               The time machine
             </p>
             <h1 className="mt-3 text-4xl font-semibold text-navy sm:text-6xl">
               {formatDay(simDate)}
             </h1>
-            <p className="mt-3 text-sm text-muted">
-              Day <span className="font-semibold text-navy">{dayNumber}</span> of Marcus&apos;s
+            <p className="mt-3 text-sm text-graphite">
+              Day <span className="font-semibold text-navy">{dayNumber}</span> of Marcus’s
               journey · {daysRemaining.toLocaleString("en-US")} day
               {daysRemaining === 1 ? "" : "s"} left on the demo timeline (rail at day{" "}
               {MAX_SIM_DAYS})
@@ -63,7 +63,7 @@ export default async function TimeMachinePage() {
               <Total label="Wearable nights" value={nights} />
               <Total label="Questionnaires" value={proResponses} />
             </dl>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-2 text-xs text-graphite">
               Consent-gated counts: rows of a revoked data class — and revoked
               participants — are excluded here the moment consent changes.
             </p>
@@ -86,8 +86,8 @@ export default async function TimeMachinePage() {
 
 function Total({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-card bg-pale-blue/60 px-4 py-3">
-      <dt className="text-xs font-medium text-muted">{label}</dt>
+    <div className="rounded-card bg-cream/60 px-4 py-3">
+      <dt className="text-xs font-medium text-graphite">{label}</dt>
       <dd className="mt-0.5 text-xl font-semibold text-navy">{value.toLocaleString("en-US")}</dd>
     </div>
   );

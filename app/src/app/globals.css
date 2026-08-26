@@ -1,94 +1,96 @@
 @import "tailwindcss";
 
 /*
- * Sleeptopia design tokens — wired from branding/tokens.json.
- * Colors were sampled from sleeptopia.com screenshots (July 7); demo-only
- * semantic colors (success/warning/danger/watermark) are additions.
+ * Sleeptopia design tokens — the NEW Sleeptopia design language
+ * (sleeptopia-site src/app/globals.css + design/DIRECTION.md, approved
+ * Aug 18 2026). Exact hex values copied from the new site; names match the
+ * site's tokens. The whole app now renders in this language — cream ground,
+ * white hairline cards, navy proof surfaces, the sun pill as THE action
+ * color, Playfair Display for display statements, Hanken Grotesk for
+ * everything functional.
+ *
  * Tailwind 4 exposes each @theme variable as utilities, e.g.
- * --color-brand-blue -> bg-brand-blue / text-brand-blue.
+ * --color-navy -> bg-navy / text-navy.
  */
 @theme {
-  /* colors.primaryNavy — headings, "Sleep" in wordmark, nav link text */
-  --color-navy: #1b4a7a;
-  /* colors.heroNavy — hero overlay cards, dark panels, footers */
-  --color-hero-navy: #1a2b4c;
-  /* colors.brandBlue — primary CTA pill buttons */
-  --color-brand-blue: #3f92ce;
-  /* colors.skyBlue — "topia" in wordmark, eyebrow text */
-  --color-sky-blue: #5faedd;
-  /* colors.utilityBar — top utility bar background */
-  --color-utility-bar: #a9d9ef;
-  /* colors.paleBlue — light-blue section washes */
-  --color-pale-blue: #e1f0fa;
-  /* colors.accentPurple — "Sleeptopia Direct" button, "Step N:" labels */
-  --color-accent-purple: #8a5ec1;
-  /* colors.surface — cards */
-  --color-surface: #ffffff;
-  /* colors.textBody / colors.textMuted */
-  --color-body: #3e4a5a;
-  --color-muted: #64748b;
-  /* demo-only semantic colors */
-  --color-success: #2e8b57;
-  --color-warning: #d97706;
-  --color-danger: #b91c1c;
-  --color-watermark: #94a3b8;
-
-  /* typography — families loaded via next/font in layout.tsx */
-  --font-heading: var(--font-fredoka), "Baloo 2", "Nunito", sans-serif;
-  --font-sans: var(--font-source-sans), "Lato", system-ui, sans-serif;
-
-  /* shape.cardRadius — pill buttons use rounded-full directly */
-  --radius-card: 16px;
-
-  /* soft card shadow (navy-tinted, airy) */
-  --shadow-card: 0 8px 24px rgb(27 74 122 / 0.08);
-  --shadow-card-lg: 0 16px 40px rgb(26 43 76 / 0.14);
-
-  /*
-   * NEW Sleeptopia design direction (sleeptopia-site design/DIRECTION.md,
-   * approved Aug 18 2026) — exact values copied from the new site's
-   * src/app/globals.css. The AI Care Assistant module is styled in this
-   * language; the rest of the app migrates to it next. Names match the new
-   * site's tokens except `navy`/`navy2`, which collide with the legacy
-   * tokens above and are carried here as `night`/`night2` (same hex).
-   */
+  /* Approved palette — sleeptopia-site design/DIRECTION.md */
   --color-cream: #f4f0e8; /* page ground — warm linen, never gray */
   --color-vellum: #faf7f1; /* nested card surface */
-  --color-night: #16304e; /* new-direction --color-navy: night/proof bands */
-  --color-night2: #1e3c60; /* new-direction --color-navy2: navy hover */
+  --color-navy: #16304e; /* night/proof bands, dark chrome, heading ink */
+  --color-navy2: #1e3c60; /* navy hover */
   --color-ink: #20242b; /* text */
   --color-graphite: #47505e; /* secondary text */
   --color-hairline: #e3ddd1; /* 1px hairlines on light surfaces */
-  --color-sky: #5faedd; /* highlighted word in headlines */
-  --color-skylight: #a9d6f0; /* eyebrows on navy */
+  --color-sky: #5faedd; /* highlighted word in headlines; soft series */
+  --color-skylight: #a9d6f0; /* eyebrows on navy; lightest ramp stop */
   --color-brand: #3f92ce; /* links, small accents */
-  --color-lake: #2c6ba0; /* serif highlight color */
+  --color-lake: #2c6ba0; /* serif highlight color; deep-blue accents */
   --color-sun: #f6c453; /* THE action color — CTA fill only, black text */
   --color-sun2: #ebb53b; /* CTA hover */
 
-  /* New-direction type pair: Playfair Display (serif display) + Hanken
-     Grotesk (sans) — loaded via next/font in the assistant module. */
+  /* Demo-only semantic states (console app additions, tuned to sit on the
+     cream/white surfaces — never identity colors). */
+  --color-success: #2e7d4f;
+  --color-warning: #b45309;
+  --color-danger: #b3261e;
+  /* warm neutral for the DEMO chip + draft-document dashes */
+  --color-watermark: #8f8879;
+
+  /* Type pair (DIRECTION.md): serif display = Playfair Display, sans =
+     Hanken Grotesk. Loaded via next/font in layout.tsx. */
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
   --font-display: var(--font-playfair), Georgia, serif;
-  --font-grotesk: var(--font-hanken), system-ui, sans-serif;
+
+  /* shape: pill buttons use rounded-full; cards are 14–20px radii */
+  --radius-card: 16px;
+
+  /* The only sanctioned shadow besides the sun-CTA glow: a soft ambient
+     lift under floating chrome (demo navigator, chart tooltips). Cards
+     themselves are shadowless — elevation is surface contrast. */
+  --shadow-lift: 0 16px 40px rgb(22 48 78 / 0.18);
 }
 
 @layer base {
   body {
-    background: var(--color-surface);
-    color: var(--color-body);
+    background: var(--color-cream);
+    color: var(--color-ink);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
+  /* Serif display for headings (site language). Small utility headings can
+     opt back out with `font-sans`. */
   h1,
   h2,
-  h3,
-  h4 {
-    font-family: var(--font-heading);
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.004em;
+  }
+
+  ::selection {
+    background: var(--color-navy);
+    color: #fff;
+  }
+
+  p,
+  li,
+  blockquote,
+  figcaption {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
-  /* New-direction eyebrow (new site globals.css, exact values). */
+  /* Uppercase eyebrow (new site globals.css, exact values). */
   .eyebrow {
     font-size: 13.5px;
     font-weight: 600;
@@ -97,8 +99,12 @@
     color: var(--color-brand);
   }
   /* Playfair's fi/ff ligatures merge letters at display sizes — keep
-     glyphs separate (new site rule for .font-serif). */
-  .font-display {
+     glyphs separate (new site rule for .font-serif). Applies wherever the
+     serif renders: the utility class and the base-layer headings. */
+  .font-display,
+  h1,
+  h2,
+  h3 {
     font-variant-ligatures: none;
     font-feature-settings: "liga" 0, "dlig" 0;
   }

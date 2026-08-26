@@ -65,19 +65,19 @@ export default async function ExecDashboardPage({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="exec" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Executive dashboard · the business layer
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Two doors, one funnel, one data asset
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   The referral funnel is a direct, measurable win independent of the research
                   value (SPEC §9.2); the growth bars track the §3.5 definition of successful.
                   Every count below is consent-filtered — revoked participants are already gone.
@@ -105,12 +105,12 @@ export default async function ExecDashboardPage({
                 <h2 className="text-lg font-semibold text-navy">
                   Retail → clinic referral funnel
                 </h2>
-                <p className="text-xs text-muted">retail door, cumulative as of {formatDay(dash.clockIso)}</p>
+                <p className="text-xs text-graphite">retail door, cumulative as of {formatDay(dash.clockIso)}</p>
               </div>
               <div className="mt-4">
                 <AdherenceFunnel stages={dash.funnel} />
               </div>
-              <p className="mt-2 text-xs text-muted">
+              <p className="mt-2 text-xs text-graphite">
                 Screens are STOP-BANG completions at The Mattress Hub; conversions are screens
                 that became Sleeptopia therapy patients (CPAP or appliance started). The
                 synthetic cohort models full referral acceptance — expect real drop-off at the
@@ -121,7 +121,7 @@ export default async function ExecDashboardPage({
             {/* Revenue assumptions */}
             <Card className="p-5 sm:p-6 lg:col-span-2">
               <h2 className="text-lg font-semibold text-navy">Referral-funnel value</h2>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-graphite">
                 Editable assumptions — demo defaults, stored in the URL so a scenario is a
                 shareable link.
               </p>
@@ -131,9 +131,9 @@ export default async function ExecDashboardPage({
                 ))}
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">HST reimbursement</span>
-                  <span className="text-muted"> · per completed referral</span>
+                  <span className="text-graphite"> · per completed referral</span>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="text-muted">$</span>
+                    <span className="text-graphite">$</span>
                     <input
                       type="number"
                       name="hst"
@@ -141,18 +141,18 @@ export default async function ExecDashboardPage({
                       max={100000}
                       step={25}
                       defaultValue={assumptions.hstValue}
-                      className="w-28 rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                      className="w-28 rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                     />
-                    <span className="text-xs text-muted">
+                    <span className="text-xs text-graphite">
                       × {dash.revenue.hstCount.toLocaleString("en-US")} HSTs
                     </span>
                   </div>
                 </label>
                 <label className="block text-sm">
                   <span className="font-semibold text-navy">CPAP setup value</span>
-                  <span className="text-muted"> · equipment + supplies</span>
+                  <span className="text-graphite"> · equipment + supplies</span>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="text-muted">$</span>
+                    <span className="text-graphite">$</span>
                     <input
                       type="number"
                       name="cpap"
@@ -160,9 +160,9 @@ export default async function ExecDashboardPage({
                       max={100000}
                       step={50}
                       defaultValue={assumptions.cpapValue}
-                      className="w-28 rounded-card border border-pale-blue px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                      className="w-28 rounded-card border border-hairline px-3 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                     />
-                    <span className="text-xs text-muted">
+                    <span className="text-xs text-graphite">
                       × {dash.revenue.cpapSetupCount.toLocaleString("en-US")} setups
                     </span>
                   </div>
@@ -171,14 +171,14 @@ export default async function ExecDashboardPage({
                   Recompute
                 </button>
               </form>
-              <div className="mt-4 rounded-card bg-pale-blue/70 p-4">
-                <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+              <div className="mt-4 rounded-card bg-cream/70 p-4">
+                <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
                   Estimated funnel value to date
                 </p>
                 <p className="mt-1 text-3xl font-semibold text-navy tabular-nums">
                   {usd(dash.revenue.totalValue)}
                 </p>
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1 text-xs text-graphite">
                   {dash.revenue.hstCount.toLocaleString("en-US")} HSTs × {usd(assumptions.hstValue)}{" "}
                   + {dash.revenue.cpapSetupCount.toLocaleString("en-US")} CPAP setups ×{" "}
                   {usd(assumptions.cpapValue)} · assumptions, not bookings
@@ -193,8 +193,8 @@ export default async function ExecDashboardPage({
               <h2 className="text-lg font-semibold text-navy">
                 Cohort growth vs SPEC §3.5 targets
               </h2>
-              <p className="text-xs text-muted">
-                bands are the &ldquo;successful when&rdquo; column, drawn to scale
+              <p className="text-xs text-graphite">
+                bands are the “successful when” column, drawn to scale
               </p>
             </div>
             <div className="mt-5 space-y-6">
@@ -214,8 +214,8 @@ export default async function ExecDashboardPage({
                 bands={[{ from: TARGETS.linkedM24.min, to: null, label: "M24: ≥ 400" }]}
               />
             </div>
-            <p className="mt-4 text-xs text-muted">
-              Linked (Lane C) participants are the platform&apos;s most valuable cohort — raw
+            <p className="mt-4 text-xs text-graphite">
+              Linked (Lane C) participants are the platform’s most valuable cohort — raw
               enrollment without linkage is explicitly not success (SPEC §3.5).
             </p>
           </Card>
@@ -231,7 +231,7 @@ export default async function ExecDashboardPage({
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">The asset we are building</h2>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-graphite">
                 linked, longitudinal, consent-provenanced — the moat (SPEC §12.2)
               </p>
             </div>
@@ -263,7 +263,7 @@ export default async function ExecDashboardPage({
           <Card className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-semibold text-navy">Partnership pipeline</h2>
-              <p className="text-xs text-muted">SPEC §12.1 tiers · demo-honest status</p>
+              <p className="text-xs text-graphite">SPEC §12.1 tiers · demo-honest status</p>
             </div>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               <PipelineRow
@@ -290,7 +290,7 @@ export default async function ExecDashboardPage({
             </ul>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Queries ran in {dash.queryMs.toLocaleString("en-US")} ms · consent-filtered
             aggregates · revenue figures are assumptions ·{" "}
             <Link href="/research/abstract" className="underline underline-offset-4">
@@ -332,7 +332,7 @@ function RevenueModelCard({
     <Card className="p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold text-navy">Revenue-model calculator</h2>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-graphite">
           SPEC §12.4 lines vs the §3.5 month-36 self-funding bar · assumptions live in the URL
         </p>
       </div>
@@ -346,7 +346,7 @@ function RevenueModelCard({
           {REVENUE_LINES.map((line) => (
             <div key={line.key} className="text-sm">
               <span className="font-semibold text-navy">{line.label}</span>
-              <span className="text-muted"> · {line.unit}</span>
+              <span className="text-graphite"> · {line.unit}</span>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <input
                   type="number"
@@ -356,9 +356,9 @@ function RevenueModelCard({
                   step={1}
                   defaultValue={inputs[line.key].count}
                   aria-label={`${line.label} per year`}
-                  className="w-16 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                  className="w-16 rounded-card border border-hairline px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                 />
-                <span className="text-muted">×&nbsp;$</span>
+                <span className="text-graphite">×&nbsp;$</span>
                 <input
                   type="number"
                   name={REVENUE_PARAM_KEYS[line.key].price}
@@ -367,19 +367,19 @@ function RevenueModelCard({
                   step={5000}
                   defaultValue={inputs[line.key].price}
                   aria-label={`${line.label} price`}
-                  className="w-28 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                  className="w-28 rounded-card border border-hairline px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
                 />
               </div>
-              <p className="mt-0.5 text-xs text-muted">
+              <p className="mt-0.5 text-xs text-graphite">
                 band {usd(line.band.min)}–{usd(line.band.max)} · {line.band.basis}
               </p>
             </div>
           ))}
           <label className="block text-sm">
             <span className="font-semibold text-navy">Operating cost</span>
-            <span className="text-muted"> · annual, the line to beat</span>
+            <span className="text-graphite"> · annual, the line to beat</span>
             <div className="mt-1 flex items-center gap-2">
-              <span className="text-muted">$</span>
+              <span className="text-graphite">$</span>
               <input
                 type="number"
                 name={REVENUE_PARAM_KEYS.operatingCost}
@@ -387,7 +387,7 @@ function RevenueModelCard({
                 max={MAX_OPERATING_COST}
                 step={25000}
                 defaultValue={inputs.operatingCost}
-                className="w-32 rounded-card border border-pale-blue px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand-blue focus:outline-none"
+                className="w-32 rounded-card border border-hairline px-2.5 py-1.5 text-sm tabular-nums focus:ring-2 focus:ring-brand focus:outline-none"
               />
             </div>
           </label>
@@ -400,7 +400,7 @@ function RevenueModelCard({
         <div className="lg:col-span-3">
           <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
             <div>
-              <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+              <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
                 Projected annual partner revenue
               </p>
               <p className="mt-1 text-3xl font-semibold text-navy tabular-nums">
@@ -420,7 +420,7 @@ function RevenueModelCard({
 
           {/* Stacked revenue bar with the operating-cost marker */}
           <div className="mt-4">
-            <div className="relative h-6 rounded-full bg-pale-blue">
+            <div className="relative h-6 rounded-full bg-cream">
               <div className="absolute inset-0 flex overflow-hidden rounded-full">
                 {model.lines
                   .filter((line) => line.total > 0)
@@ -442,7 +442,7 @@ function RevenueModelCard({
                 aria-hidden
               />
             </div>
-            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-graphite">
               {model.lines.map((line) => (
                 <span key={line.key} className="flex items-center gap-1.5">
                   <span
@@ -460,12 +460,12 @@ function RevenueModelCard({
             </div>
           </div>
 
-          <p className="mt-3 text-sm text-body">
+          <p className="mt-3 text-sm text-ink">
             {model.selfFunding ? (
               <>
                 Surplus of <span className="font-semibold tabular-nums">{usd(model.surplus)}</span>{" "}
-                over the operating-cost line — §3.5&rsquo;s business-engine test (&ldquo;partner
-                revenue covering platform operating costs by month 36&rdquo;) holds under these
+                over the operating-cost line — §3.5’s business-engine test (“partner
+                revenue covering platform operating costs by month 36”) holds under these
                 assumptions.
               </>
             ) : (
@@ -477,8 +477,8 @@ function RevenueModelCard({
               </>
             )}
           </p>
-          <p className="mt-2 text-xs text-muted">
-            SPEC §12.4&rsquo;s bands are deliberately rough — this is a planning calculator on
+          <p className="mt-2 text-xs text-graphite">
+            SPEC §12.4’s bands are deliberately rough — this is a planning calculator on
             assumptions, not bookings, and the §12.3 rules of engagement (de-identified, DUA,
             never raw resale) apply to every line.
           </p>
@@ -490,12 +490,12 @@ function RevenueModelCard({
 
 function AssetTile({ value, label, note }: { value: number; label: string; note: string }) {
   return (
-    <div className="rounded-card bg-pale-blue/70 p-4">
+    <div className="rounded-card bg-cream/70 p-4">
       <p className="text-2xl font-semibold text-navy tabular-nums">
         {value.toLocaleString("en-US")}
       </p>
-      <p className="mt-0.5 text-sm font-semibold text-body">{label}</p>
-      <p className="mt-0.5 text-xs text-muted">{note}</p>
+      <p className="mt-0.5 text-sm font-semibold text-ink">{label}</p>
+      <p className="mt-0.5 text-xs text-graphite">{note}</p>
     </div>
   );
 }
@@ -524,7 +524,7 @@ function TargetBar({
           {value.toLocaleString("en-US")}
         </p>
       </div>
-      <div className="relative mt-2 h-4 rounded-full bg-pale-blue">
+      <div className="relative mt-2 h-4 rounded-full bg-cream">
         {/* target bands under the fill */}
         {bands.map((band) => (
           <div
@@ -539,7 +539,7 @@ function TargetBar({
         ))}
         {/* the value fill */}
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-brand-blue/85"
+          className="absolute inset-y-0 left-0 rounded-full bg-brand/85"
           style={{ width: `${pct(value)}%` }}
           aria-hidden
         />
@@ -563,7 +563,7 @@ function TargetBar({
             : []),
         ])}
       </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-graphite">
         {bands.map((band) => (
           <span key={band.label} className="flex items-center gap-1.5">
             <span aria-hidden className="inline-block h-2.5 w-0.5 bg-success" />
@@ -590,10 +590,10 @@ function PipelineRow({
     status === "working"
       ? "bg-success/10 text-success"
       : status === "reserve"
-        ? "bg-pale-blue text-navy"
-        : "bg-accent-purple/10 text-accent-purple";
+        ? "bg-cream text-navy"
+        : "bg-lake/10 text-lake";
   return (
-    <li className="rounded-card border border-pale-blue p-4">
+    <li className="rounded-card border border-hairline p-4">
       <div className="flex items-center justify-between gap-2">
         <p className="font-semibold text-navy">
           {href ? (
@@ -608,7 +608,7 @@ function PipelineRow({
           {status}
         </span>
       </div>
-      <p className="mt-1 text-sm text-muted">{detail}</p>
+      <p className="mt-1 text-sm text-graphite">{detail}</p>
     </li>
   );
 }

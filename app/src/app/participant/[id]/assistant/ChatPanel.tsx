@@ -91,7 +91,7 @@ function AssistantBubble({ turn }: { turn: ChatTurnResult }) {
     <div
       className={
         escalated
-          ? "max-w-[92%] rounded-2xl bg-night p-4 text-white"
+          ? "max-w-[92%] rounded-2xl bg-navy p-4 text-white"
           : "max-w-[92%] rounded-2xl border border-hairline bg-white p-4"
       }
     >
@@ -181,7 +181,7 @@ export function ChatPanel({
         {entries.map((entry) =>
           entry.role === "user" ? (
             <div key={entry.key} className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl bg-night px-4 py-2.5 text-[15px] text-white">
+              <div className="max-w-[85%] rounded-2xl bg-navy px-4 py-2.5 text-[15px] text-white">
                 {entry.text}
               </div>
             </div>

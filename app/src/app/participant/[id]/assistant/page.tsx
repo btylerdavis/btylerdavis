@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { SiteHeader } from "@/components/SiteHeader";
-import { newDirectionClass } from "@/components/assistant/fonts";
 import {
   ArrowLink,
   Display,
@@ -58,7 +57,7 @@ export default async function AssistantPage({
   const paused = ready === null;
 
   return (
-    <div className={`flex min-h-screen flex-col bg-cream text-ink ${newDirectionClass}`}>
+    <div className="flex min-h-screen flex-col bg-cream text-ink">
       <SiteHeader variant="site" />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
@@ -77,7 +76,7 @@ export default async function AssistantPage({
             </div>
             <Link
               href={`/participant/${id}`}
-              className="text-[15px] font-semibold text-brand underline-offset-4 hover:text-night hover:underline"
+              className="text-[15px] font-semibold text-brand underline-offset-4 hover:text-navy hover:underline"
             >
               ← Participant snapshot
             </Link>
@@ -88,7 +87,7 @@ export default async function AssistantPage({
             <div className="min-h-[540px]">
               {paused ? (
                 <HairlineCard className="p-6 sm:p-8">
-                  <p className="eyebrow font-grotesk">Assistant paused</p>
+                  <p className="eyebrow font-sans">Assistant paused</p>
                   <p className="mt-3 font-display text-[26px] font-medium leading-[1.2] text-ink">
                     {alive
                       ? "No current consent grant admits the assistant"
@@ -126,7 +125,7 @@ export default async function AssistantPage({
             {/* Side rail */}
             <div className="space-y-4">
               <HairlineCard className="p-5">
-                <p className="eyebrow font-grotesk">What I can see today</p>
+                <p className="eyebrow font-sans">What I can see today</p>
                 {ready === null ? (
                   <p className="mt-3 text-[14px] text-graphite">
                     Nothing — the consent gate is closed, so no data is read at all.

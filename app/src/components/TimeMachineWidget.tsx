@@ -34,12 +34,12 @@ export function TimeMachineWidget({
   };
 
   return (
-    <div className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-pale-blue bg-white py-1.5 pr-2 pl-4 shadow-card">
+    <div className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-hairline bg-white py-1.5 pr-2 pl-4">
       <Link href="/timemachine" className="group">
-        <p className="text-[10px] font-semibold tracking-[0.14em] text-sky-blue uppercase">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-brand uppercase">
           Sim clock · day {dayNumber}
         </p>
-        <p className="font-heading text-sm leading-tight font-semibold text-navy group-hover:text-brand-blue">
+        <p className="font-sans text-sm leading-tight font-semibold text-navy group-hover:text-brand">
           {formatDay(simDateIso)}
         </p>
       </Link>

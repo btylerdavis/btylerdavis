@@ -2,24 +2,33 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 /**
- * Pill buttons matching the site's shape language (tokens.json shape):
- * full-radius, solid brandBlue with white text; accentPurple variant for
- * portal/external-style actions (the "Sleeptopia Direct" pattern).
+ * Pill buttons in the new Sleeptopia design language (sleeptopia-site
+ * src/components/ui.tsx): full-radius pills, the sun fill (#F6C453, near-
+ * black text, soft gold glow) as THE action color, ink-outline ghosts for
+ * secondary actions, solid navy for console/portal actions, and a quiet
+ * brand-blue text-link variant. Sizes are console-scale — same shape,
+ * colors, and weights as the site's pills, smaller type for dense screens.
  */
-export type ButtonVariant = "primary" | "purple" | "outline" | "quiet" | "danger";
+export type ButtonVariant =
+  | "primary"
+  | "navy"
+  | "outline"
+  | "light"
+  | "quiet"
+  | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-blue text-white hover:bg-navy focus-visible:outline-brand-blue",
-  purple:
-    "bg-accent-purple text-white hover:bg-hero-navy focus-visible:outline-accent-purple",
+    "bg-sun text-[#161616] shadow-[0_8px_26px_rgba(235,181,59,0.35)] hover:bg-sun2 focus-visible:outline-sun2",
+  navy: "bg-navy text-white hover:bg-navy2 focus-visible:outline-navy",
   outline:
-    "border border-brand-blue/60 bg-white text-navy hover:bg-pale-blue focus-visible:outline-brand-blue",
+    "border border-ink bg-transparent text-ink hover:bg-black/5 focus-visible:outline-navy",
+  light:
+    "border border-white/70 bg-transparent text-white hover:bg-white/10 focus-visible:outline-white",
   quiet:
-    "bg-transparent text-navy underline-offset-4 hover:underline focus-visible:outline-brand-blue",
-  danger:
-    "bg-danger text-white hover:bg-hero-navy focus-visible:outline-danger",
+    "bg-transparent text-brand underline-offset-4 hover:text-navy hover:underline focus-visible:outline-brand",
+  danger: "bg-danger text-white hover:bg-navy focus-visible:outline-danger",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -34,9 +43,9 @@ export function buttonClasses(
   extra = ""
 ): string {
   return [
-    "inline-flex items-center justify-center gap-2 rounded-full font-heading font-semibold transition-colors",
+    "inline-flex items-center justify-center gap-2 rounded-full font-sans font-semibold transition-[transform,background-color,color] duration-150 active:scale-[.97]",
     "focus-visible:outline-2 focus-visible:outline-offset-2",
-    "disabled:cursor-not-allowed disabled:opacity-45",
+    "disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100",
     VARIANT_CLASSES[variant],
     SIZE_CLASSES[size],
     extra,

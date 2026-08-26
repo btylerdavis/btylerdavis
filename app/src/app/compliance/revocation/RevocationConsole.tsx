@@ -72,7 +72,7 @@ export function RevocationConsole({
           {pending ? "Working…" : `Revoke all consents — ${displayLabel}`}
         </Button>
         <Button
-          variant="purple"
+          variant="navy"
           disabled={pending}
           onClick={() => run(() => restoreAllAction(participantId))}
         >
@@ -80,7 +80,7 @@ export function RevocationConsole({
         </Button>
         {error && <span className="text-sm font-semibold text-danger">{error}</span>}
       </div>
-      <p className="text-xs text-muted">
+      <p className="text-xs text-graphite">
         Every change is a <span className="font-semibold">new immutable event</span> — nothing
         is ever updated or deleted. Restore re-enables only what was{" "}
         <span className="font-semibold">signed</span> (the authorized ceiling); the audit trail
@@ -88,12 +88,12 @@ export function RevocationConsole({
       </p>
 
       {/* Partial revocation: per-data-class toggle grid */}
-      <div className="rounded-card border border-pale-blue bg-pale-blue/40 p-4">
+      <div className="rounded-card border border-hairline bg-cream/40 p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold text-navy">
             Partial revocation · per data class
           </h3>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-graphite">
             each toggle appends a scope-revised record — only that class blocks, the rest keeps
             flowing
           </p>
@@ -111,7 +111,7 @@ export function RevocationConsole({
                       ? "bg-success/10 text-success"
                       : state.state === "revoked"
                         ? "bg-danger/10 text-danger"
-                        : "bg-pale-blue text-muted"
+                        : "bg-cream text-graphite"
                   }`}
                 >
                   {state.state === "never_authorized" ? "never authorized" : state.state}
@@ -131,19 +131,19 @@ export function RevocationConsole({
                 state.revisable ? (
                   <Button
                     size="sm"
-                    variant="purple"
+                    variant="navy"
                     disabled={pending}
                     onClick={() => run(() => restoreClassAction(participantId, state.dataClass))}
                   >
                     Restore
                   </Button>
                 ) : (
-                  <span className="text-[11px] text-muted">no granted instrument</span>
+                  <span className="text-[11px] text-graphite">no granted instrument</span>
                 )
               ) : (
                 <a
                   href={`/participant/${participantId}/reconsent`}
-                  className="text-[11px] font-semibold text-accent-purple underline underline-offset-2"
+                  className="text-[11px] font-semibold text-lake underline underline-offset-2"
                 >
                   requires re-consent →
                 </a>
@@ -164,7 +164,7 @@ function ReportPanel({ report }: { report: RevocationReport }) {
   return (
     <div
       className={`rounded-card border p-4 ${
-        revoked ? "border-danger/40 bg-danger/5" : "border-accent-purple/40 bg-accent-purple/5"
+        revoked ? "border-danger/40 bg-danger/5" : "border-lake/40 bg-lake/5"
       }`}
     >
       <p className="text-sm font-semibold text-navy">
@@ -188,7 +188,7 @@ function ReportPanel({ report }: { report: RevocationReport }) {
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="border-b border-pale-blue text-left text-xs tracking-wide text-muted uppercase">
+            <tr className="border-b border-hairline text-left text-xs tracking-wide text-graphite uppercase">
               <th className="py-1.5 pr-4 font-semibold">Consent-filtered number</th>
               <th className="py-1.5 pr-4 font-semibold">Before</th>
               <th className="py-1.5 pr-4 font-semibold">After</th>
@@ -258,7 +258,7 @@ function ReportPanel({ report }: { report: RevocationReport }) {
       {/* Gate probes */}
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+          <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
             Ingest gate probe (writes)
           </p>
           <ul className="mt-1.5 space-y-1">
@@ -274,13 +274,13 @@ function ReportPanel({ report }: { report: RevocationReport }) {
                   {probe.allowed ? "allows" : "throws"}
                 </span>
                 <span className="font-semibold text-navy">{probe.dataClass}</span>
-                {probe.error && <span className="text-muted"> — {probe.error}</span>}
+                {probe.error && <span className="text-graphite"> — {probe.error}</span>}
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+          <p className="text-xs font-semibold tracking-wide text-graphite uppercase">
             Read gate probe (queries)
           </p>
           <ul className="mt-1.5 space-y-1 text-xs">
@@ -294,7 +294,7 @@ function ReportPanel({ report }: { report: RevocationReport }) {
                   {probe.blocked ? "blocked" : "flowing"}
                 </span>
                 <span className="font-semibold text-navy">{probe.use}</span>{" "}
-                <span className="text-muted">
+                <span className="text-graphite">
                   — {probe.rowsReturned.toLocaleString("en-US")} rows returned
                   {probe.blocked && probe.blockedDataClasses.length > 0
                     ? `; refused: ${probe.blockedDataClasses.join(", ")}`
@@ -323,9 +323,9 @@ function BeforeAfterRow({
   tone: string;
 }) {
   return (
-    <tr className="border-b border-pale-blue/60 last:border-0">
-      <td className="py-1.5 pr-4 text-body">{label}</td>
-      <td className="py-1.5 pr-4 tabular-nums text-muted">{before}</td>
+    <tr className="border-b border-hairline/60 last:border-0">
+      <td className="py-1.5 pr-4 text-ink">{label}</td>
+      <td className="py-1.5 pr-4 tabular-nums text-graphite">{before}</td>
       <td
         className={`py-1.5 pr-4 font-semibold tabular-nums ${changed ? tone : "text-navy"}`}
       >

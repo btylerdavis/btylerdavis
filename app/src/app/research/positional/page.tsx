@@ -44,19 +44,19 @@ export default async function PositionalDashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader variant="research" />
-      <main className="flex-1 bg-pale-blue">
+      <main className="flex-1 bg-cream">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-10">
           {/* Cohort definition banner */}
           <Card className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-[0.14em] text-sky-blue uppercase">
+                <p className="text-xs font-semibold tracking-[0.14em] text-brand uppercase">
                   Research · flagship sub-study (SPEC §6.3)
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold text-navy sm:text-3xl">
                   Positional OSA × mattress
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 max-w-2xl text-sm text-graphite">
                   Cohort: <span className="font-semibold text-navy">supine-predominant OSA</span>{" "}
                   (supine AHI ≥ 2× non-supine, per the HST position channel) with a{" "}
                   <span className="font-semibold text-navy">delivered mattress change</span> —{" "}
@@ -107,7 +107,7 @@ export default async function PositionalDashboardPage() {
               {dash.bandDeltas.map(({ band, stats }) => (
                 <span
                   key={band}
-                  className="rounded-full bg-pale-blue px-2.5 py-1 font-semibold text-navy tabular-nums"
+                  className="rounded-full bg-cream px-2.5 py-1 font-semibold text-navy tabular-nums"
                 >
                   {FIRMNESS_BAND_LABELS[band]}:{" "}
                   {stats.mean === null
@@ -118,7 +118,7 @@ export default async function PositionalDashboardPage() {
                 </span>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-2 text-xs text-graphite">
               Member-level pre → post supine change (post − pre; negative = less supine time)
               with 95% CIs, normal approximation — the uncertainty behind the headline. Full
               bias workup:{" "}
@@ -155,10 +155,10 @@ export default async function PositionalDashboardPage() {
                 nonRespondersN={dash.nonRespondersN}
               />
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full bg-pale-blue px-2.5 py-1 font-semibold text-navy">
+                <span className="rounded-full bg-cream px-2.5 py-1 font-semibold text-navy">
                   Responders: mean ESS {fmtEss(dash.respondersEssMean)}
                 </span>
-                <span className="rounded-full bg-pale-blue px-2.5 py-1 font-semibold text-navy">
+                <span className="rounded-full bg-cream px-2.5 py-1 font-semibold text-navy">
                   Non-responders: mean ESS {fmtEss(dash.nonRespondersEssMean)}
                 </span>
               </div>
@@ -166,9 +166,9 @@ export default async function PositionalDashboardPage() {
           </div>
 
           {/* Methods & limitations — the honesty layer, as a proper card */}
-          <Card tone="wash" className="border border-sky-blue/40 p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-navy">Methods &amp; limitations</h2>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-body">
+          <Card tone="wash" className="border border-sky/40 p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-navy">Methods & limitations</h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink">
               <li>
                 <span className="font-semibold">
                   Observational, synthetic demonstration cohort. Effects are illustrative.
@@ -196,7 +196,7 @@ export default async function PositionalDashboardPage() {
             </ul>
           </Card>
 
-          <p className="pb-2 text-center text-xs text-muted">
+          <p className="pb-2 text-center text-xs text-graphite">
             Dashboard queries ran in {dash.queryMs.toLocaleString("en-US")} ms across ~
             {(800_000).toLocaleString("en-US")} observations ·{" "}
             <Link
