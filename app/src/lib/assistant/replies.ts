@@ -31,15 +31,18 @@ const hoursText = (min: number): string => `${(min / 60).toFixed(1)} h`;
 /**
  * Sleeptopia's published CPAP resupply cadence (sleeptopia.com cpap-care
  * schedule, mirrored on the new site's /supplies page): disposable filters
- * every 2 weeks; nasal cushions/pillows twice a month; full-face cushions
- * monthly; mask frame + tubing every 3 months; headgear, chin straps, and
- * water chamber every 6 months. Typical replacement guidance only — what a
- * specific plan covers is the care team's call, never asserted here.
+ * every 2 weeks; mask cushions & pillows every 2–4 weeks depending on type;
+ * mask frame + tubing every 3 months; headgear, chin straps, and water
+ * chamber every 6 months. The cushion line matches the published range
+ * exactly rather than splitting by mask style — the source does not.
+ * `everyDays` for the ranged entry is the range's earliest point (14), so
+ * the "typically due" nudge starts when the fastest-wearing type is due.
+ * Typical replacement guidance only — what a specific plan covers is the
+ * care team's call, never asserted here.
  */
 export const RESUPPLY_CADENCE = [
   { item: "Disposable filters", everyDays: 14, cadence: "every 2 weeks" },
-  { item: "Nasal cushions / pillows", everyDays: 15, cadence: "twice a month" },
-  { item: "Full-face mask cushion", everyDays: 30, cadence: "monthly" },
+  { item: "Mask cushions & pillows", everyDays: 14, cadence: "every 2–4 weeks depending on type" },
   { item: "Mask frame & tubing", everyDays: 90, cadence: "every 3 months" },
   { item: "Headgear, chin strap & water chamber", everyDays: 180, cadence: "every 6 months" },
 ] as const;

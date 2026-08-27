@@ -186,7 +186,7 @@ describe("reply wording discipline (pure)", () => {
 
   it("resupply due items follow the published cadence", () => {
     expect(dueResupplyItems(10)).toEqual([]);
-    expect(dueResupplyItems(20)).toEqual(["Disposable filters", "Nasal cushions / pillows"]);
+    expect(dueResupplyItems(20)).toEqual(["Disposable filters", "Mask cushions & pillows"]);
     expect(dueResupplyItems(95)).toContain("Mask frame & tubing");
     expect(dueResupplyItems(95)).not.toContain("Headgear, chin strap & water chamber");
   });
