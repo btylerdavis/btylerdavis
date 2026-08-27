@@ -78,7 +78,30 @@ You should see "Better Sleep Starts with Data." — you're live.
 - **To stop the app:** click the terminal window and press `Ctrl + C`.
 - **To reset after a demo run:** run `npm run seed` again (with the app stopped). It wipes and regenerates the exact same pristine data.
 
-## 5. If something goes wrong
+## 5. Get the latest version (after we ship updates)
+
+Your laptop copy never updates itself — when new work lands (the Sleeptopia
+branding, the AI care assistant, and anything after), pull it down:
+
+1. Stop the app if it's running: click its terminal window, press `Ctrl + C`.
+2. Then, in a terminal:
+
+
+       cd sleeptopia-demo
+       git pull
+       cd app
+       npm install
+       npx prisma db push
+       npm run build
+       npm run start
+
+3. Go back to **http://localhost:3000** and refresh.
+
+`git pull` fetches the newest code, `npm install` and `npx prisma db push`
+catch up any new pieces it needs, and the build/start pair serves it. Your
+saved data stays put — only `npm run seed` resets it.
+
+## 6. If something goes wrong
 
 **"Port 3000 is already in use"** — something else (probably an old copy of this app) is using the address. Free it, then start again:
 
@@ -93,6 +116,6 @@ You should see "Better Sleep Starts with Data." — you're live.
 
 **Totally stuck?** Close the terminal, open a fresh one, and repeat step 4. The data is safe on disk.
 
-## 6. Demo day?
+## 7. Demo day?
 
 Open **DEMO-SCRIPT.md** next — it walks the whole pitch, screen by screen.
