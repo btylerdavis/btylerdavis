@@ -1,11 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sleeptopia mark">
-  <!-- Recreated from sleeptopia.com screenshots: navy rounded plus offset lower-left behind a sky-blue rounded plus -->
-  <g fill="#1A2B4C" transform="translate(-6,6)">
-    <rect x="22" y="4" width="20" height="56" rx="9"/>
-    <rect x="4" y="22" width="56" height="20" rx="9"/>
-  </g>
-  <g fill="#5FAEDD">
-    <rect x="22" y="4" width="20" height="56" rx="9"/>
-    <rect x="4" y="22" width="56" height="20" rx="9"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="249.906" height="249.906" viewBox="260.9 145.9 249.9 249.9">
+<defs>
+<clipPath id="clip_1">
+<path transform="matrix(1,0,0,-1,0,612)" d="M0 612H792V0H0Z"/>
+</clipPath>
+</defs>
+<rect x="260.9" y="145.9" width="249.9" height="249.9" rx="55.0" fill="#FFFFFF"/>
+<g inkscape:groupmode="layer" inkscape:label="Layer 1">
+<g clip-path="url(#clip_1)">
+<path transform="matrix(1,0,0,-1,404.8439,371.5842)" d="M0 0H1.208C22.444 0 39.659 17.215 39.659 38.451V42.185H45.603C63.725 42.185 78.416 56.876 78.416 74.998 78.416 93.121 63.725 107.812 45.602 107.812H39.51V81.24H.604V42.185H-38.451V38.451C-38.451 17.215-21.236 0 0 0M-77.506 79.252V81.24H-38.451V42.185H-40.439C-60.911 42.185-77.506 58.781-77.506 79.252" fill="#7baeff"/>
+<path transform="matrix(1,0,0,-1,366.8479,170.04682)" d="M0 0H-1.208C-22.444 0-39.659-17.215-39.659-38.451V-42.185H-45.603C-63.725-42.185-78.416-56.876-78.416-74.998-78.416-93.121-63.725-107.812-45.602-107.812H-39.51V-81.24H-.604V-42.185H38.451V-38.451C38.451-17.215 21.236 0 0 0M77.506-79.252V-81.24H38.451V-42.185H40.439C60.911-42.185 77.506-58.781 77.506-79.252" fill="#002d9e"/>
+</g>
+</g>
 </svg>
