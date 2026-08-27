@@ -47,17 +47,20 @@ const UTILITY_HEADLINES: Record<string, string> = {
   exec: "Executive Console — funnel, growth, and the data asset",
 };
 
-/** Variant badge chips — one palette family, surface-contrast identity. */
-const VARIANT_BADGES: Record<string, { label: string; classes: string }> = {
+/** Variant badge chips — one palette family, surface-contrast identity.
+ * Each links to its console's home (Ben, Aug 27: the chip reads as a
+ * button, so it should act like one). */
+const VARIANT_BADGES: Record<string, { label: string; classes: string; href: string }> = {
   retail: {
     label: "In-store enrollment",
     classes: "border border-hairline bg-cream text-navy",
+    href: "/enroll/retail",
   },
-  coach: { label: "Coach portal", classes: "bg-navy text-white" },
-  research: { label: "Research", classes: "bg-brand text-white" },
-  compliance: { label: "Compliance", classes: "bg-lake text-white" },
-  partner: { label: "Partner · Tempur-Sealy", classes: "bg-ink text-white" },
-  exec: { label: "Executive", classes: "border border-navy text-navy" },
+  coach: { label: "Coach portal", classes: "bg-navy text-white", href: "/coach" },
+  research: { label: "Research", classes: "bg-brand text-white", href: "/research" },
+  compliance: { label: "Compliance", classes: "bg-lake text-white", href: "/compliance/revocation" },
+  partner: { label: "Partner · Tempur-Sealy", classes: "bg-ink text-white", href: "/partner" },
+  exec: { label: "Executive", classes: "border border-navy text-navy", href: "/exec" },
 };
 
 export function SiteHeader({
@@ -132,11 +135,12 @@ export function SiteHeader({
             </nav>
           )}
           {badge && (
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold sm:text-sm ${badge.classes}`}
+            <Link
+              href={badge.href}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-opacity hover:opacity-85 sm:text-sm ${badge.classes}`}
             >
               {badge.label}
-            </span>
+            </Link>
           )}
         </div>
       </div>
