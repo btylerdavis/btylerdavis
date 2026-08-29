@@ -61,10 +61,18 @@ export default async function AssistantPage({
       <SiteHeader variant="site" />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-          {/* Header */}
+          {/* Header — Sadie's face (Kevin, Aug 29; same asset as the site's
+              chat widget) sits beside the title so the assistant reads as one
+              persona across both surfaces. */}
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Eyebrow>AI care assistant · scripted · works offline</Eyebrow>
+            <div className="flex items-start gap-4">
+              <img
+                src="/brand/sadie.webp"
+                alt="Sadie, an AI-generated persona"
+                className="mt-1 h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-brand/40"
+              />
+              <div>
+              <Eyebrow>Sadie · AI care assistant · scripted · works offline</Eyebrow>
               <Display className="mt-3">
                 Answers from <Highlight>your consented data</Highlight>, nothing else
               </Display>
@@ -73,6 +81,7 @@ export default async function AssistantPage({
                 {view ? formatDay(view.clockIso) : "—"} · CPAP check-ins, supply schedule, and
                 comfort troubleshooting. Clinical questions route to the care team.
               </SectionSub>
+              </div>
             </div>
             <Link
               href={`/participant/${id}`}
