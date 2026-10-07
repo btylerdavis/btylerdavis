@@ -8,6 +8,9 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 |---|---|
 | `index.html` | Page source published as a claude.ai Artifact. Live AI features (Ask the AI, decision critique, curveball injects, after-action report) only run inside Claude. |
 | `standalone.html` | The same page with a full HTML wrapper, for opening straight from a laptop browser. It needs internet access for three.js and fonts. AI features fall back to the built-in exercise guidance. |
+| `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags and asks search engines not to index it. |
+| `build.sh` | Rebuilds `standalone.html` and `site/index.html` from `index.html`. Run it after every edit. |
+| `america250-qr.png` | QR code for the public address, for slides or handouts. The page's **Share** button shows the same code. |
 
 ## What's in it
 
@@ -28,3 +31,8 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 2. Ask the room for a what-if, type it into **Throw a curveball**, and let the AI build it onto the map.
 3. Jump to the storm at 19:55. Shelter or evacuate? Watch the crowd move and the fireworks shift.
 4. Finish with **Generate after-action report** and **How this was built**.
+5. Press **Share** and leave the QR code on screen so the room can open it on their phones.
+
+## Updating the public site
+
+Edit `index.html`, run `./build.sh`, commit and push. Then redeploy the Vercel project `america250-mall-ops` (team `ad-astra-ai`) from the new commit with root directory `america250/site`. The project is not linked to this repo, so pushes don't deploy automatically.
