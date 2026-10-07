@@ -24,14 +24,23 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
   - turns any what-if from the room into a new inject on the map
   - drafts an HSEEP-style after-action report
 - AI-generated aerial stills, linked from site and incident cards and labeled as simulated.
+- **What-if dials** (map chip): attendance, heat index, storm arrival (or no storm), and a Blue/Orange/Silver line outage.
+  - The crowd, HUD, storm timing and affected injects update live.
+  - An outlook table compares plan vs what-if, and "Preview on the map" jumps to the impact moment and back.
+  - "Ask AI what changed" explains the new risk (offline: rule-based note).
+- **Your City** (header button, phone tab, or the How-this-was-built panel): the AI drafts a six-inject tabletop for any city and event.
+  - The draft is playable as graded decision cards, and the exercise packet can be copied, saved or shared.
+  - Offline, a prepared Chicago example is shown.
+- **Phone layout** (≤640px): opens on the map, decisions slide up from the bottom, a bottom tab bar, and a floating Next button.
 
-## Presenter flow (about 5 minutes)
+## Presenter flow on a phone (about 5 minutes)
 
 1. Press **Next inject** and talk through the decision. Pick an option, then press **Critique my call**.
 2. Ask the room for a what-if, type it into **Throw a curveball**, and let the AI build it onto the map.
 3. Jump to the storm at 19:55. Shelter or evacuate? Watch the crowd move and the fireworks shift.
-4. Finish with **Generate after-action report** and **How this was built**.
-5. Press **Share** and leave the QR code on screen so the room can open it on their phones.
+4. Tap **What-if**, drag attendance to +30% and move the storm to 21:00, then **Preview on the map** and **Ask AI what changed**.
+5. Tap **Your city**, hand over the phone, and let them name their city and event. Play one inject, then copy or share the packet.
+6. Finish with **How this was built** and **Share** (people can scan the QR code from your screen).
 
 ## Updating the public site
 

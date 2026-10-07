@@ -197,6 +197,51 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
 }
 @media (max-width:480px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}.clock .t{font-size:24px}.legend{display:none}}
 /* phone (<=640px): one-line strip, compact header, swipeable controls + HUD, map first, decision card as a bottom sheet over the map, bottom tab bar */
+.site,.card,.dials{z-index:2}
+/* what-if dials */
+.wichip{position:absolute;right:10px;top:10px;z-index:1;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;background:rgba(10,16,30,.86);border:1px solid #4a3d22;color:var(--brass);font:600 12px/1 var(--f-display);letter-spacing:.12em;text-transform:uppercase}
+.wichip svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.wichip:hover{border-color:var(--brass)}
+.stage.hasdials .wichip,.stage.hasdials .fab{display:none}
+.dials{position:absolute;right:10px;top:10px;width:min(350px,calc(100% - 20px));max-height:calc(100% - 20px);overflow:auto;background:rgba(13,20,36,.97);border:1px solid #33436a;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45);padding:12px;display:flex;flex-direction:column;gap:10px}
+.dials .dh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dials h4{margin:0;font:700 19px/1.1 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.dials .dh p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.dials .x{background:transparent;border:0;color:var(--muted);font-size:18px;min-width:36px;min-height:36px;padding:0}
+.dl{display:flex;flex-direction:column;gap:6px}
+.dr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;align-items:center}
+.dr label{font-size:13px;font-weight:500}
+.dr output{font:500 13px var(--f-mono);color:var(--brass);font-variant-numeric:tabular-nums}
+.dr input[type=range]{grid-column:1/-1;width:100%;margin:0;height:30px;accent-color:var(--brass)}
+.dr input[type=range]:disabled{opacity:.4}
+.sw{display:flex;align-items:center;gap:8px;font-size:13px;min-height:36px}
+.sw input{width:18px;height:18px;margin:0;accent-color:var(--brass)}
+.dd{width:100%;border-collapse:collapse;font-size:12.5px}
+.dd th{font:600 10.5px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:right;padding:3px 4px;border-bottom:1px solid var(--line)}
+.dd td{padding:4px;text-align:right;border-bottom:1px solid rgba(36,49,79,.6)}
+.dd th:first-child,.dd td:first-child{text-align:left}
+.dd .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dd .worse{color:var(--crit)} .dd .better{color:var(--ok)}
+/* your city */
+.cityform{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px 10px;margin-top:12px}
+.cityform .f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cityform .l{font:600 11px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cityform .chips,.cityform .row-btns,.cityform .note,.cityform .tog{grid-column:1/-1}
+.cityform .note{margin:0}
+.cx{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.cx .head{border:1px solid #3b3220;background:#17140d;border-radius:10px;padding:12px}
+.cx .head h3{margin:6px 0 2px;color:var(--fg);font:700 22px/1.1 var(--f-display);letter-spacing:.01em;text-transform:none}
+.cx .head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.cx ol{margin:4px 0 0;padding-left:20px;font-size:13.5px}
+.cinj{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.cinj h4{margin:0;font:700 17px/1.2 var(--f-display)}
+.cinj > p{margin:0;font-size:13.5px}
+.cinj .meta,.cx .head .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:500 11.5px var(--f-mono);color:var(--muted)}
+.grade{display:inline-block;font:600 10px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;border:1px solid currentColor;margin-right:6px}
+.g-strong{color:var(--ok)} .g-workable{color:var(--mod)} .g-risky{color:var(--crit)}
+.cscore{font:600 14px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
+.cscore:empty{display:none}
+#cityPacket{min-height:200px;font:12px/1.5 var(--f-mono)}
 .fab,.tabs,.grab,.dict{display:none}
 @media (max-width:640px){
   .app{gap:8px;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
@@ -255,6 +300,17 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
   .tabs button[aria-current="true"]{color:var(--brass)}
   .tabs button[aria-current="true"]::before{content:"";position:absolute;top:-1px;left:30%;right:30%;height:2px;border-radius:0 0 2px 2px;background:var(--brass)}
   .tabs button:focus-visible{outline-offset:-4px}
+  .tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .tabs .cta svg{stroke:var(--brass)}
+  .tabs button{white-space:nowrap;letter-spacing:.08em}
+  .wichip{min-height:40px}
+  .stage.hascard .wichip{display:none}
+  .dials{left:0;right:0;top:auto;bottom:0;width:auto;max-height:80%;border-width:1px 0 0;border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);overscroll-behavior:contain}
+  .dr input[type=range]{height:38px}
+  .dials .row-btns .btn{flex:1 1 auto;justify-content:center;min-height:44px}
+  .cityform{grid-template-columns:minmax(0,1fr)}
+  .cityform input{font-size:16px}
+  .cx .row-btns .btn,.cityform .btn{min-height:44px}
 }
 @media (prefers-reduced-motion:reduce){.thinking::after{animation:none;content:"..."}}
 </style>
@@ -275,6 +331,7 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
       <div class="ctrls">
         <button class="btn pri" id="play" type="button" aria-label="Play">▶ Play</button>
         <button class="btn" id="next" type="button">⏭ Next inject</button>
+        <button class="btn" id="cityBtn" type="button">Your city</button>
         <select class="btn" id="speed" aria-label="Clock speed">
           <option value="2">2 min/s</option><option value="5">5 min/s</option><option value="10" selected>10 min/s</option><option value="20">20 min/s</option>
         </select>
@@ -326,6 +383,20 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
       <button class="btn pri fab" id="fabNext" type="button" aria-label="Next inject">Next ▶</button>
       <div class="site" id="site" hidden></div>
       <div class="card" id="card" hidden></div>
+      <button class="wichip" id="wiChip" type="button" aria-controls="dials" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h8M15 5h2M3 10h3M10 10h7M3 15h9M16 15h1"/><circle cx="13" cy="5" r="2"/><circle cx="8" cy="10" r="2"/><circle cx="14" cy="15" r="2"/></svg>What-if</button>
+      <div class="dials" id="dials" hidden role="region" aria-label="What-if planning dials">
+        <div class="dh"><div><h4>What-if</h4><p>Change a planning assumption. The map and numbers update as you drag.</p></div><button class="x" type="button" id="wiClose" aria-label="Close what-if">✕</button></div>
+        <div class="dl">
+          <div class="dr"><label for="wiCrowd">Attendance</label><output id="wiCrowdV" for="wiCrowd">Plan</output><input type="range" id="wiCrowd" min="-30" max="50" step="5" value="0"></div>
+          <div class="dr"><label for="wiHeat">Heat index</label><output id="wiHeatV" for="wiHeat">Forecast</output><input type="range" id="wiHeat" min="-10" max="10" step="1" value="0"></div>
+          <div class="dr"><label for="wiStorm">Storm arrives</label><output id="wiStormV" for="wiStorm">20:35 (plan)</output><input type="range" id="wiStorm" min="1110" max="1365" step="5" value="1235"></div>
+          <label class="sw"><input type="checkbox" id="wiLine"><span>Blue/Orange/Silver line out of service</span></label>
+          <p class="note" id="wiNote" style="margin:0"></p>
+        </div>
+        <table class="dd" id="wiDelta"></table>
+        <div class="row-btns"><button class="btn" type="button" id="wiShow">Preview on the map</button><button class="btn" type="button" id="wiReset">Back to plan</button><button class="btn pri" type="button" id="wiAsk">Ask AI what changed</button></div>
+        <div class="ai" id="wiAI" hidden></div>
+      </div>
     </div>
     <div class="tl">
       <div class="rail" id="rail"><input type="range" id="scrub" min="690" max="1410" step="1" value="690" aria-label="Exercise timeline"></div>
@@ -363,6 +434,7 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
 <nav class="tabs" id="tabs" aria-label="Jump to section">
   <button type="button" data-go="#stage" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2zM7 3v12M13 5v12"/></svg>Map</button>
   <button type="button" data-go="#msel" aria-current="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5h11M7 10h11M7 15h11M2.5 5h1M2.5 10h1M2.5 15h1"/></svg>Injects</button>
+  <button type="button" id="tabCity" class="cta"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 17h16M4 17V8l4-2v11M8 17V4l5-2v15M13 17V9l3 1.5V17"/></svg>Your city</button>
   <button type="button" data-go=".chat" aria-current="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3h14v10H8l-5 4z"/></svg>Ask AI</button>
   <button type="button" data-go="#feeds" aria-current="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5h11v10H2zM13 8.5l5-3v9l-5-3"/></svg>Feeds</button>
 </nav>
@@ -389,9 +461,28 @@ Interview answers: AI as a thinking partner + "my team could do this" · ready b
       <li>Wrote a 9-inject master scenario events list (MSEL) spanning ESF-1, 6, 8, 9, 12, 13 and 15, each with a decision point, consequences and guidance.</li>
       <li>Wired a live AI advisor into the page: it answers questions with the current exercise picture, critiques each decision, invents new injects on request, and drafts the after-action report.</li>
       <li>AI reviewers did a first realism pass and tested the page on desktop and phone. Treat it as a first draft for your planners, not a validated MSEL.</li>
+      <li>Added the same evening, on request: a phone layout, What-if dials for planning assumptions, and Your City, which drafts a six-inject exercise for any city. Each was tested on a phone-sized screen before going live.</li>
     </ul>
     <h3>What it would take for your city</h3>
     <p>Swap the map footprint and the event, keep the engine. Your venues, your MSEL, your ESF structure. A first version is a working session, not a procurement.</p>
+    <button class="btn pri" type="button" id="howCity">Draft your city's exercise now</button>
+  </div>
+</div>
+
+<div class="modal" id="cityModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cityTitle">
+    <button class="x" type="button" data-close aria-label="Close">✕</button>
+    <h2 id="cityTitle">Your city, your exercise</h2>
+    <p style="color:var(--muted);margin:0">Name a city and its signature event. The AI drafts a six-inject tabletop with local venues, agencies and decision points.</p>
+    <div class="cityform">
+      <div class="f"><label class="l" for="cityName">City</label><input type="text" id="cityName" placeholder="Chicago" autocomplete="off" enterkeyhint="next"></div>
+      <div class="f"><label class="l" for="cityEvent">Event</label><input type="text" id="cityEvent" placeholder="Fourth of July at Navy Pier" autocomplete="off" enterkeyhint="go"></div>
+      <div class="chips" id="citySug"></div>
+      <label class="tog"><input type="checkbox" id="cityDeep"> Higher quality (slower)</label>
+      <div class="row-btns"><button class="btn pri" type="button" id="cityGo">Draft our exercise</button></div>
+      <p class="note" id="cityNote"></p>
+    </div>
+    <div id="cityOut"></div>
   </div>
 </div>
 
@@ -530,7 +621,7 @@ const SCEN = [
    {l:'Wait for Pepco\'s 90-minute restoration', o:'Restoration takes 2.5 hours. Natural History is not ready as a shelter when the storm arrives.', fx:{readiness:-7}}
   ],
   g:'Treat this as a shelter-capacity problem, not just a traffic problem. The outage is manageable on its own; the real risk is that it takes out a shelter site two hours before likely storms. Watch the NWS timing. If a warning comes, the shelter plan has to already account for the lost capacity.'},
- {id:'storm', at:()=>T('19:55'), place:'wamo', sev:'critical', title:'Severe Thunderstorm Warning, fireworks at risk', esf:['ESF-15 External Affairs','ESF-13 Public Safety','ESF-6 Mass Care'],
+ {id:'storm', at:()=>S.stormWarn, place:'wamo', sev:'critical', title:'Severe Thunderstorm Warning, fireworks at risk', esf:['ESF-15 External Affairs','ESF-13 Public Safety','ESF-6 Mass Care'],
   sit:'NWS issues a Severe Thunderstorm Warning: a line of storms with 60 mph gusts and frequent lightning, reaching the Mall about 20:35. Lightning is already within 10 miles. About 520,000 people are on site, the Capitol concert starts at 20:00, and the fireworks are set for 21:09.',
   q:'Your call',
   opts:[
@@ -567,7 +658,7 @@ const SCEN = [
   ],
   g:'Bus bridge plus metering. This is a long event, not a short one, so take care of people while they wait (water, restrooms, information) and protect the platforms. Watch the late-night tail: riders who cannot get home after 23:00 become a mass care issue. Identify a cooling shelter and a rideshare staging zone now.'}
 ];
-SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.scripted = true; });
+SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.scripted = true; s.sit0 = s.sit; s.opts.forEach(o => o.o0 = o.o); });
 
 /* ------------------------------------------------------------------- state */
 const S = {
@@ -576,7 +667,8 @@ const S = {
   stormWarn:T('19:55'), stormArrive:T('20:35'), stormEnd:T('21:05'),
   readiness:92, patients:0, alerts:0, emsTotal:48, emsHold:[], metroAdj:[],
   crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0,
-  log:[], current:null, deep:false, run:0
+  log:[], current:null, deep:false, run:0,
+  wi:{crowd:1, heat:0, storm:T('20:35'), line:false}
 };
 
 /* ------------------------------------------------------------------- scene */
@@ -768,7 +860,7 @@ ZONES.forEach((z,zi) => {
     const [x,zz] = sampleZone(z);
     const ex = nearest(EXITS, x, zz);
     const alt = ex[2]==='smi' ? nearest(EXITS, x, zz, e => !(e[2]==='lef' || e[2]==='fed')) : ex;
-    P.push({zi, hx:x, hz:zz, u:R(), u2:R(), u3:R(), jx:(R()-.5)*60, jz:(R()-.5)*60, ex, alt, sh:nearest(SHELTERS,x,zz), co:nearest(COOL,x,zz)});
+    P.push({zi, hx:x, hz:zz, u:R(), u2:R(), u3:R(), jx:(R()-.5)*60, jz:(R()-.5)*60, ex, alt, alt2:nearest(EXITS, x, zz, e => e[2]==='smi' || e[2]==='fed'), sh:nearest(SHELTERS,x,zz), co:nearest(COOL,x,zz)});
     z.n++;
   }
 });
@@ -783,8 +875,8 @@ const PARADE_KEYS = [[690,0.85],[800,0.8],[840,0.35],[880,0.12],[1410,0.12]];
 const cGreen = new THREE.Color(0x7fdcff), cAmber = new THREE.Color(0xffc93c), cRed = new THREE.Color(0xff3d47);
 function densColor(d, out){ if (d < 0.55) out.copy(cGreen).lerp(cAmber, d/0.55); else out.copy(cAmber).lerp(cRed, clamp((d-0.55)/0.3,0,1)); return out; }
 function crowdFrac(z, t){
-  if (z.parade) return keyed(PARADE_KEYS, t);
-  let f = keyed(CROWD_KEYS, Math.min(t, fwEnd()));
+  if (z.parade) return keyed(PARADE_KEYS, t) * S.wi.crowd;
+  let f = keyed(CROWD_KEYS, Math.min(t, fwEnd())) * S.wi.crowd;
   if (S.crowdCut && t > S.crowdCut.t0) f *= lerp(1, S.crowdCut.f, clamp((t-S.crowdCut.t0)/35,0,1));
   return f;
 }
@@ -794,11 +886,13 @@ function updateCrowd(t){
   const fe = fwEnd(), egr = t > fe;
   ZONES.forEach(z => z.vis = 0);
   const frac = ZONES.map(z => crowdFrac(z,t));
+  ZONES.forEach((z,i) => z.over = Math.max(1, frac[i])); // attendance above what the points can show
   const shelterOn = S.shelter && t >= S.shelter.t0, coolOn = S.cool && t >= S.cool.t0 && t < S.cool.t1, clearOn = S.clear && t >= S.clear.t0 && t < S.clear.t0 + 40;
   // per-zone density + incident stress for color
   const stress = ZONES.map(() => 0);
   if (S.current && S.current.status==='active'){ const zid = PLACES[S.current.place] && PLACES[S.current.place].zone; if (zid != null && ZI[zid] != null) stress[ZI[zid]] = 0.35; }
   if (egr && !(S.egress==='redirect')) { stress[ZI.mall_c] += 0.25; stress[ZI.wamo] += 0.15; }
+  if (egr && S.wi.line) { stress[ZI.mall_e] += 0.2; stress[ZI.mall_c] += 0.1; }
   for (let i=0;i<P.length;i++){
     const p = P[i], z = ZONES[p.zi];
     let x = p.hx, zz = p.hz, show = p.u < frac[p.zi];
@@ -806,7 +900,8 @@ function updateCrowd(t){
       let dep = fe + 3 + p.u2*75; if (S.egress==='redirect' && p.ex[2]==='smi') dep += 4;
       if (t > dep){
         let tgt = p.ex; let k = (t - dep) / 16;
-        if (p.ex[2]==='smi'){
+        if (S.wi.line && (p.ex[2]==='smi' || p.ex[2]==='fed')){ tgt = p.alt2; k = (t - dep) / 22; }
+        else if (p.ex[2]==='smi'){
           if (S.egress==='redirect' && t > S.egressAt) tgt = p.alt;
           else if (S.egress==='closed' && t < S.egressAt + 25) k = Math.min(k, 0.86);
           else if (!S.egress) k = Math.min(k*0.6, 0.9);
@@ -824,10 +919,10 @@ function updateCrowd(t){
     if (show) z.vis++;
     cpos[i*3] = x; cpos[i*3+1] = show ? 1.4 : -9999; cpos[i*3+2] = zz;
   }
-  ZONES.forEach((z,zi) => { const d = z.n ? (z.vis / z.n) : 0; densColor(clamp(d*0.74 + stress[zi], 0, 1), zcol[zi]); });
+  ZONES.forEach((z,zi) => { const d = z.n ? (z.vis / z.n) * z.over : 0; densColor(clamp(d*0.74 + stress[zi], 0, 1), zcol[zi]); });
   for (let i=0;i<P.length;i++){ const c = zcol[P[i].zi]; ccol[i*3]=c.r; ccol[i*3+1]=c.g; ccol[i*3+2]=c.b; }
   cgeo.attributes.position.needsUpdate = true; cgeo.attributes.color.needsUpdate = true;
-  return ZONES.reduce((a,z) => a + z.vis, 0) * PPL;
+  return Math.round(ZONES.reduce((a,z) => a + z.vis * z.over, 0) * PPL);
 }
 
 /* -------------------------------------------------------- fireworks + rain */
@@ -939,7 +1034,7 @@ function updateSky(t, dt){
   return {el, night, sf};
 }
 function stormFactor(t){ if (t < S.stormArrive - 25 || t > S.stormEnd + 15) return 0; if (t < S.stormArrive) return clamp((t-(S.stormArrive-25))/25,0,1)*0.6; if (t <= S.stormEnd) return 1; return clamp(1-(t-S.stormEnd)/15,0,1); }
-const heatIndex = t => keyed([[690,93],[780,101],[870,104],[990,103],[1080,97],[1170,91],[1235,84],[1260,82],[1410,80]], t) - (stormFactor(t) > .5 ? 6 : 0);
+const heatIndex = t => keyed([[690,93],[780,101],[870,104],[990,103],[1080,97],[1170,91],[1235,84],[1260,82],[1410,80]], t) - (stormFactor(t) > .5 ? 6 : 0) + S.wi.heat;
 
 /* ------------------------------------------------------------------ feeds */
 const FEEDS = [
@@ -986,16 +1081,16 @@ function updateFly(dt){ if (!fly) return; fly.t = Math.min(1, fly.t + dt/1.5); c
 canvas.addEventListener('pointerdown', () => { fly = null; });
 
 /* ------------------------------------------------------------- metrics */
-function emsFree(t){ let held = 6; S.emsHold.forEach(h => { if (t >= h.t0 && t < h.t1) held += h.n; }); const base = Math.round(keyed([[690,2],[900,5],[1140,6],[1290,9],[1410,4]], t)); return clamp(S.emsTotal - held - base, 0, S.emsTotal); }
-function metroLoad(t){ const fe = fwEnd(); let v = keyed([[690,34],[900,38],[1110,46],[1260,52]], Math.min(t,1260)); if (t > fe) v = 52 + 68*Math.exp(-Math.pow((t-fe-22)/26,2)) - (t > fe+60 ? (t-fe-60)*0.4 : 0); if (t > 1260 && t <= fe) v = 50; S.metroAdj.forEach(a => { if (t >= a.t0 && t < a.t0 + 90) v += a.v * clamp(1-(t-a.t0)/90, 0, 1); }); return Math.round(clamp(v, 8, 140)); }
-function basePatients(t){ return Math.round(keyed([[690,0],[820,40],[960,105],[1140,160],[1260,195],[1410,250]], t)); }
+function emsFree(t){ let held = 6; S.emsHold.forEach(h => { if (t >= h.t0 && t < h.t1) held += h.n; }); const base = Math.round(keyed([[690,2],[900,5],[1140,6],[1290,9],[1410,4]], t) * S.wi.crowd + Math.max(0, S.wi.heat) * (t > 780 && t < 1140 ? 0.7 : 0.3)); return clamp(S.emsTotal - held - base, 0, S.emsTotal); }
+function metroLoad(t){ const fe = fwEnd(); const c = 0.6 + 0.4*S.wi.crowd; let v = keyed([[690,34],[900,38],[1110,46],[1260,52]], Math.min(t,1260)) * c; if (t > fe) v = 52*c + 68*S.wi.crowd*Math.exp(-Math.pow((t-fe-22)/26,2)) - (t > fe+60 ? (t-fe-60)*0.4 : 0); if (t > 1260 && t <= fe) v = 50*c; if (S.wi.line) v *= t > fe ? 1.35 : 1.15; S.metroAdj.forEach(a => { if (t >= a.t0 && t < a.t0 + 90) v += a.v * clamp(1-(t-a.t0)/90, 0, 1); }); return Math.round(clamp(v, 8, 180)); }
+function basePatients(t){ return Math.round(keyed([[690,0],[820,40],[960,105],[1140,160],[1260,195],[1410,250]], t) * S.wi.crowd * (1 + 0.04*S.wi.heat)); }
 function setTile(id, v, s, cls, bar, barColor){ const el = $(id); el.querySelector('.v').textContent = v; if (s != null) el.querySelector('.s').textContent = s; el.classList.remove('warn','bad','good'); if (cls) el.classList.add(cls); if (bar != null){ const i = el.querySelector('.bar i'); i.style.width = clamp(bar,0,100)+'%'; i.style.background = barColor; } }
 let crowdNow = 0, lastHud = 0;
 function updateHud(t){
   setTile('#h-crowd', crowdNow >= 1000 ? Math.round(crowdNow/1000).toLocaleString()+'k' : String(crowdNow), null);
   const sf = stormFactor(t), warn = t >= S.stormWarn && t <= S.stormEnd + 10;
   if (warn){ setTile('#h-wx', sf > .5 ? 'STORM' : 'WARNING', sf > .5 ? '60 mph gusts · lightning' : 'Severe T-storm warning', 'bad'); $('#h-wx .k').textContent = 'Weather'; }
-  else { const hi = Math.round(heatIndex(t)); $('#h-wx .k').textContent = 'Heat index'; setTile('#h-wx', hi + '°F', t < S.stormWarn && t > T('15:00') ? 'storms likely after 19:00' : 'NWS Sterling', hi >= 103 ? 'bad' : hi >= 95 ? 'warn' : null); }
+  else { const hi = Math.round(heatIndex(t)); $('#h-wx .k').textContent = 'Heat index'; setTile('#h-wx', hi + '°F', S.wi.storm != null && t < S.stormWarn && t > T('15:00') ? 'storms likely after ' + fmt(Math.floor((S.stormWarn - 55)/30)*30) : 'NWS Sterling', hi >= 103 ? 'bad' : hi >= 95 ? 'warn' : null); }
   const open = SCEN.filter(s => s.status==='active').length, decided = SCEN.filter(s => s.status==='done' && t < s.at() + 30).length;
   setTile('#h-inc', String(open + decided), 'awaiting decision: ' + open, open ? 'bad' : null);
   setTile('#h-pt', String(S.patients + basePatients(t)), null);
@@ -1018,7 +1113,7 @@ function updateHud(t){
 /* ------------------------------------------------------------- MSEL + card */
 function renderMsel(){
   const list = SCEN.slice().sort((a,b) => a.at() - b.at());
-  $('#msel').innerHTML = list.map(s => `<li class="st-${s.status==='pending'?'pending':(s.status==='done'||s.status==='skipped')?'done':'act'} ${S.current===s?'active':''}"><button type="button" data-id="${s.id}"><span class="tm">${fmt(s.at())}</span><span class="tt">${esc(s.title)}<span class="es">${s.status==='skipped' ? 'Not played: fireworks cancelled' : esc(s.esf[0])}${s.scripted ? '' : ' · from the room'}</span></span><span class="chip sev-${s.sev}">${s.sev}</span></button></li>`).join('');
+  $('#msel').innerHTML = list.map(s => `<li class="st-${s.status==='pending'?'pending':(s.status==='done'||s.status==='skipped')?'done':'act'} ${S.current===s?'active':''}"><button type="button" data-id="${s.id}"><span class="tm">${s.status==='skipped' ? '—' : fmt(s.at())}</span><span class="tt">${esc(s.title)}<span class="es">${s.status==='skipped' ? esc(s.skipWhy || 'Not played') : esc(s.esf[0])}${s.scripted ? '' : ' · from the room'}</span></span><span class="chip sev-${s.sev}">${s.sev}</span></button></li>`).join('');
   $('#mselCount').textContent = 'MSEL · ' + SCEN.length;
   renderTicks();
 }
@@ -1027,12 +1122,13 @@ function renderTicks(){
   const rail = $('#rail'); rail.querySelectorAll('.tick,.band').forEach(n => n.remove());
   const pct = t => ((t - S.start) / (S.end - S.start) * 100) + '%';
   const band = (t0,t1,c,title) => { const b = document.createElement('div'); b.className = 'band'; b.style.left = pct(t0); b.style.width = ((t1-t0)/(S.end-S.start)*100)+'%'; b.style.background = c; b.title = title; rail.appendChild(b); };
-  band(S.stormArrive, S.stormEnd, '#5e6b85', 'Storm'); if (!S.fwCancelled) band(S.fwStart, S.fwStart+S.fwDur, '#d9ae55', 'Fireworks');
-  SCEN.forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? '#68748e' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='skipped' ? null : s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
+  if (S.wi.storm != null) band(S.stormArrive, S.stormEnd, '#5e6b85', 'Storm'); if (!S.fwCancelled) band(S.fwStart, S.fwStart+S.fwDur, '#d9ae55', 'Fireworks');
+  SCEN.filter(s => s.status !== 'skipped').forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? '#68748e' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='skipped' ? null : s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
 }
 function jumpTo(sc){ if (sc.at() <= S.t + 0.01){ S.t = sc.at(); fire(sc); return; } S.ff = sc; S.playing = true; setPlayBtn(); }
 function fire(sc){
   sc.status = 'active'; S.current = sc; S.playing = false; S.ff = null; setPlayBtn();
+  if (sc.id==='storm') sc.sit = sc.sit0.replace('20:35', fmt(S.stormArrive)).replace('21:09', fmt(S.fwStart));
   addMarker(sc); const p = PLACES[sc.place]; orbitTarget = {x:p.x, z:p.z}; flyTo(p.x, p.z, sc.id==='storm' ? 2600 : 900);
   if (sc.id==='drone'){ drone.visible = true; }
   if (sc.id==='water'){ capsized.visible = true; }
@@ -1041,7 +1137,7 @@ function fire(sc){
 function fxChips(fx){ const out = []; const add = (k, v, good, label) => { if (!v) return; out.push(`<span class="${good ? 'up' : 'dn'}">${label} ${v > 0 ? '+' : ''}${v}</span>`); };
   add('r', fx.readiness, fx.readiness > 0, 'Readiness'); add('p', fx.patients, false, 'Patients'); add('e', fx.ems ? -fx.ems : 0, fx.ems < 0, 'EMS free'); add('m', fx.metro ? fx.metro : 0, fx.metro < 0, 'Metro load %'); add('a', fx.alerts, true, 'Alerts'); return out.join(''); }
 function openCard(sc){
-  S.current = sc; const p = PLACES[sc.place]; const card = $('#card');
+  closeDials(); S.current = sc; const p = PLACES[sc.place]; const card = $('#card');
   const decided = sc.pick != null;
   card.innerHTML = `<div class="hd"><button class="grab" type="button" aria-label="Collapse card" aria-expanded="true"></button><div class="meta"><span class="chip sev-${sc.sev}">${sc.sev}</span><span>${fmt(sc.at())} · ${esc(p.name)}</span>${sc.scripted ? '' : '<span class="chip" style="color:var(--brass)">from the room</span>'}</div><h3>${esc(sc.title)}</h3><button class="x" type="button" aria-label="Close">✕</button></div>
   <div class="bd"><p class="sit">${esc(sc.sit)}</p><div class="esf">${sc.esf.map(e => `<span>${esc(e)}</span>`).join('')}</div>
@@ -1070,8 +1166,8 @@ function decide(sc, i){
   if (o.flow==='cool') S.cool = {t0:t, t1:t+150};
   if (o.flow==='clear'){ const p = PLACES[sc.place]; S.clear = {t0:t, x:p.x, z:p.z, zi:[ZI.mall_c, ZI.wamo, ZI.mall_e]}; }
   if (o.cordon) S.cordon = true;
-  if (o.storm==='shelter'){ S.shelter = {t0:t, t1:S.stormEnd + 20}; S.fwStart = T('21:54'); S.crowdCut = {t0:S.stormArrive, f:0.72}; }
-  if (o.storm==='evac'){ S.crowdCut = {t0:t, f:0.45}; S.fwCancelled = true; S.fwCancelledAt = t + 1; const w = SCEN.find(s => s.id==='water'); if (w && w.status==='pending') w.status = 'skipped'; const eg = SCEN.find(s => s.id==='egress'); if (eg) eg.sit = 'The evacuation order is out. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for the Mall-area stations.'; }
+  if (o.storm==='shelter'){ S.shelter = {t0:t, t1:S.stormEnd + 20}; S.fwStart = Math.max(T('21:09'), S.stormEnd + 49); S.crowdCut = {t0:S.stormArrive, f:0.72}; o.o = o.o0.replace('21:05', fmt(S.stormEnd)).replace('21:54', fmt(S.fwStart)); }
+  if (o.storm==='evac'){ S.crowdCut = {t0:t, f:0.45}; S.fwCancelled = true; S.fwCancelledAt = t + 1; const w = SCEN.find(s => s.id==='water'); if (w && w.status==='pending'){ w.status = 'skipped'; w.skipWhy = 'Not played: fireworks cancelled'; } const eg = SCEN.find(s => s.id==='egress'); if (eg) eg.sit = 'The evacuation order is out. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for the Mall-area stations.'; }
   if (o.storm==='hold'){ S.stormArrive -= 0; }
   if (o.egress){ S.egress = o.egress; S.egressAt = t; }
   if (sc.id==='drone') setTimeout(() => {}, 0);
@@ -1093,7 +1189,7 @@ function renderOutcome(sc){
 /* --------------------------------------------------------- site popover */
 function openSite(id){
   const p = PLACES[id]; if (!p) return; const el = $('#site');
-  const z = p.zone && ZONES[ZI[p.zone]]; const zl = z ? `${z.name}: ~${(Math.round(z.vis*PPL/1000)).toLocaleString()}k people · ${z.vis/z.n > .7 ? 'dense' : z.vis/z.n > .45 ? 'busy' : 'comfortable'}` : '';
+  const z = p.zone && ZONES[ZI[p.zone]]; const zl = z ? `${z.name}: ~${(Math.round(z.vis*(z.over||1)*PPL/1000)).toLocaleString()}k people · ${z.vis/z.n > .7 ? 'dense' : z.vis/z.n > .45 ? 'busy' : 'comfortable'}` : '';
   el.innerHTML = `<button class="x" type="button" aria-label="Close">✕</button><h4>${esc(p.name)}</h4><p>${esc(p.d)}</p>${zl ? `<p style="color:var(--fg)">${esc(zl)}</p>` : ''}
   ${p.still ? `<a class="still" href="${STILLS[p.still]}" target="_blank" rel="noopener">◉ Aerial still <small>AI-simulated imagery · opens in a new tab</small></a>` : ''}
   <div class="row-btns"><button class="btn" type="button" data-fly>Fly here</button><button class="btn" type="button" data-ask>Ask AI about this site</button></div>`;
@@ -1106,10 +1202,10 @@ function openSite(id){
 /* ---------------------------------------------------------------- clock */
 function setPlayBtn(){ const b = $('#play'); b.textContent = S.playing ? '❚❚ Pause' : '▶ Play'; b.setAttribute('aria-label', S.playing ? 'Pause' : 'Play'); }
 const activeInject = () => SCEN.find(s => s.status==='active');
-$('#play').addEventListener('click', () => { const act = activeInject(); if (act){ openCard(act); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
-$('#next').addEventListener('click', () => { const act = activeInject(); if (act){ openCard(act); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
+$('#play').addEventListener('click', () => { if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
+$('#next').addEventListener('click', () => { if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
 $('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
-$('#scrub').addEventListener('input', e => { S.t = +e.target.value; S.ff = null; });
+$('#scrub').addEventListener('input', e => { S.t = +e.target.value; S.ff = null; if (wiPrev != null){ wiPrev = null; $('#wiShow').textContent = 'Preview on the map'; } });
 $('#reset').addEventListener('click', () => resetAll());
 function advance(dt){
   const fe = fwEnd(); let spd = S.speed;
@@ -1126,10 +1222,10 @@ function resetAll(){
   labels.filter(l => l.id.startsWith('inc:')).map(l => l.id).forEach(removeLabel);
   if (cordonMesh){ scene.remove(cordonMesh); cordonMesh = null; }
   for (let i = SCEN.length-1; i >= 0; i--) if (!SCEN[i].scripted) SCEN.splice(i,1);
-  SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.critText = null; s.doneAt = null; });
+  SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.critText = null; s.doneAt = null; s.skipWhy = null; if (s.sit0) s.sit = s.sit0; s.opts.forEach(o => { if (o.o0) o.o = o.o0; }); }); syncWhatIfInjects();
   S.run = (S.run || 0) + 1;
   Object.assign(S, {t:S.start, playing:false, ff:null, fwStart:T('21:09'), fwCancelled:false, readiness:92, patients:0, alerts:0, emsHold:[], metroAdj:[], crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0, log:[], current:null});
-  drone.visible = false; capsized.visible = false; closeCard(); $('#site').hidden = true; setPlayBtn(); renderMsel();
+  drone.visible = false; capsized.visible = false; wiPrev = null; closeDials(); closeCard(); $('#site').hidden = true; setPlayBtn(); syncDialsUI(); renderMsel();
   flyTo(350, -80, 3200);
 }
 
@@ -1137,13 +1233,13 @@ function resetAll(){
 const AI = {sample:null, downloads:null, ready:false};
 const PLACE_IDS = Object.keys(PLACES);
 function brief(){
-  const t = S.t, zl = ZONES.map(z => `${z.name} ~${Math.round(z.vis*PPL/1000)}k (${Math.round(z.vis/z.n*100)}% of peak capacity)`).join('; ');
+  const t = S.t, zl = ZONES.map(z => `${z.name} ~${Math.round(z.vis*(z.over||1)*PPL/1000)}k (${Math.round(z.vis*(z.over||1)/z.n*100)}% of planned capacity)`).join('; ');
   const act = SCEN.filter(s => s.status !== 'pending').map(s => `- ${fmt(s.at())} ${s.title} [${s.sev}] at ${PLACES[s.place].name}: ${s.sit}${s.pick!=null ? ` DECISION: ${s.opts[s.pick].l}. RESULT: ${s.opts[s.pick].o}` : ' (AWAITING DECISION)'}`).join('\n') || '- none yet';
   const up = SCEN.filter(s => s.status==='pending').map(s => `${fmt(s.at())}`).join(', ');
   return `EXERCISE (fictional tabletop). America 250 Independence Day on the National Mall, Washington DC, Saturday July 4 2026.
-Exercise clock: ${fmt(t)} EDT. Weather: ${t >= S.stormWarn && t <= S.stormEnd + 10 ? 'Severe Thunderstorm Warning in effect, storm arrival ~' + fmt(S.stormArrive) : 'heat index ' + Math.round(heatIndex(t)) + '°F' + (t < S.stormWarn ? ', storms possible after 19:00' : '')}.
+Exercise clock: ${fmt(t)} EDT. Weather: ${t >= S.stormWarn && t <= S.stormEnd + 10 ? 'Severe Thunderstorm Warning in effect, storm arrival ~' + fmt(S.stormArrive) : 'heat index ' + Math.round(heatIndex(t)) + '°F' + (S.wi.storm != null && t < S.stormWarn ? ', storms possible after ' + fmt(Math.floor((S.stormWarn - 55)/30)*30) : '')}.
 Crowd on site ~${Math.round(crowdNow/1000)}k. Zones: ${zl}.
-Fireworks: ${S.fwCancelled ? 'cancelled' : fmt(S.fwStart) + '–' + fmt(S.fwStart + S.fwDur)}. Capitol West Lawn concert 20:00–21:30.
+Fireworks: ${S.fwCancelled ? 'cancelled' : fmt(S.fwStart) + '–' + fmt(S.fwStart + S.fwDur)}. Capitol West Lawn concert 20:00–21:30.${wiText() ? '\nPlanning what-if in effect: ' + wiText() + '.' : ''}
 Metrics: EMS units free ${emsFree(t)}/${S.emsTotal}; patients treated ${S.patients + basePatients(t)}; Mall-area Metro load ${metroLoad(t)}% of platform capacity; public alerts sent ${S.alerts}; exercise readiness score ${Math.round(S.readiness)}/100.
 Jurisdiction: Mall, Monument Grounds and memorials are NPS land policed by U.S. Park Police; Capitol grounds by U.S. Capitol Police; White House complex by U.S. Secret Service; city streets by MPD; Metro by Metro Transit Police; river by MPD Harbor Patrol and Coast Guard. Also: DC HSEMA (EOC), DC Fire & EMS, FBI, NWS Sterling, Pepco, DC Water, DDOT.
 Incidents so far:
@@ -1336,6 +1432,249 @@ function spy(){ if (!phoneMQ.matches || performance.now() < spyHold) return; let
 addEventListener('scroll', () => { if (!spyQ) spyQ = requestAnimationFrame(() => { spyQ = 0; spy(); }); }, {passive:true});
 $('#fabNext').addEventListener('click', () => $('#next').click());
 
+/* ------------------------------------------------------- what-if dials */
+const PLAN_WI = {crowd:1, heat:0, storm:T('20:35'), line:false};
+let wiPrev = null, wiBusy = false;
+function applyStorm(){ const a = S.wi.storm; if (a == null){ S.stormArrive = S.stormWarn = S.stormEnd = 99999; } else { S.stormArrive = a; S.stormWarn = a - 40; S.stormEnd = a + 30; } }
+function wiText(){ const w = S.wi, a = [];
+  if (w.crowd !== 1) a.push('attendance ' + (w.crowd > 1 ? '+' : '') + Math.round((w.crowd - 1)*100) + '% vs plan');
+  if (w.heat) a.push('heat index ' + (w.heat > 0 ? '+' : '') + w.heat + '°F vs forecast');
+  if (w.storm == null) a.push('no storm'); else if (w.storm !== PLAN_WI.storm) a.push('storm arrives ' + fmt(w.storm) + ' instead of 20:35');
+  if (w.line) a.push('Blue/Orange/Silver Metro line out of service, so Smithsonian and Federal Triangle stations are closed');
+  return a.join('; '); }
+function syncWhatIfInjects(){
+  const st = SCEN.find(s => s.id==='storm'), mt = SCEN.find(s => s.id==='metro');
+  if (S.wi.storm == null){ if (st.status==='pending'){ st.status = 'skipped'; st.skipWhy = 'Not played: no storm in this what-if'; } }
+  else if (st.status==='skipped' && /no storm/.test(st.skipWhy || '')){ st.status = 'pending'; st.skipWhy = null; }
+  if (S.wi.line){ if (mt.status==='pending'){ mt.status = 'skipped'; mt.skipWhy = 'Not played: line already out in this what-if'; } }
+  else if (mt.status==='skipped' && /line already/.test(mt.skipWhy || '')){ mt.status = 'pending'; mt.skipWhy = null; }
+}
+// Whole-day outlook for a set of assumptions, from the same model the map runs on.
+function outlook(w){
+  const keep = S.wi; S.wi = w; applyStorm();
+  const fe = fwEnd(); let crowd = 0, metro = 0, ems = 999, heat = 0;
+  for (let t = S.start; t <= S.end; t += 5){
+    crowd = Math.max(crowd, ZONES.reduce((a,z) => a + z.n * crowdFrac(z, Math.min(t, fe)), 0) * PPL);
+    metro = Math.max(metro, metroLoad(t)); ems = Math.min(ems, emsFree(t)); heat = Math.max(heat, heatIndex(t));
+  }
+  const out = {crowd, metro, ems, heat, patients: basePatients(S.end) + S.patients, overlap: w.storm != null && !S.fwCancelled && S.stormArrive < S.fwStart + S.fwDur && S.stormEnd > S.fwStart};
+  S.wi = keep; applyStorm(); return out;
+}
+function deltaRows(p, n){ const k = v => Math.round(v/1000) + 'k';
+  return [['Peak crowd', k(p.crowd), k(n.crowd), n.crowd - p.crowd, 1, 1000],
+    ['Peak heat index', Math.round(p.heat) + '°F', Math.round(n.heat) + '°F', n.heat - p.heat, 1, 0.5],
+    ['Metro peak load', p.metro + '%', n.metro + '%', n.metro - p.metro, 1, 0.5],
+    ['Patients, full day', String(p.patients), String(n.patients), n.patients - p.patients, 1, 0.5],
+    ['EMS units free, low point', String(p.ems), String(n.ems), n.ems - p.ems, -1, 0.5],
+    ['Storm during fireworks', p.overlap ? 'Yes' : 'No', n.overlap ? 'Yes' : 'No', (n.overlap ? 1 : 0) - (p.overlap ? 1 : 0), 1, 0.5]]; }
+function renderDelta(){
+  const p = outlook(PLAN_WI), n = outlook(S.wi);
+  $('#wiDelta').innerHTML = '<thead><tr><th scope="col">Outlook</th><th scope="col">Plan</th><th scope="col">What-if</th></tr></thead><tbody>' + deltaRows(p, n).map(([l, a, b, d, sgn, eps], i) => {
+    const risk = d * sgn, cls = risk > eps ? 'worse' : risk < -eps ? 'better' : '', arrow = i === 5 || Math.abs(d) <= eps ? '' : d > 0 ? ' ▲' : ' ▼';
+    return `<tr><td>${l}</td><td class="num">${a}</td><td class="num ${cls}">${b}${arrow}</td></tr>`; }).join('') + '</tbody>';
+  return {p, n};
+}
+function wiLabels(){ const w = S.wi, c = Math.round((w.crowd - 1)*100);
+  $('#wiCrowdV').textContent = c ? (c > 0 ? '+' : '') + c + '%' : 'Plan';
+  $('#wiHeatV').textContent = w.heat ? (w.heat > 0 ? '+' : '') + w.heat + '°F' : 'Forecast';
+  $('#wiStormV').textContent = w.storm == null ? 'No storm' : fmt(w.storm) + (w.storm === PLAN_WI.storm ? ' (plan)' : '');
+  const st = SCEN.find(s => s.id==='storm'), lock = st.status==='active' || st.status==='done';
+  $('#wiStorm').disabled = lock; $('#wiNote').textContent = lock ? 'The storm has already played in this run. Reset the exercise to move it.' : '';
+}
+function syncDialsUI(){ const w = S.wi; $('#wiCrowd').value = Math.round((w.crowd - 1)*100); $('#wiHeat').value = w.heat; $('#wiStorm').value = w.storm == null ? 1365 : w.storm; $('#wiLine').checked = w.line; wiLabels(); }
+function wiChanged(){
+  const st = SCEN.find(s => s.id==='storm'), now = wiPrev != null ? wiPrev : S.t; let moved = false;
+  // a pending storm must still have its warning ahead of the exercise clock
+  if (st.status==='pending' && S.wi.storm != null && S.wi.storm - 40 <= now){ const a = Math.ceil((now + 45)/5)*5; S.wi.storm = a <= 1355 ? a : null; $('#wiStorm').value = S.wi.storm == null ? 1365 : S.wi.storm; moved = true; }
+  applyStorm(); syncWhatIfInjects(); wiLabels(); updateHud(S.t);
+  if (moved) $('#wiNote').textContent = S.wi.storm == null ? 'Too late in the day for that storm time, so no storm.' : 'Storm set to ' + fmt(S.wi.storm) + ' so its warning is still ahead of the clock.';
+  renderDelta(); renderMsel();
+  $('#wiAI').hidden = true;
+}
+$('#wiCrowd').addEventListener('input', e => { S.wi.crowd = 1 + (+e.target.value)/100; wiChanged(); });
+$('#wiHeat').addEventListener('input', e => { S.wi.heat = +e.target.value; wiChanged(); });
+$('#wiStorm').addEventListener('input', e => { const v = +e.target.value; S.wi.storm = v >= 1360 ? null : v; wiChanged(); });
+$('#wiLine').addEventListener('change', e => { S.wi.line = e.target.checked; wiChanged(); });
+$('#wiReset').addEventListener('click', () => { S.wi = Object.assign({}, PLAN_WI); syncDialsUI(); wiChanged(); });
+function openDials(){ $('#site').hidden = true; closeCard(); $('#dials').hidden = false; stage.classList.add('hasdials'); $('#wiChip').setAttribute('aria-expanded', 'true'); syncDialsUI(); renderDelta(); showStage(); }
+function closeDials(reopen){
+  const d = $('#dials'); if (d.hidden) return;
+  if (wiPrev != null){ S.t = wiPrev; wiPrev = null; $('#wiShow').textContent = 'Preview on the map'; updateHud(S.t); }
+  d.hidden = true; stage.classList.remove('hasdials'); $('#wiChip').setAttribute('aria-expanded', 'false');
+  if (reopen){ const act = activeInject(); if (act) openCard(act); }
+}
+$('#wiChip').addEventListener('click', openDials);
+$('#wiClose').addEventListener('click', () => closeDials(true));
+// Preview jumps the clock to where the assumption bites, then returns to where the exercise was.
+function impactAt(){ const n = outlook(S.wi), w = S.wi;
+  if (n.overlap || (w.storm != null && w.storm !== PLAN_WI.storm)) return {t:S.stormArrive + 8, x:0, z:0, d:2600};
+  if (w.line || w.crowd > 1) return {t:fwEnd() + 18, x:700, z:120, d:1500};
+  if (w.heat > 0) return {t:T('14:30'), x:0, z:0, d:1100};
+  return {t:fwEnd() + 18, x:700, z:120, d:1500}; }
+$('#wiShow').addEventListener('click', () => {
+  if (wiPrev != null){ S.t = wiPrev; wiPrev = null; $('#wiShow').textContent = 'Preview on the map'; updateHud(S.t); return; }
+  const im = impactAt(); wiPrev = S.t; S.playing = false; S.ff = null; setPlayBtn();
+  S.t = clamp(im.t, S.start, S.end); flyTo(im.x, im.z, im.d); updateHud(S.t);
+  $('#wiShow').textContent = 'Back to ' + fmt(wiPrev);
+});
+function localWhatIf(p, n){
+  const w = S.wi, acts = []; let risk = 'No major change from the plan.';
+  if (n.overlap) risk = `The storm now hits during the fireworks, with about ${Math.round(n.crowd/1000)}k people on open ground.`;
+  else if (w.line || n.metro - p.metro >= 15) risk = `Metro platforms reach ${n.metro}% of capacity at egress, up from ${p.metro}%.`;
+  else if (n.crowd - p.crowd >= 50000) risk = `Peak crowd rises to about ${Math.round(n.crowd/1000)}k, pushing the Monument Grounds toward critical density.`;
+  else if (n.patients - p.patients >= 25) risk = `About ${n.patients - p.patients} more patients over the day, mostly heat-related.`;
+  else if (w.storm == null) risk = 'Without the storm, the risk shifts to heat and to a full-size crowd at egress.';
+  if (n.overlap) acts.push('Name the shelter buildings and their capacities, and set a lightning hold rule for the fireworks.');
+  if (w.line) acts.push('Stage officers and WMATA supervisors at L\'Enfant Plaza and Archives, and publish walking routes before the event.');
+  if (w.crowd > 1) acts.push('Add screening lanes and open overflow viewing areas before 18:00.');
+  if (w.heat > 0) acts.push('Add cooling buses and water stations on the Monument Grounds before noon.');
+  if (n.ems < 15) acts.push('Request mutual-aid ambulances to stage by 17:00.');
+  if (!acts.length) acts.push('Keep the current staffing plan and watch attendance at the screening points.');
+  const trig = n.overlap ? 'An NWS warning with lightning inside 10 miles.' : w.line ? 'Any Mall-area platform above 90% before the fireworks end.' : 'Heat calls above 15 an hour at any one site.';
+  return `**Biggest new risk:** ${risk}\n\n**Change the plan:**\n${acts.slice(0,3).map(x => '- ' + x).join('\n')}\n\n**Trigger to watch:** ${trig}`;
+}
+$('#wiAsk').addEventListener('click', async () => {
+  const box = $('#wiAI'), btn = $('#wiAsk'); box.hidden = false;
+  if (!wiText()){ box.innerHTML = '<p class="note" style="margin:0">Move a dial first. Everything is still at plan.</p>'; return; }
+  const {p, n} = renderDelta(), rows = deltaRows(p, n).map(r => `${r[0]}: plan ${r[1]}, what-if ${r[2]}`).join('\n');
+  if (!AI.sample){ box.innerHTML = '<div class="who"><span>Planning note</span><span>offline</span></div>' + md(localWhatIf(p, n)); return; }
+  if (wiBusy) return; wiBusy = true; btn.disabled = true;
+  box.innerHTML = '<div class="who"><span>AI planner</span></div><div class="body"><span class="thinking">Comparing with the plan</span></div>'; const body = box.querySelector('.body');
+  const input = `You are a senior emergency management planner reviewing planning assumptions for a fictional tabletop exercise (America 250, Saturday July 4 2026, National Mall, Washington DC).
+What changed versus the plan: ${wiText()}.
+Model outlook (plan vs what-if):
+${rows}
+
+CURRENT EXERCISE PICTURE
+${brief()}
+
+Answer in markdown, under 110 words: "**Biggest new risk:**" one sentence that uses a number from the outlook; then "**Change the plan:**" with 2-3 bullets of concrete pre-event actions (who does what); then "**Trigger to watch:**" one sentence. Public-information level only.`;
+  try { const r = await AI.sample(input, {modelTier:'quick', onText:({text}) => { body.innerHTML = md(text); }}); body.innerHTML = md(r.text); }
+  catch(e){ body.innerHTML = `<p class="note">${esc(aiErr(e))}</p>` + md(localWhatIf(p, n)); }
+  finally { wiBusy = false; btn.disabled = false; }
+});
+
+/* ------------------------------------------------------- your city */
+const CITY_SUG = [['Chicago','Fourth of July at Navy Pier and Grant Park'],['New York','Macy\'s Fourth of July Fireworks'],['Los Angeles','LA28 Olympics opening ceremony'],['Houston','Freedom Over Texas on July 4'],['Philadelphia','Wawa Welcome America on the Parkway'],['Boston','Boston Pops Fireworks on the Esplanade']];
+// Prepared example, shown when live AI is unavailable (public site, or permission declined).
+const CITY_EXAMPLE = {city:'Chicago', event:'Fourth of July at Navy Pier and Grant Park', exercise:'Lakefront Fourth Tabletop', when:'Saturday, July 4 · 14:00–23:30',
+ scope:'Navy Pier fireworks plus Grant Park and lakefront viewing, about 250,000 people from Ohio Street Beach to Museum Campus. City, county, state, federal and transit partners.',
+ objectives:['Issue coordinated public warnings within 10 minutes of a severe weather warning.','Spread post-fireworks egress across at least three CTA stations without platform overcrowding.','Coordinate a multi-agency water rescue on Lake Michigan within 15 minutes of the first call.'],
+ agencies:['Chicago OEMC','Chicago Police Department','Chicago Fire Department','Chicago Transit Authority','Chicago Park District','Navy Pier','U.S. Coast Guard Sector Lake Michigan','NWS Chicago','ComEd'],
+ injects:[
+  {time:'14:40', title:'Heat casualties climb at Butler Field', location:'Grant Park, Butler Field', sev:'high', esf:['ESF-8 Health & Medical','ESF-6 Mass Care'], situation:'Heat index 100°F. CFD EMS has treated 18 heat patients near Butler Field in 45 minutes, 2 serious. The cooling bus on Columbus Drive is full and about 120,000 people are already holding spots.', options:[
+    {label:'Send a heat message through NotifyChicago, social and PA; open the Cultural Center as a cooling site; add water stations', outcome:'New heat calls drop about a third within the hour. EMS stays stretched for the serious cases.', grade:'strong'},
+    {label:'Add ambulances from the private EMS contract and open a second treatment area', outcome:'Turnaround improves, but calls keep climbing because nothing reduced exposure.', grade:'workable'},
+    {label:'Hold posture and post hydration reminders', outcome:'Calls double by 16:30, with two more serious patients.', grade:'risky'}],
+   guidance:'Cut exposure first, then surge medical. Shade, water and cooling reduce calls; treatment does not. Watch for a second peak around 17:00 among people who held spots all afternoon.'},
+  {time:'17:30', title:'Swimmers caught in a rip current off Ohio Street Beach', location:'Ohio Street Beach', sev:'high', esf:['ESF-9 Search & Rescue','ESF-8 Health & Medical'], situation:'Waves reach 4 feet. Three swimmers are struggling 50 m out, past the swim area; lifeguards have reached one. About 6,000 people are on the beach.', options:[
+    {label:'Hand the response to the Coast Guard', outcome:'Coast Guard boats need 20+ minutes from Calumet Harbor; city marine units were closer.', grade:'workable'},
+    {label:'CFD Marine and Dive with the Air Sea Rescue helicopter; Park District closes the water; lifeguards and PA clear swimmers', outcome:'All three recovered within 12 minutes, one transported. Closing the water prevents a repeat.', grade:'strong'},
+    {label:'Let bystanders with floats help', outcome:'A bystander becomes a fourth victim. Bystanders need direction, not encouragement.', grade:'risky'}],
+   guidance:'Send the closest specialized assets, then stop it repeating by closing the water. Watch for higher waves after 18:00 as the wind shifts.'},
+  {time:'19:15', title:'Severe Thunderstorm Warning with fireworks at 21:30', location:'Lakefront, Navy Pier to Museum Campus', sev:'critical', esf:['ESF-15 External Affairs','ESF-13 Public Safety','ESF-6 Mass Care'], situation:'NWS Chicago warns of a squall line with 65 mph gusts and frequent lightning reaching the lakefront about 20:00. About 220,000 people are outdoors and the fireworks are set for 21:30.', options:[
+    {label:'Evacuate the lakefront now and cancel the fireworks', outcome:'220,000 people head for a handful of CTA stations at once; thousands are on DuSable Lake Shore Drive bridges when the gusts hit.', grade:'risky'},
+    {label:'Keep the program running and monitor', outcome:'Gusts hit open crowds; tents collapse, with 2 lightning injuries and 20 others.', grade:'risky'},
+    {label:'Shelter now: NotifyChicago, PA and screen alerts; open Navy Pier halls, museums and garages; hold fireworks until 30 minutes after the last strike', outcome:'About 60,000 get into buildings and garages; most others reach the L or cars. The line passes by 20:40 and the show starts at 21:45.', grade:'strong'}],
+   guidance:'There is not enough hard shelter for everyone, so fill pre-agreed buildings and garages and send the rest to the L and cars. Watch the all-clear: 30 minutes after the last strike, then expect a rush back.'},
+  {time:'21:55', title:'Crowd surge at Grand Red Line station', location:'Grand Ave and State St', sev:'critical', esf:['ESF-1 Transportation','ESF-13 Public Safety'], situation:'The show ends. The Navy Pier crowd pushes west on Grand Ave and Illinois St; the Grand platform is at capacity and a surge is reported at the stair entrances. About 90,000 people are heading for the L.', options:[
+    {label:'Open more entrances to speed people in', outcome:'More people reach an already full platform. The choke point is the platform.', grade:'risky'},
+    {label:'Pause entry at Grand until the platform clears, then meter it; redirect to Chicago and Lake stations with officers, signage and PA', outcome:'The surge eases within 15 minutes. Walks get longer, but there are no injuries.', grade:'strong'},
+    {label:'Close Grand with no reroute', outcome:'The crowd compresses at the closed entrance; 7 injuries before officers set up a reroute.', grade:'risky'}],
+   guidance:'Meter and spread the load across stations and time. Watch Chicago station: the reroute moves the pressure there in about 15 minutes.'},
+  {time:'22:10', title:'Boat collision in the Navy Pier anchorage', location:'Lake Michigan off Navy Pier', sev:'high', esf:['ESF-9 Search & Rescue','ESF-13 Public Safety'], situation:'Two pleasure boats collide as the fleet heads home; one is taking on water with 8 aboard. More than 400 boats are moving at once in the dark.', options:[
+    {label:'CPD Marine Unit and CFD boats respond; Coast Guard sets a safety zone and holds boat traffic until clear', outcome:'All 8 recovered in 14 minutes; the hold prevents a second collision.', grade:'strong'},
+    {label:'Respond to the sinking boat and let traffic keep moving', outcome:'The rescue succeeds, but a second, minor collision happens in the confusion.', grade:'workable'},
+    {label:'Close the harbor entrances immediately', outcome:'Boats bunch up at the breakwater in the dark, raising the collision risk.', grade:'risky'}],
+   guidance:'Rescue plus control of the environment: a short hold on movement keeps one incident from becoming three. Watch for impaired operators after the show.'},
+  {time:'22:40', title:'Red Line disruption strands 25,000 riders', location:'State Street subway, downtown', sev:'high', esf:['ESF-1 Transportation','ESF-6 Mass Care'], situation:'A disabled train near Chicago station stops Red Line service between North/Clybourn and Roosevelt. About 25,000 riders are waiting downtown and it is still 84°F.', options:[
+    {label:'Hold riders at street level and meter platform entry', outcome:'Prevents a platform crush, but crowds build on State Street and need water and information.', grade:'workable'},
+    {label:'Tell riders to walk to the Blue Line', outcome:'Moves the problem: Blue Line platforms at Washington and Monroe overflow.', grade:'risky'},
+    {label:'Request a CTA bus bridge, point riders to the Blue Line and Loop elevated lines, and push real-time updates', outcome:'Buses arrive in 25 minutes; platforms clear within the hour.', grade:'strong'}],
+   guidance:'Bus bridge plus metering. Treat it as a long event and look after people while they wait. Watch the late-night tail: riders stranded after midnight become a mass care issue.'}
+ ]};
+let cityData = null, cityBusy = false, cityRun = 0;
+CITY_SUG.forEach(([c, e]) => { const b = document.createElement('button'); b.className = 'sug'; b.type = 'button'; b.textContent = c; b.title = e; b.addEventListener('click', () => { $('#cityName').value = c; $('#cityEvent').value = e; }); $('#citySug').appendChild(b); });
+function openCity(){ $('#cityModal').hidden = false; if (!AI.sample && !cityData) renderCity(CITY_EXAMPLE, true); }
+$('#cityBtn').addEventListener('click', openCity);
+$('#tabCity').addEventListener('click', openCity);
+$('#howCity').addEventListener('click', () => { $('#howModal').hidden = true; openCity(); });
+$('#cityName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#cityEvent').focus(); } });
+$('#cityEvent').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#cityGo').click(); } });
+function cityPrompt(city, ev){ return `You are a senior HSEEP exercise designer. Draft a fictional tabletop exercise for a big-city emergency management office.
+City: ${city}
+Event: ${ev}
+Use real, well-known public places, transit lines and agencies for that city. Use the real name of the city's emergency management office only if you are confident of it; otherwise say "the city's emergency management office". Never name real individuals. Public-information level only: no tactical security, weapons or counter-drone detail. Realistic numbers for this event.
+Return ONLY a JSON object, no prose and no code fences, with exactly these keys:
+{"exercise":"name, max 60 chars","when":"date and time window, e.g. Saturday, July 4 · 14:00–23:30","scope":"max 40 words: footprint, expected attendance, key partners","objectives":["3 measurable objectives, max 18 words each"],"agencies":["5-8 real agencies involved"],"injects":[6 objects in time order, each {"time":"HH:MM","title":"max 55 chars","location":"real local place","sev":"moderate|high|critical","esf":["1-2 like ESF-8 Health & Medical"],"situation":"max 45 words with specific numbers","options":[{"label":"max 90 chars","outcome":"max 28 words","grade":"strong|workable|risky"},{...},{...}],"guidance":"max 40 words: the better call, why, and one thing to watch"}]}
+Cover different hazards (weather, crowd and transit, medical, a generic security concern, infrastructure, water if relevant). Exactly 3 options per inject with genuinely different strategies, exactly one "strong" option per inject, and vary which letter is the strong one.`; }
+function parseCity(text, city, ev){
+  const t = String(text), a = t.indexOf('{'), b = t.lastIndexOf('}'); if (a < 0 || b <= a) throw {code:'invalid_json'};
+  const j = JSON.parse(t.slice(a, b + 1)), str = (v, n) => String(v == null ? '' : v).slice(0, n), arr = v => Array.isArray(v) ? v : [];
+  const injects = arr(j.injects).slice(0, 8).map(x => ({time:str(x.time, 5), title:str(x.title, 80), location:str(x.location, 80), sev:['moderate','high','critical'].includes(x.sev) ? x.sev : 'high', esf:arr(x.esf).slice(0, 3).map(e => str(e, 40)), situation:str(x.situation, 400), guidance:str(x.guidance, 360),
+    options:arr(x.options).slice(0, 3).map(o => ({label:str(o && o.label, 160), outcome:str(o && o.outcome, 260), grade:['strong','workable','risky'].includes(o && o.grade) ? o.grade : 'workable'}))})).filter(x => x.title && x.options.length >= 2 && x.options.every(o => o.label));
+  if (injects.length < 3) throw {code:'invalid_json'};
+  return {city, event:ev, exercise:str(j.exercise || city + ' tabletop', 90), when:str(j.when, 80), scope:str(j.scope, 400), objectives:arr(j.objectives).slice(0, 4).map(o => str(o, 200)), agencies:arr(j.agencies).slice(0, 10).map(x => str(x, 80)), injects};
+}
+$('#cityGo').addEventListener('click', async () => {
+  const city = $('#cityName').value.trim(), ev = $('#cityEvent').value.trim() || 'its largest annual outdoor event', note = $('#cityNote'), btn = $('#cityGo');
+  if (!city){ note.textContent = 'Type a city first, or tap one above.'; $('#cityName').focus(); return; }
+  if (!AI.sample){ renderCity(CITY_EXAMPLE, true); note.textContent = 'Live AI is offline here, so this is a prepared example for Chicago. Opened in Claude, the AI drafts one for any city.'; return; }
+  if (cityBusy) return; cityBusy = true; btn.disabled = true; const run = ++cityRun;
+  $('#cityOut').innerHTML = ''; note.innerHTML = '<span class="thinking">Writing the exercise outline for ' + esc(city) + '</span>';
+  try {
+    const r = await AI.sample(cityPrompt(city, ev), {modelTier:$('#cityDeep').checked ? 'default' : 'quick', onText:({text}) => { const k = (text.match(/"situation"/g) || []).length; if (k) note.innerHTML = '<span class="thinking">Writing inject ' + Math.min(6, k) + ' of 6 for ' + esc(city) + '</span>'; }});
+    if (run !== cityRun) return;
+    renderCity(parseCity(r.text, city, ev), false); note.textContent = 'AI draft for ' + city + '. Review with your planners before use.';
+  } catch(e){
+    note.innerHTML = esc(e && e.code === 'invalid_json' ? 'The AI\'s draft came back incomplete. Try again.' : aiErr(e)) + ' <button class="btn" type="button" id="cityEx">Show the Chicago example</button>';
+    const b = $('#cityEx'); if (b) b.addEventListener('click', () => renderCity(CITY_EXAMPLE, true));
+  } finally { cityBusy = false; btn.disabled = false; }
+});
+function renderCity(d, ex){
+  cityData = Object.assign({}, d, {picks:[], example:ex}); const o = $('#cityOut');
+  o.innerHTML = `<div class="cx">
+   <div class="head"><div class="meta"><span class="chip" style="color:var(--brass)">${ex ? 'Example draft' : 'AI draft'}</span><span>${esc(d.city)} · ${esc(d.event)}</span></div><h3>${esc(d.exercise)}</h3>${d.when ? `<p>${esc(d.when)}</p>` : ''}${d.scope ? `<p>${esc(d.scope)}</p>` : ''}${ex ? '<p class="note">Prepared example. Opened in Claude, the AI writes one for any city in under a minute.</p>' : ''}</div>
+   ${d.objectives.length ? `<div><div class="q">Objectives</div><ol>${d.objectives.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>` : ''}
+   <div class="q">Injects · tap a choice</div>
+   ${d.injects.map((x, i) => `<div class="cinj" data-i="${i}"><div class="meta"><span class="chip sev-${x.sev}">${x.sev}</span><span>${esc(x.time)} · ${esc(x.location)}</span></div><h4>${esc(x.title)}</h4><p>${esc(x.situation)}</p>${x.esf.length ? `<div class="esf">${x.esf.map(e => `<span>${esc(e)}</span>`).join('')}</div>` : ''}<div class="opts">${x.options.map((op, k) => `<button class="opt" type="button" data-k="${k}"><b>${'ABC'[k]}</b><span>${esc(op.label)}</span></button>`).join('')}</div><div class="cout"></div></div>`).join('')}
+   <div class="cscore" id="cityScore"></div>
+   ${d.agencies.length ? `<div><div class="q">Partners</div><p style="margin:4px 0 0;font-size:13px">${d.agencies.map(esc).join(' · ')}</p></div>` : ''}
+   <div class="row-btns"><button class="btn pri" type="button" id="cityCopy">Copy exercise packet</button><button class="btn" type="button" id="citySave"${AI.downloads ? '' : ' hidden'}>Save or share packet</button><button class="btn" type="button" id="cityAgain">Try another city</button></div>
+   <p class="note" id="cityMsg" style="margin:0"></p>
+   <textarea id="cityPacket" readonly hidden aria-label="Exercise packet text"></textarea>
+  </div>`;
+  o.querySelectorAll('.cinj').forEach(card => card.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => pickCity(+card.dataset.i, +b.dataset.k))));
+  $('#cityCopy').addEventListener('click', copyPacket); $('#citySave').addEventListener('click', savePacket);
+  $('#cityAgain').addEventListener('click', () => { o.innerHTML = ''; cityData = null; $('#cityName').value = ''; $('#cityEvent').value = ''; $('#cityNote').textContent = ''; o.closest('.sheet').scrollTop = 0; $('#cityName').focus(); });
+  o.scrollIntoView({block:'start', behavior:behavior()});
+}
+function pickCity(i, k){
+  const d = cityData, x = d.injects[i]; if (d.picks[i] != null) return; d.picks[i] = k; const op = x.options[k];
+  const card = $(`#cityOut .cinj[data-i="${i}"]`);
+  card.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === k) b.classList.add('pick'); });
+  card.querySelector('.cout').innerHTML = `<div class="out"><span class="grade g-${op.grade}">${op.grade}</span>${esc(op.outcome)}</div>${x.guidance ? `<div class="ai"><div class="who"><span>Facilitator note</span></div>${esc(x.guidance)}</div>` : ''}`;
+  const done = d.picks.filter(v => v != null).length, strong = d.picks.filter((v, j) => v != null && d.injects[j].options[v].grade === 'strong').length;
+  $('#cityScore').textContent = `Strong calls: ${strong} of ${done}` + (done === d.injects.length ? ' · exercise complete' : '');
+}
+function packetText(){
+  const d = cityData; if (!d) return '';
+  const L = [`# ${d.exercise} (EXERCISE · ${d.example ? 'example draft' : 'AI draft'})`, `**${d.city} · ${d.event}${d.when ? ' · ' + d.when : ''}**`, ''];
+  if (d.scope) L.push('## Scope', d.scope, '');
+  if (d.objectives.length) L.push('## Objectives', ...d.objectives.map((o, i) => `${i + 1}. ${o}`), '');
+  if (d.agencies.length) L.push('## Participating agencies', ...d.agencies.map(a => '- ' + a), '');
+  L.push('## Master scenario events list');
+  d.injects.forEach((x, i) => { L.push('', `### ${i + 1}. ${x.time} · ${x.title} (${x.sev})`, `Location: ${x.location}${x.esf.length ? ' · ' + x.esf.join(', ') : ''}`, '', x.situation, ''); x.options.forEach((o, k) => L.push(`- ${'ABC'[k]}) ${o.label}. Expected result: ${o.outcome} [${o.grade}]`)); if (x.guidance) L.push('', `Facilitator note: ${x.guidance}`); });
+  L.push('', '---', `Drafted ${new Date().toLocaleDateString()} with AI from public information. Fictional exercise: review and validate with your planners before use.`);
+  return L.join('\n');
+}
+async function copyPacket(){ const txt = packetText(), ta = $('#cityPacket'), msg = $('#cityMsg');
+  try { await navigator.clipboard.writeText(txt); msg.textContent = 'Exercise packet copied. Paste it into an email or a document.'; }
+  catch(e){ ta.value = txt; ta.hidden = false; ta.focus(); ta.select(); msg.textContent = 'The packet is below. Select all and copy.'; } }
+async function savePacket(){ if (!AI.downloads || !cityData) return;
+  try { await AI.downloads.save({filename:(cityData.city || 'city').replace(/[^a-z0-9]+/gi, '-') + '-tabletop-draft.md', data:packetText()}); }
+  catch(e){ $('#cityMsg').textContent = 'The packet was not saved.'; } }
+
 /* ------------------------------------------------------------------ loop */
 // Portrait canvas gets a wider lens. On phone the open card covers the lower map, so the view is shifted up (lens shift) to keep the incident in sight.
 let vOff = 0, sheetH = 0;
@@ -1343,14 +1682,14 @@ function setView(){ const w = stage.clientWidth, h = canvas.clientHeight; if (vO
 function resize(){ const w = stage.clientWidth, h = canvas.clientHeight || stage.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w/h; camera.fov = camera.aspect < 1 ? 58 : 42; setView(); }
 new ResizeObserver(resize).observe(stage); resize();
 if (camera.aspect < 1) camera.position.set(-2300, 1700, 1330); // portrait: look up the Mall's axis so Lincoln to the Capitol fits the narrow frame
-new ResizeObserver(() => { sheetH = $('#card').offsetHeight; }).observe($('#card'));
+const sheetObs = new ResizeObserver(() => { sheetH = Math.max($('#card').offsetHeight, $('#dials').offsetHeight); }); sheetObs.observe($('#card')); sheetObs.observe($('#dials'));
 let last = performance.now(), acc = 0, tsAcc = 0, crowdKey = '';
 function frame(now){
   const dt = Math.min(0.05, (now - last)/1000); last = now;
   if (S.playing) advance(dt);
   const t = S.t;
   const sky = updateSky(t, dt);
-  const ck = t.toFixed(3) + '|' + S.log.length + '|' + (S.current ? S.current.id + S.current.status : '') + '|' + S.run;
+  const ck = t.toFixed(3) + '|' + S.log.length + '|' + (S.current ? S.current.id + S.current.status : '') + '|' + S.run + '|' + S.wi.crowd + ',' + S.wi.storm + ',' + S.wi.line;
   if (ck !== crowdKey){ crowdKey = ck; crowdNow = updateCrowd(t); }
   const fwOn = !S.fwCancelled && t >= S.fwStart && t <= S.fwStart + S.fwDur;
   updateFireworks(dt, fwOn);
@@ -1369,10 +1708,10 @@ function frame(now){
   tsAcc += dt; if (tsAcc > 0.5){ tsAcc = 0; const ts = fmt(t) + ':' + String(Math.floor((now/1000)%60)).padStart(2,'0'); FEEDS.forEach(f => f.ts.textContent = ts); }
   requestAnimationFrame(frame);
 }
-renderMsel(); updateHud(S.t); setPlayBtn();
+applyStorm(); syncWhatIfInjects(); syncDialsUI(); renderMsel(); updateHud(S.t); setPlayBtn();
 requestAnimationFrame(frame);
 setTimeout(initAI, 0);
-window.__ex = {S, SCEN, fire, decide, advance, crowd:() => crowdNow, labels:() => labels.length, P:P.length, inst:inst.length};
+window.__ex = {S, SCEN, fire, decide, advance, crowd:() => crowdNow, labels:() => labels.length, P:P.length, inst:inst.length, outlook, PLAN_WI, city:() => cityData};
 })();
 </script>
 
