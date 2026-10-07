@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:dark}body{margin:0}img{max-width:100%}</style></head><body>
 <title>America 250 Mall Ops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,7 @@
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--f-body);margin:0}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
@@ -182,6 +183,7 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
   .stage{flex:none;height:58vh;min-height:340px}
   .card{position:static;width:100%;max-height:none;border-radius:0 0 10px 10px}
   .stage.hascard{height:auto}
+  .stage.hascard .legend{display:none}
   .stage.hascard #c{height:46vh;min-height:300px}
   .stage.hascard #labels{bottom:auto;height:46vh;min-height:300px}
   .clock{margin-left:0}
@@ -303,8 +305,8 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
 Interview answers: AI as a thinking partner + "my team could do this" · ready by the next break · live exercise framing · Ask-the-AI, after-action report, aerial stills · make it interactive.</div>
     <h3>The receipt</h3>
     <div class="steps">
-      <div><b>22 min</b><span>request to working model (3:53 PM → 4:15 PM ET)</span></div>
-      <div><b>1,250</b><span>lines of code written by AI</span></div>
+      <div><b>28 min</b><span>request to tested, published model (3:53 PM → 4:21 PM ET)</span></div>
+      <div><b>1,260</b><span>lines of code written by AI</span></div>
       <div><b>9 + ∞</b><span>scripted injects, plus any what-if the room invents</span></div>
       <div><b>9</b><span>AI-generated aerial stills</span></div>
     </div>
@@ -457,7 +459,7 @@ const SCEN = [
    {l:'Ask nearby boaters to assist', o:'Good Samaritans pull out three people, but two more boats crowd in and another person goes into the water.', fx:{readiness:-5, patients:6}}
   ],
   g:'Get the right boats in and control the environment with a no-wake zone so the incident does not multiply. Do not stop the show unless it is interfering with the rescue; the crowd effects on land are bigger than the gain. Watch for the egress starting in about 10 minutes. River EMS staging must not block the Lincoln Memorial exit routes.'},
- {id:'egress', at:()=>S.fwStart + S.fwDur + 13, place:'smithsonian_metro', sev:'critical', title:'Crowd surge at Smithsonian Metro', esf:['ESF-1 Transportation','ESF-13 Public Safety'],
+ {id:'egress', at:()=>fwEnd() + 13, place:'smithsonian_metro', sev:'critical', title:'Crowd surge at Smithsonian Metro', esf:['ESF-1 Transportation','ESF-13 Public Safety'],
   sit:'The fireworks are over. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for the Mall-area stations.',
   q:'Your call',
   opts:[
@@ -466,7 +468,7 @@ const SCEN = [
    {l:'Close Smithsonian entirely with no reroute plan', o:'The crowd stays and the queue compresses. Nine injuries in the crush at the barrier before officers set up the reroute.', fx:{readiness:-9, patients:9}, egress:'closed'}
   ],
   g:'Meter entry and redirect. Crowd crush comes from density, and the fix is spreading the load across stations and across time. Metering protects the platform, which is the real choke point. "Walk or wait" works best when it gives people a reason to wait. Watch L\'Enfant Plaza: the reroute moves the pressure there in about 15 minutes, so have officers and a WMATA supervisor in place first.'},
- {id:'metro', at:()=>S.fwStart + S.fwDur + 48, place:'metro_tunnel', sev:'high', title:'Disabled train under the Mall', esf:['ESF-1 Transportation','ESF-6 Mass Care'],
+ {id:'metro', at:()=>fwEnd() + 48, place:'metro_tunnel', sev:'high', title:'Disabled train under the Mall', esf:['ESF-1 Transportation','ESF-6 Mass Care'],
   sit:'A disabled train is stuck between Federal Triangle and Smithsonian on the Blue/Orange/Silver lines. WMATA is single-tracking with 20+ minute gaps between trains. About 30,000 riders are waiting at three stations and it is still 85°F.',
   q:'Your call',
   opts:[
@@ -485,7 +487,7 @@ const S = {
   stormWarn:T('19:55'), stormArrive:T('20:35'), stormEnd:T('21:05'),
   readiness:92, patients:0, alerts:0, emsTotal:48, emsHold:[], metroAdj:[],
   crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0,
-  log:[], current:null, deep:false
+  log:[], current:null, deep:false, run:0
 };
 
 /* ------------------------------------------------------------------- scene */
@@ -827,7 +829,7 @@ function updateLabels(){
 /* -------------------------------------------------------------- sky/light */
 const SKY = {day:new THREE.Color(0x9cc0e6), gold:new THREE.Color(0xe7a774), dusk:new THREE.Color(0x3f3b6b), night:new THREE.Color(0x0b1426), storm:new THREE.Color(0x3a4350)};
 const skyC = new THREE.Color();
-let lightning = 0;
+let lightning = 0; const FLASH_C = new THREE.Color(0xdde6ff);
 function updateSky(t, dt){
   const rise = 347, set = 1237; const el = Math.sin(Math.PI*(t-rise)/(set-rise)) * 74; // degrees (approx)
   if (el > 14) skyC.copy(SKY.day); else if (el > 2) skyC.copy(SKY.gold).lerp(SKY.day, (el-2)/12); else if (el > -6) skyC.copy(SKY.dusk).lerp(SKY.gold, (el+6)/8); else skyC.copy(SKY.night).lerp(SKY.dusk, clamp((el+12)/6,0,1));
@@ -840,7 +842,7 @@ function updateSky(t, dt){
   MAT.marble.emissive.setRGB(0.42*night, 0.40*night, 0.34*night);
   MAT.stone.emissive.setRGB(0.12*night, 0.11*night, 0.09*night);
   if (sf > 0.3 && Math.random() < dt*0.9) lightning = 0.12;
-  if (lightning > 0){ lightning -= dt; skyC.lerp(new THREE.Color(0xdde6ff), 0.6); hemi.intensity += 1.2; }
+  if (lightning > 0){ lightning -= dt; skyC.lerp(FLASH_C, 0.6); hemi.intensity += 1.2; }
   scene.background = skyC; scene.fog.color.copy(skyC);
   scene.fog.near = lerp(2500, 3500, day) * (1 - sf*0.4); scene.fog.far = lerp(8500, 11000, day) * (1 - sf*0.35);
   return {el, night, sf};
@@ -866,11 +868,11 @@ FEEDS.forEach((f,i) => {
   feedsEl.appendChild(b); f.cv = b.querySelector('canvas'); f.ctx = f.cv.getContext('2d'); f.ts = b.querySelector('[data-ts]'); f.btn = b;
   b.addEventListener('click', () => { if (f.orbit) flyTo(orbitTarget.x, orbitTarget.z, 650); else flyPose(f.pos, f.look); });
 });
-let orbitTarget = {x:0, z:0}, feedFrame = 0, orbitA = 0;
+let orbitTarget = {x:0, z:0}, feedFrame = 0, feedTick = 0, orbitA = 0;
 function renderFeeds(dt, night){
   orbitA += dt*0.25;
   const f4 = FEEDS[3]; f4.cam.position.set(orbitTarget.x + Math.cos(orbitA)*300, 210, orbitTarget.z + Math.sin(orbitA)*300); f4.cam.lookAt(orbitTarget.x, 0, orbitTarget.z);
-  if (!feedR) return;
+  if (!feedR || (feedTick = (feedTick + 1) % 2)) return;
   const f = FEEDS[feedFrame++ % FEEDS.length];
   const mode = f.mode==='ir' ? 'f-ir' : (night > .6 ? (f.orbit ? 'f-ir' : 'f-nv') : '');
   if (f.cv.className !== mode) f.cv.className = mode;
@@ -925,19 +927,19 @@ function updateHud(t){
 /* ------------------------------------------------------------- MSEL + card */
 function renderMsel(){
   const list = SCEN.slice().sort((a,b) => a.at() - b.at());
-  $('#msel').innerHTML = list.map(s => `<li class="st-${s.status==='pending'?'pending':s.status==='done'?'done':'act'} ${S.current===s?'active':''}"><button type="button" data-id="${s.id}"><span class="tm">${fmt(s.at())}</span><span class="tt">${esc(s.title)}<span class="es">${esc(s.esf[0])}${s.scripted ? '' : ' · from the room'}</span></span><span class="chip sev-${s.sev}">${s.sev}</span></button></li>`).join('');
+  $('#msel').innerHTML = list.map(s => `<li class="st-${s.status==='pending'?'pending':(s.status==='done'||s.status==='skipped')?'done':'act'} ${S.current===s?'active':''}"><button type="button" data-id="${s.id}"><span class="tm">${fmt(s.at())}</span><span class="tt">${esc(s.title)}<span class="es">${s.status==='skipped' ? 'Not played: fireworks cancelled' : esc(s.esf[0])}${s.scripted ? '' : ' · from the room'}</span></span><span class="chip sev-${s.sev}">${s.sev}</span></button></li>`).join('');
   $('#mselCount').textContent = 'MSEL · ' + SCEN.length;
   renderTicks();
 }
-$('#msel').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; const sc = SCEN.find(s => s.id === b.dataset.id); if (sc.status === 'pending'){ jumpTo(sc); } else openCard(sc); });
+$('#msel').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; const sc = SCEN.find(s => s.id === b.dataset.id); if (sc.status === 'skipped') return; if (sc.status === 'pending'){ jumpTo(sc); } else openCard(sc); });
 function renderTicks(){
   const rail = $('#rail'); rail.querySelectorAll('.tick,.band').forEach(n => n.remove());
   const pct = t => ((t - S.start) / (S.end - S.start) * 100) + '%';
   const band = (t0,t1,c,title) => { const b = document.createElement('div'); b.className = 'band'; b.style.left = pct(t0); b.style.width = ((t1-t0)/(S.end-S.start)*100)+'%'; b.style.background = c; b.title = title; rail.appendChild(b); };
   band(S.stormArrive, S.stormEnd, '#5e6b85', 'Storm'); if (!S.fwCancelled) band(S.fwStart, S.fwStart+S.fwDur, '#d9ae55', 'Fireworks');
-  SCEN.forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? '#68748e' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
+  SCEN.forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? '#68748e' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='skipped' ? null : s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
 }
-function jumpTo(sc){ S.ff = sc; S.playing = true; setPlayBtn(); }
+function jumpTo(sc){ if (sc.at() <= S.t + 0.01){ S.t = sc.at(); fire(sc); return; } S.ff = sc; S.playing = true; setPlayBtn(); }
 function fire(sc){
   sc.status = 'active'; S.current = sc; S.playing = false; S.ff = null; setPlayBtn();
   addMarker(sc); const p = PLACES[sc.place]; orbitTarget = {x:p.x, z:p.z}; flyTo(p.x, p.z, sc.id==='storm' ? 2600 : 900);
@@ -972,7 +974,7 @@ function decide(sc, i){
   if (o.flow==='clear'){ const p = PLACES[sc.place]; S.clear = {t0:t, x:p.x, z:p.z, zi:[ZI.mall_c, ZI.wamo, ZI.mall_e]}; }
   if (o.cordon) S.cordon = true;
   if (o.storm==='shelter'){ S.shelter = {t0:t, t1:S.stormEnd + 20}; S.fwStart = T('21:54'); S.crowdCut = {t0:S.stormArrive, f:0.72}; }
-  if (o.storm==='evac'){ S.crowdCut = {t0:t, f:0.45}; S.fwCancelled = true; S.fwCancelledAt = t + 1; }
+  if (o.storm==='evac'){ S.crowdCut = {t0:t, f:0.45}; S.fwCancelled = true; S.fwCancelledAt = t + 1; const w = SCEN.find(s => s.id==='water'); if (w && w.status==='pending') w.status = 'skipped'; const eg = SCEN.find(s => s.id==='egress'); if (eg) eg.sit = 'The evacuation order is out. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for the Mall-area stations.'; }
   if (o.storm==='hold'){ S.stormArrive -= 0; }
   if (o.egress){ S.egress = o.egress; S.egressAt = t; }
   if (sc.id==='drone') setTimeout(() => {}, 0);
@@ -986,7 +988,7 @@ function renderOutcome(sc){
   box.innerHTML = `<div class="out"><strong>What happened:</strong> ${esc(o.o)}<div class="fx">${fxChips(o.fx||{})}</div></div>
   <div class="ai" id="crit"><div class="who"><span>${AI.sample ? 'AI advisor' : 'Exercise guidance'}</span><span id="critTag"></span></div><div id="critBody" class="note" style="color:var(--muted)">${AI.sample ? 'Ask the AI to critique this call, live, using the current picture.' : esc(sc.g)}</div></div>
   <div class="row-btns">${AI.sample ? '<button class="btn" type="button" id="critGo">Critique my call</button>' : ''}<button class="btn pri" type="button" id="resume">Resume clock ▶</button></div>`;
-  $('#resume').addEventListener('click', () => { closeCard(); S.playing = true; setPlayBtn(); });
+  $('#resume').addEventListener('click', () => { const act = activeInject(); if (act){ openCard(act); return; } closeCard(); S.playing = true; setPlayBtn(); });
   const cg = $('#critGo'); if (cg) cg.addEventListener('click', () => critique(sc));
   if (sc.critText){ $('#critBody').className = ''; $('#critBody').innerHTML = md(sc.critText); }
 }
@@ -1006,8 +1008,9 @@ function openSite(id){
 
 /* ---------------------------------------------------------------- clock */
 function setPlayBtn(){ const b = $('#play'); b.textContent = S.playing ? '❚❚ Pause' : '▶ Play'; b.setAttribute('aria-label', S.playing ? 'Pause' : 'Play'); }
-$('#play').addEventListener('click', () => { if (S.current && S.current.status==='active'){ openCard(S.current); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
-$('#next').addEventListener('click', () => { if (S.current && S.current.status==='active'){ openCard(S.current); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
+const activeInject = () => SCEN.find(s => s.status==='active');
+$('#play').addEventListener('click', () => { const act = activeInject(); if (act){ openCard(act); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
+$('#next').addEventListener('click', () => { const act = activeInject(); if (act){ openCard(act); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
 $('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
 $('#scrub').addEventListener('input', e => { S.t = +e.target.value; S.ff = null; });
 $('#reset').addEventListener('click', () => resetAll());
@@ -1027,6 +1030,7 @@ function resetAll(){
   if (cordonMesh){ scene.remove(cordonMesh); cordonMesh = null; }
   for (let i = SCEN.length-1; i >= 0; i--) if (!SCEN[i].scripted) SCEN.splice(i,1);
   SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.critText = null; s.doneAt = null; });
+  S.run = (S.run || 0) + 1;
   Object.assign(S, {t:S.start, playing:false, ff:null, fwStart:T('21:09'), fwCancelled:false, readiness:92, patients:0, alerts:0, emsHold:[], metroAdj:[], crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0, log:[], current:null});
   drone.visible = false; capsized.visible = false; closeCard(); $('#site').hidden = true; setPlayBtn(); renderMsel();
   flyTo(350, -80, 3200);
@@ -1087,7 +1091,7 @@ const msgs = $('#msgs'); const turns = [];
 function addMsg(role, text){ const d = document.createElement('div'); d.className = 'msg ' + (role==='u' ? 'u' : 'a'); if (role==='u') d.textContent = text; else d.innerHTML = '<div class="who">AI advisor</div><div class="body">' + md(text) + '</div>'; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; }
 let askCtl = null;
 async function ask(q){
-  q = (q || '').trim(); if (!q) return;
+  q = (q || '').trim(); if (!q || askCtl) return;
   addMsg('u', q); $('#askText').value = '';
   if (!AI.sample){ addMsg('a', 'Live AI is offline in this view. Open this page in Claude to get a live answer. Meanwhile, the guidance on each decision card shows how an experienced planner would think about it.'); return; }
   const d = addMsg('a', ''); const body = d.querySelector('.body'); body.innerHTML = '<span class="thinking">Thinking</span>';
@@ -1098,7 +1102,7 @@ async function ask(q){
     const r = await AI.sample(input, {modelTier:tier(), cache:false, signal:askCtl.signal, onText:({text}) => { body.innerHTML = md(text); msgs.scrollTop = msgs.scrollHeight; }});
     body.innerHTML = md(r.text); turns.push({role:'user', content:q}, {role:'assistant', content:r.text});
   } catch(e){ body.innerHTML = (e && e.text ? md(e.text) : '') + `<p class="note">${esc(aiErr(e))}</p>`; }
-  finally { $('#askStop').hidden = true; $('#askGo').disabled = false; msgs.scrollTop = msgs.scrollHeight; }
+  finally { askCtl = null; $('#askStop').hidden = true; $('#askGo').disabled = false; msgs.scrollTop = msgs.scrollHeight; }
 }
 $('#askGo').addEventListener('click', () => ask($('#askText').value));
 $('#askText').addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); ask($('#askText').value); } });
@@ -1138,7 +1142,7 @@ const FALLBACK_CB = {title:'Water main break floods Constitution Ave', place:'pa
   g:'Close and reroute early. Infrastructure failures become crowd problems when people improvise their own detours. Watch the Federal Triangle Metro entrance, which is downhill from the break.'};
 let cbBusy = false;
 $('#cbGo').addEventListener('click', async () => {
-  const q = $('#cbText').value.trim(); if (!q || cbBusy) return; cbBusy = true; const btn = $('#cbGo'), note = $('#cbNote');
+  const q = $('#cbText').value.trim(); if (!q || cbBusy) return; cbBusy = true; const run = S.run; const btn = $('#cbGo'), note = $('#cbNote');
   btn.disabled = true; btn.textContent = 'Building the inject…';
   let sc = null;
   if (AI.sample){
@@ -1161,6 +1165,7 @@ Exactly 3 options with genuinely different strategies.`;
     } catch(e){ note.textContent = aiErr(e) + ' Using a pre-built inject instead.'; }
   }
   if (!sc){ sc = JSON.parse(JSON.stringify(FALLBACK_CB)); if (!AI.sample) note.textContent = 'Live AI is offline here, so this is a pre-built inject. In Claude, the AI writes one from your exact words.'; }
+  if (run !== S.run){ btn.disabled = false; btn.textContent = 'Generate inject'; cbBusy = false; note.textContent = ''; return; }
   const at = Math.min(S.end - 1, Math.floor(S.t) + 1);
   Object.assign(sc, {id:'cb' + Date.now(), at:() => at, status:'pending', pick:null, scripted:false, q:'Your call'});
   SCEN.push(sc); renderMsel(); fire(sc);
@@ -1194,6 +1199,7 @@ ${L.filter(x => !strong.includes(x)).slice(0,3).map(x => `- ${x.title}: revisit 
 *Generated offline from the exercise log. In Claude, the AI writes a full HSEEP-style report.*`;
 }
 $('#aarBtn').addEventListener('click', async () => {
+  if (aarCtl){ $('#aarModal').hidden = false; return; }
   const modal = $('#aarModal'), body = $('#aarBody'), stat = $('#aarStat'); modal.hidden = false;
   $('#aarSave').hidden = !AI.downloads;
   if (!AI.sample || !S.log.length){ aarText = localAAR(); body.innerHTML = md(aarText); stat.textContent = S.log.length ? 'Built from the exercise log (live AI offline in this view).' : 'Play at least one inject to fill this in.'; return; }
@@ -1211,7 +1217,7 @@ ${S.log.map(x => `${fmt(x.t)} | ${x.title} (${x.sev}) at ${x.place} | chose ${x.
     const r = await AI.sample(input, {modelTier:'default', signal:aarCtl.signal, onText:({text}) => { body.innerHTML = md(text); stat.textContent = 'AI is writing…'; }});
     aarText = r.text; body.innerHTML = md(aarText); stat.textContent = 'Drafted by AI from ' + S.log.length + ' decisions. Review before use.';
   } catch(e){ aarText = localAAR(); body.innerHTML = md(aarText); stat.textContent = aiErr(e) + ' Showing the offline version.'; }
-  finally { $('#aarStop').hidden = true; }
+  finally { aarCtl = null; $('#aarStop').hidden = true; }
 });
 $('#aarStop').addEventListener('click', () => aarCtl && aarCtl.abort());
 $('#aarCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(aarText); $('#aarStat').textContent = 'Copied.'; } catch(e){ const r = document.createRange(); r.selectNodeContents($('#aarBody')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('#aarStat').textContent = 'Text selected. Press Ctrl/Cmd+C to copy.'; } });
@@ -1225,13 +1231,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.que
 /* ------------------------------------------------------------------ loop */
 function resize(){ const w = stage.clientWidth, h = canvas.clientHeight || stage.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(stage); resize();
-let last = performance.now(), acc = 0, tsAcc = 0;
+let last = performance.now(), acc = 0, tsAcc = 0, crowdKey = '';
 function frame(now){
   const dt = Math.min(0.05, (now - last)/1000); last = now;
   if (S.playing) advance(dt);
   const t = S.t;
   const sky = updateSky(t, dt);
-  crowdNow = updateCrowd(t);
+  const ck = t.toFixed(3) + '|' + S.log.length + '|' + (S.current ? S.current.id + S.current.status : '') + '|' + S.run;
+  if (ck !== crowdKey){ crowdKey = ck; crowdNow = updateCrowd(t); }
   const fwOn = !S.fwCancelled && t >= S.fwStart && t <= S.fwStart + S.fwDur;
   updateFireworks(dt, fwOn);
   updateRain(dt, stormFactor(t) > 0.4);
