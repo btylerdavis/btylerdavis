@@ -1,0 +1,1253 @@
+<title>America 250 Mall Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: EOC wall display. Exercise strip + status bar on top; MSEL left, 3D common operating picture center, sensors + AI desk right. */
+  --bg:#0b1220; --panel:#111a2c; --panel-2:#16213a; --line:#24314f; --fg:#e8edf5; --muted:#97a3bb; --dim:#68748e;
+  --brass:#d9ae55; --brass-ink:#1b1408;
+  --crit:#e5484d; --high:#f08a3a; --mod:#e8c547; --ok:#45b883; --info:#5ea8e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--f-body);margin:0}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.app{height:100%;display:grid;grid-template-columns:300px minmax(0,1fr) 340px;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:10px;padding-inline:16px;padding-block:0 12px}
+.exstrip{grid-column:1/-1;margin-inline:-16px;background:repeating-linear-gradient(-45deg,#3a1418 0 10px,#2d1013 10px 20px);color:#ffd9d9;font:600 12px/1 var(--f-mono);letter-spacing:.18em;text-align:center;padding:6px 16px;border-bottom:1px solid #5a2026}
+.exstrip span{color:var(--brass)}
+/* top bar */
+.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.seal{width:40px;height:40px;flex:none}
+.brand h1{margin:0;font:700 26px/1 var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.brand h1 b{color:var(--brass);font-weight:700}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.clock{display:flex;align-items:center;gap:10px;margin-left:auto}
+.clock .t{font:500 30px/1 var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clock .d{font:500 11px/1.2 var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.ctrls{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel-2);border-radius:6px;padding:7px 11px;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:6px;line-height:1.1}
+.btn:hover{border-color:#3a4a70}
+.btn.pri{background:var(--brass);color:var(--brass-ink);border-color:var(--brass);font-weight:600}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.5;cursor:default}
+select.btn{padding-right:6px}
+.hud{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.tile .k{font:600 11px/1.2 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font:500 20px/1.25 var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .s{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.warn .v{color:var(--high)} .tile.bad .v{color:var(--crit)} .tile.good .v{color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:50%;transition:width .4s,background .4s}
+/* panels */
+.col{min-height:0;display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-height:0;display:flex;flex-direction:column}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:10px 12px 6px}
+.ph h2{margin:0;font:700 15px/1 var(--f-display);letter-spacing:.12em;text-transform:uppercase}
+.ph small{color:var(--dim);font:11px var(--f-mono)}
+.msel{list-style:none;margin:0;padding:0 6px 8px;overflow:auto;min-height:0}
+.msel li button{width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:7px 8px;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:start}
+.msel li button:hover{background:var(--panel-2);border-color:var(--line)}
+.msel li.active button{background:#1d2742;border-color:#3a4a70}
+.msel .tm{font:500 12px/1.3 var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1px}
+.msel .tt{font-size:13px;line-height:1.3}
+.msel .es{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+.chip{font:600 10px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border-radius:4px;border:1px solid currentColor;white-space:nowrap}
+.sev-moderate{color:var(--mod)} .sev-high{color:var(--high)} .sev-critical{color:var(--crit)}
+.st-pending .tt{color:var(--muted)}
+.st-done .chip{color:var(--dim)}
+.st-done .tt::after{content:" ✓";color:var(--ok)}
+.curve{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+.curve p{margin:0;color:var(--muted);font-size:12.5px}
+textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;resize:vertical;min-height:40px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.sug{background:transparent;border:1px dashed #33436a;color:var(--muted);border-radius:999px;padding:4px 9px;font-size:12px}
+.sug:hover{color:var(--fg);border-color:var(--brass)}
+.note{font-size:11.5px;color:var(--dim)}
+/* stage */
+.center{min-height:0;display:flex;flex-direction:column;gap:8px}
+.stage{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d1526}
+#c{display:block;width:100%;height:100%;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;pointer-events:auto;white-space:nowrap;transform-origin:0 0;will-change:transform}
+.lbl.lm{font:600 11px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:#f1f4fa;background:rgba(10,16,30,.62);border:1px solid rgba(255,255,255,.14);padding:3px 6px;border-radius:4px;cursor:pointer}
+.lbl.lm:hover{border-color:var(--brass)}
+.lbl.mt{font:600 10px/1 var(--f-mono);color:#fff;background:#6b4e2e;border-radius:3px;padding:3px 5px;cursor:pointer}
+.lbl.inc{font:600 12px/1.15 var(--f-body);color:#fff;padding:5px 8px;border-radius:5px;border-left:4px solid;background:rgba(10,16,30,.86);cursor:pointer;max-width:220px;white-space:normal}
+.lbl.inc small{display:block;font:500 10px/1.2 var(--f-mono);color:var(--muted);margin-top:2px}
+.legend{position:absolute;right:10px;bottom:10px;background:rgba(10,16,30,.8);border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.legend .row{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.wx{position:absolute;left:10px;top:10px;background:rgba(10,16,30,.8);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font:500 11.5px/1.35 var(--f-mono);color:var(--muted);pointer-events:none;max-width:60%}
+.wx b{color:var(--fg);font-weight:500}
+.wx.alert{border-color:var(--crit);color:#ffd2d3}
+/* incident card */
+.card{position:absolute;left:10px;bottom:10px;width:min(440px,calc(100% - 20px));max-height:calc(100% - 60px);overflow:auto;background:rgba(13,20,36,.97);border:1px solid #33436a;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.card .hd{padding:10px 12px 8px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px;position:relative}
+.card .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:500 11.5px var(--f-mono);color:var(--muted)}
+.card h3{margin:0;font:700 22px/1.05 var(--f-display);letter-spacing:.01em;text-wrap:balance;padding-right:28px}
+.card .x{position:absolute;right:8px;top:8px;background:transparent;border:0;color:var(--muted);font-size:18px;padding:2px 6px}
+.card .bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.card .sit{margin:0;font-size:13.5px}
+.esf{display:flex;flex-wrap:wrap;gap:5px}
+.esf span{font:500 10.5px var(--f-mono);color:#bcd7f5;background:#15284a;border-radius:4px;padding:3px 6px}
+.q{font:600 13px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;text-align:left;background:#121c33;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.opt:hover:not(:disabled){border-color:var(--brass)}
+.opt b{font:700 15px/1.2 var(--f-display);color:var(--brass)}
+.opt.pick{border-color:var(--brass);background:#231d10}
+.opt:disabled:not(.pick){opacity:.45}
+.out{background:#0e1730;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px}
+.out .fx{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.out .fx span{font:500 11px var(--f-mono);padding:2px 6px;border-radius:4px;background:#18223b}
+.fx .up{color:var(--ok)} .fx .dn{color:var(--crit)}
+.ai{border:1px solid #3b3220;background:#17140d;border-radius:8px;padding:9px 10px;font-size:13px}
+.ai .who{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--brass);display:flex;justify-content:space-between;gap:8px}
+.ai h3,.ai h4,.ai h5,.ai h6{font:700 14px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 4px;color:var(--fg)}
+.ai p{margin:6px 0} .ai ul,.ai ol{margin:6px 0;padding-left:18px} .ai li{margin:2px 0}
+.row-btns{display:flex;gap:6px;flex-wrap:wrap}
+.thinking{color:var(--muted);font-style:italic}
+.thinking::after{content:"";display:inline-block;width:1.2em;animation:dots 1.2s steps(4) infinite;overflow:hidden;vertical-align:bottom}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.site{position:absolute;right:10px;top:10px;width:min(300px,calc(100% - 20px));background:rgba(13,20,36,.96);border:1px solid #33436a;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.site h4{margin:0;font:700 19px/1.1 var(--f-display);padding-right:24px}
+.site p{margin:0;font-size:12.5px;color:var(--muted)}
+.site .x{position:absolute;right:6px;top:6px;background:transparent;border:0;color:var(--muted);font-size:16px}
+.still{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #3b3220;background:#17140d;border-radius:8px;color:var(--brass);text-decoration:none;font-size:12.5px;font-weight:500}
+.still:hover{border-color:var(--brass)}
+.still small{display:block;color:var(--dim);font-weight:400;font-size:11px}
+/* timeline */
+.tl{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px}
+.tl .rail{position:relative;height:30px}
+.tl input[type=range]{position:absolute;inset:auto 0 0 0;width:100%;margin:0;accent-color:var(--brass);height:18px}
+.tick{position:absolute;top:0;width:3px;height:12px;border-radius:2px;transform:translateX(-1px);border:0;padding:0}
+.band{position:absolute;top:2px;height:8px;border-radius:3px;opacity:.5}
+.tl .scale{display:flex;justify-content:space-between;font:500 10.5px var(--f-mono);color:var(--dim);margin-top:2px}
+/* right column */
+.feeds{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 8px 8px}
+.feed{position:relative;border-radius:6px;overflow:hidden;background:#000;aspect-ratio:16/9;border:1px solid #1f2a44;cursor:pointer;padding:0}
+.feed canvas{width:100%;height:100%;display:block}
+.feed .ov{position:absolute;inset:0;pointer-events:none;font:500 9.5px/1.25 var(--f-mono);color:#e9f0ff;text-shadow:0 1px 2px #000;padding:4px 5px;display:flex;flex-direction:column;justify-content:space-between;text-align:left}
+.feed .ov .r{display:flex;justify-content:space-between;gap:4px}
+.feed .rec{color:#ff6b6b}
+.feed .rec::before{content:"● "}
+.feed:hover{border-color:var(--brass)}
+.f-ir{filter:grayscale(1) contrast(1.55) brightness(1.15)}
+.f-nv{filter:grayscale(1) sepia(1) hue-rotate(52deg) saturate(2.6) brightness(1.15) contrast(1.15)}
+.chat{flex:1;min-height:0}
+.msgs{flex:1;min-height:80px;overflow:auto;padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.msg{font-size:13px}
+.msg.u{align-self:flex-end;background:#1d2742;border-radius:9px 9px 2px 9px;padding:7px 10px;max-width:90%}
+.msg.a{background:#17140d;border:1px solid #3b3220;border-radius:9px;padding:8px 10px}
+.msg.a .who{font:600 10.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--brass);margin-bottom:2px}
+.msg.a h3,.msg.a h4,.msg.a h5,.msg.a h6{font:700 14px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 3px}
+.msg.a p{margin:5px 0} .msg.a ul,.msg.a ol{margin:5px 0;padding-left:18px}
+.ask{padding:8px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.ask .row{display:flex;gap:6px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tog{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.aistat{font:500 11px var(--f-mono);color:var(--dim)}
+.aistat.on{color:var(--ok)}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(4,8,16,.72);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.sheet{background:var(--panel);border:1px solid #33436a;border-radius:12px;width:min(760px,100%);max-height:100%;overflow:auto;padding:18px 20px;position:relative}
+.sheet h2{margin:0 0 4px;font:700 28px/1.05 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.sheet h3{font:700 15px/1.2 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin:16px 0 6px}
+.sheet p,.sheet li{max-width:68ch}
+.sheet .x{position:absolute;right:12px;top:10px;background:transparent;border:0;color:var(--muted);font-size:20px}
+.prompt{font:400 13px/1.55 var(--f-mono);background:#0d1526;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:6px;padding:10px 12px;white-space:pre-wrap}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.steps div{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.steps b{display:block;font:500 20px var(--f-mono);color:var(--brass)}
+.steps span{font-size:12px;color:var(--muted)}
+.aar{font-size:13.5px}
+.aar h3,.aar h4,.aar h5{color:var(--brass)}
+.foot{grid-column:1/-1;color:var(--dim);font-size:11.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:1180px){.app{grid-template-columns:260px minmax(0,1fr) 300px}.hud{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:980px){
+  html,body{height:auto}
+  .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .center{order:1}.right{order:2}.left{order:3}.foot{order:4}
+  .stage{flex:none;height:58vh;min-height:340px}
+  .card{position:static;width:100%;max-height:none;border-radius:0 0 10px 10px}
+  .stage.hascard{height:auto}
+  .stage.hascard #c{height:46vh;min-height:300px}
+  .stage.hascard #labels{bottom:auto;height:46vh;min-height:300px}
+  .clock{margin-left:0}
+  .hud{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .msel{max-height:none}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .brand h1{font-size:22px}
+}
+@media (max-width:480px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}.clock .t{font-size:24px}.legend{display:none}}
+@media (prefers-reduced-motion:reduce){.thinking::after{animation:none;content:"..."}}
+</style>
+
+<div class="app" id="app">
+  <div class="exstrip">EXERCISE · EXERCISE · EXERCISE <span>— fictional tabletop scenario · public information only —</span> EXERCISE · EXERCISE · EXERCISE</div>
+
+  <header class="top">
+    <div class="brand">
+      <svg class="seal" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="none" stroke="#d9ae55" stroke-width="1.5"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#d9ae55" stroke-width=".8" stroke-dasharray="1.5 2"/><path d="M20 8.5l2.7 8.2h8.6l-7 5.1 2.7 8.2-7-5.1-7 5.1 2.7-8.2-7-5.1h8.6z" fill="#d9ae55"/></svg>
+      <div>
+        <h1><b>America 250</b> · National Mall</h1>
+        <p>Common operating picture · Saturday, July 4, 2026 · Washington, DC</p>
+      </div>
+    </div>
+    <div class="clock">
+      <div><div class="d">Exercise time (EDT)</div><div class="t" id="clk">11:30</div></div>
+      <div class="ctrls">
+        <button class="btn pri" id="play" type="button" aria-label="Play">▶ Play</button>
+        <button class="btn" id="next" type="button">⏭ Next inject</button>
+        <select class="btn" id="speed" aria-label="Clock speed">
+          <option value="2">2 min/s</option><option value="5">5 min/s</option><option value="10" selected>10 min/s</option><option value="20">20 min/s</option>
+        </select>
+        <button class="btn ghost" id="reset" type="button">Reset</button>
+        <button class="btn ghost" id="how" type="button">How this was built</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hud" aria-label="Status">
+    <div class="tile" id="h-crowd"><div class="k">Crowd on site</div><div class="v">—</div><div class="s">est. from zone sensors</div></div>
+    <div class="tile" id="h-wx"><div class="k">Heat index</div><div class="v">—</div><div class="s">NWS Sterling</div></div>
+    <div class="tile" id="h-inc"><div class="k">Open incidents</div><div class="v">0</div><div class="s">awaiting decision: 0</div></div>
+    <div class="tile" id="h-pt"><div class="k">Patients treated</div><div class="v">0</div><div class="s">DC FEMS + mutual aid</div></div>
+    <div class="tile" id="h-ems"><div class="k">EMS units free</div><div class="v">—</div><div class="s">of 48 staged</div></div>
+    <div class="tile" id="h-metro"><div class="k">Metro load</div><div class="v">—</div><div class="s">Mall-area stations</div><div class="bar"><i></i></div></div>
+    <div class="tile" id="h-ready"><div class="k">Readiness</div><div class="v">92</div><div class="s">exercise score / 100</div><div class="bar"><i></i></div></div>
+  </section>
+
+  <aside class="col left">
+    <section class="panel" style="flex:1;min-height:0">
+      <div class="ph"><h2>Scenario injects</h2><small id="mselCount">MSEL · 9</small></div>
+      <ul class="msel" id="msel"></ul>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Throw a curveball</h2><small>live AI</small></div>
+      <div class="curve">
+        <p>Ask the room for a what-if. The AI builds it into the exercise and puts it on the map.</p>
+        <textarea id="cbText" rows="2" placeholder="What if a water main breaks on Constitution Ave at 8 pm?"></textarea>
+        <div class="chips" id="cbSug"></div>
+        <button class="btn pri" id="cbGo" type="button">Generate inject</button>
+        <div class="note" id="cbNote"></div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="center">
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="3D model of the National Mall"></canvas>
+      <div id="labels"></div>
+      <div class="wx" id="wx"></div>
+      <div class="legend" aria-hidden="true">
+        <div class="row"><i style="background:#7fdcff"></i>Crowd: comfortable</div>
+        <div class="row"><i style="background:#ffc93c"></i>Crowd: dense</div>
+        <div class="row"><i style="background:#ff3d47"></i>Crowd: critical density</div>
+        <div class="row" style="color:#6b7894">Drag to orbit · scroll/pinch to zoom</div>
+      </div>
+      <div class="site" id="site" hidden></div>
+      <div class="card" id="card" hidden></div>
+    </div>
+    <div class="tl">
+      <div class="rail" id="rail"><input type="range" id="scrub" min="690" max="1410" step="1" value="690" aria-label="Exercise timeline"></div>
+      <div class="scale"><span>11:30</span><span>14:00</span><span>16:30</span><span>19:00</span><span>21:30</span><span>23:30</span></div>
+    </div>
+  </main>
+
+  <aside class="col right">
+    <section class="panel">
+      <div class="ph"><h2>Sensor feeds</h2><small>simulated · tap to fly</small></div>
+      <div class="feeds" id="feeds"></div>
+    </section>
+    <section class="panel chat">
+      <div class="ph"><h2>Ask the AI</h2><span class="aistat" id="aiStat">connecting…</span></div>
+      <div class="msgs" id="msgs"></div>
+      <div class="ask">
+        <div class="chips" id="askSug"></div>
+        <textarea id="askText" rows="2" placeholder="Thunderstorm 20 minutes out and 500k on the Mall. What do I do?"></textarea>
+        <div class="row">
+          <label class="tog"><input type="checkbox" id="deep"> Deeper analysis (slower)</label>
+          <div class="row-btns"><button class="btn" id="askStop" type="button" hidden>Stop</button><button class="btn pri" id="askGo" type="button">Ask</button></div>
+        </div>
+      </div>
+    </section>
+    <button class="btn pri" id="aarBtn" type="button" style="justify-content:center;padding:10px">Generate after-action report</button>
+  </aside>
+
+  <footer class="foot">
+    <span>Fictional exercise built on public information. Not an operational tool. Aerial stills are AI-generated and labeled as simulated.</span>
+    <span>Built with Claude</span>
+  </footer>
+</div>
+
+<div class="modal" id="howModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <button class="x" type="button" data-close aria-label="Close">✕</button>
+    <h2 id="howTitle">How this was built</h2>
+    <p style="color:var(--muted);margin:0">One request typed during the meeting. Everything on this page came back from it.</p>
+    <h3>The request</h3>
+    <div class="prompt">Build me a 3D model of America 250 event over the 4th of July in DC with lots of event scenarios, scans of places in DC of the event, etc.
+
+Interview answers: AI as a thinking partner + "my team could do this" · ready by the next break · live exercise framing · Ask-the-AI, after-action report, aerial stills · make it interactive.</div>
+    <h3>The receipt</h3>
+    <div class="steps">
+      <div><b>22 min</b><span>request to working model (3:53 PM → 4:15 PM ET)</span></div>
+      <div><b>1,250</b><span>lines of code written by AI</span></div>
+      <div><b>9 + ∞</b><span>scripted injects, plus any what-if the room invents</span></div>
+      <div><b>9</b><span>AI-generated aerial stills</span></div>
+    </div>
+    <h3>What the AI did</h3>
+    <ul>
+      <li>Modeled the Mall from public geography: 20+ landmarks, ~800 city blocks of buildings, the Potomac, Metro stations, a crowd model of ~16,000 tracked points.</li>
+      <li>Wrote a 9-inject master scenario events list (MSEL) spanning ESF-1, 6, 8, 9, 12, 13 and 15, each with a decision point, consequences and guidance.</li>
+      <li>Wired a live AI advisor into the page: it answers questions with the current exercise picture, critiques each decision, invents new injects on request, and drafts the after-action report.</li>
+      <li>Independent AI reviewers checked the scenarios for realism and tested the page on desktop and phone before it was shared.</li>
+    </ul>
+    <h3>What it would take for your city</h3>
+    <p>Swap the map footprint and the event, keep the engine. Your venues, your MSEL, your ESF structure. A first version is a working session, not a procurement.</p>
+  </div>
+</div>
+
+<div class="modal" id="aarModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="aarTitle">
+    <button class="x" type="button" data-close aria-label="Close">✕</button>
+    <h2 id="aarTitle">After-action report</h2>
+    <p class="aistat" id="aarStat" style="margin:0"></p>
+    <div class="aar ai" id="aarBody" style="margin-top:10px"></div>
+    <div class="row-btns" style="margin-top:12px">
+      <button class="btn" id="aarCopy" type="button">Copy text</button>
+      <button class="btn" id="aarSave" type="button" hidden>Download .md</button>
+      <button class="btn" id="aarStop" type="button" hidden>Stop</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t) => a + (b-a)*t;
+const ease = t => t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+const T = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+const fmt = m => { m = Math.floor(m + 1e-6); return String(Math.floor(m/60)%24).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(1776);
+function keyed(keys, t){ if (t <= keys[0][0]) return keys[0][1]; for (let i=1;i<keys.length;i++){ if (t <= keys[i][0]){ const [t0,v0] = keys[i-1], [t1,v1] = keys[i]; return lerp(v0, v1, (t-t0)/(t1-t0)); } } return keys[keys.length-1][1]; }
+
+/* ------------------------------------------------------------------ places */
+const IMG = 'https://d8j0ntlcm91z4.cloudfront.net/user_3ElygVjTX24E5NzAtPDUPVlTTIu/';
+const STILLS = {
+  mall: IMG+'hf_20261007_195450_ca989dc7-255b-4286-babc-e65974fb6640.png',
+  lincoln: IMG+'hf_20261007_195415_9ab8b223-064d-4b03-969f-7c1a10d6a18d.png',
+  metro: IMG+'hf_20261007_195414_738fbd9e-0fcf-47f8-9b67-bd43b08a9c12.png',
+  capitol: IMG+'hf_20261007_195415_1a718207-8163-4d4d-8cec-fa8b3c09eafb.png',
+  wamo: IMG+'hf_20261007_195414_2fcf0d8f-10fe-4e82-bd24-0e08b5e91814.png',
+  ellipse: IMG+'hf_20261007_195415_1045661e-5e5e-4cac-ad61-fef8f77a4875.png',
+  tidal: IMG+'hf_20261007_195414_1c8a0b97-c1be-4392-937a-85c40e3981c2.png',
+  river: IMG+'hf_20261007_195414_a2f4a075-ae5b-4efb-b5d1-9875ef95db0c.png',
+  thermal: IMG+'hf_20261007_195415_3a773cec-cb21-44af-819f-c1761023637b.png'
+};
+// World frame: meters, origin at the Washington Monument, +x east, +z south.
+const PLACES = {
+  mall:{name:'National Mall (9th St)', x:950, z:-50, still:'mall', zone:'mall_c', d:'Central Mall between 14th and 7th St. Smithsonian Folklife Festival tents and the main crowd field.'},
+  wamo:{name:'Washington Monument Grounds', x:0, z:0, y:175, still:'wamo', zone:'wamo', d:'Highest-density viewing area for the fireworks. Cooling tent and casualty collection point at 15th & Jefferson.'},
+  lincoln:{name:'Lincoln Memorial', x:-1292, z:22, y:35, still:'lincoln', zone:'lincoln', d:'West anchor of the Mall. Steps fill early; primary EMS staging for the river side.'},
+  pool:{name:'Reflecting Pool', x:-870, z:20, still:'lincoln', zone:'pool', d:'Fireworks launch area on both sides of the pool. Crowd held back by the safety perimeter.'},
+  wwii:{name:'WWII Memorial', x:-451, z:15, y:15, still:'lincoln', zone:'pool', d:'Between the Monument and the Reflecting Pool. Natural pinch point for east-west movement.'},
+  capitol:{name:'U.S. Capitol · West Lawn', x:2120, z:-44, y:95, still:'capitol', zone:'capitol', d:'Evening concert on the West Lawn, 20:00–21:30. Capitol Police jurisdiction.'},
+  whitehouse:{name:'White House', x:-104, z:-910, y:30, still:'ellipse', zone:'ellipse', d:'Secret Service perimeter. The Ellipse to the south is a ticketed viewing area.'},
+  ellipse:{name:'The Ellipse', x:-104, z:-488, still:'ellipse', zone:'ellipse', d:'Screening entry for the Ellipse viewing area, backed by the 15th and 17th St checkpoints.'},
+  checkpoint17:{name:'17th St & Constitution checkpoint', x:-364, z:-290, still:'ellipse', zone:'wamo', d:'Primary screening point for the west Monument Grounds. Queue capacity about 10,000.'},
+  jefferson:{name:'Jefferson Memorial', x:-104, z:899, y:40, still:'tidal', zone:'tidal', d:'South side of the Tidal Basin. Overflow viewing and family areas.'},
+  tidal:{name:'Tidal Basin', x:-330, z:560, still:'tidal', zone:'tidal', d:'Waterfront walkways ring the basin. Narrow paths, limited vehicle access.'},
+  castle:{name:'Smithsonian Castle', x:806, z:105, y:50, still:'mall', zone:'mall_c', d:'Folklife Festival hub and family reunification point.'},
+  nmnh:{name:'Natural History Museum', x:800, z:-215, y:50, still:'mall', zone:'mall_c', d:'Designated cooling center and storm shelter. About 9,000 capacity.'},
+  smithsonian_metro:{name:'Smithsonian Metro', x:607, z:50, still:'metro', zone:'mall_c', metro:true, d:'Busiest station after the fireworks. Mall-side entrance on Jefferson Dr.'},
+  fedtri_metro:{name:'Federal Triangle Metro', x:615, z:-410, still:'metro', metro:true, d:'Blue/Orange/Silver. Alternate for the north half of the crowd.'},
+  lenfant_metro:{name:"L'Enfant Plaza Metro", x:1160, z:520, still:'metro', metro:true, d:'Five-line transfer station. Main relief valve for Smithsonian.'},
+  archives_metro:{name:'Archives Metro', x:1162, z:-455, still:'metro', metro:true, d:'Green/Yellow. Relief for the east Mall.'},
+  metro_tunnel:{name:'Metro tunnel · Fed Triangle–Smithsonian', x:611, z:-180, still:'metro', d:'Blue/Orange/Silver tunnel under the Mall.'},
+  fedtriangle:{name:'Federal Triangle', x:700, z:-470, still:'mall', d:'Federal office blocks between Constitution and Pennsylvania Ave.'},
+  parade:{name:'Constitution Ave parade route', x:1000, z:-277, still:'mall', zone:'parade', d:'National Independence Day Parade, 7th to 17th St, from 11:45.'},
+  memorial_bridge:{name:'Arlington Memorial Bridge', x:-1850, z:290, y:20, still:'river', d:'Potomac crossing to Virginia. Boats anchor here for the fireworks.'},
+  potomac:{name:'Potomac River', x:-1950, z:60, still:'river', d:'More than 200 recreational boats on the water for the fireworks.'},
+  union:{name:'Union Station', x:2514, z:-866, y:35, still:'metro', d:'Rail hub. Alternate egress for the east side.'},
+  pentagon:{name:'Pentagon', x:-1820, z:1950, y:40, still:'river', d:'Across the river in Arlington.'},
+  kennedy:{name:'Kennedy Center', x:-1700, z:-690, y:40, still:'river', d:'Riverfront overflow viewing.'}
+};
+
+/* --------------------------------------------------------------- scenarios */
+const SCEN = [
+ {id:'child', at:()=>T('12:15'), place:'castle', sev:'moderate', title:'Lost child at the Folklife Festival', esf:['ESF-6 Mass Care','ESF-13 Public Safety'],
+  sit:'A 6-year-old was separated from family near the Folklife Festival tents by the Smithsonian Castle 12 minutes ago. The parent is at the 12th St info tent. About 38,000 people are in the area as the parade crowd drifts onto the Mall.',
+  q:'Your call',
+  opts:[
+   {l:'Activate the pre-planned reunification point at the Castle and broadcast a description on all radio channels and to NPS volunteers', o:'Child found in 18 minutes at the Air and Space entrance by a Park Police officer working from the radio description. Reunited at the designated point.', fx:{readiness:3}},
+   {l:'Push a public alert with the child\'s photo to everyone on the Mall', o:'Child found in 25 minutes, but the photo spreads on social media and brings 40 "sighting" calls that tie up dispatch. Public child-photo alerts need a policy decision before the event, not during it.', fx:{readiness:-1, alerts:1}},
+   {l:'Close the Mall exits until the child is found', o:'Not possible on an open Mall with 100,000+ people. The attempt creates bottlenecks at the 7th and 14th St crossings. Child found in 31 minutes.', fx:{readiness:-6}}
+  ],
+  g:'Go with the reunification point. It is a planned capability, not an improvisation, and a staffed point plus a radio description resolves most cases in under 30 minutes. Keep mass public alerts for confirmed abductions. Watch for a second wave of separations right after the fireworks, when lost-child reports jump. Have staff at the reunification point before the show ends.'},
+ {id:'heat', at:()=>T('13:40'), place:'wamo', sev:'high', title:'Heat casualties surge at the Monument Grounds', esf:['ESF-8 Health & Medical','ESF-6 Mass Care'],
+  sit:'Heat index 104°F. DC Fire & EMS has treated 23 heat patients at the Monument Grounds in 40 minutes, 2 of them critical. The cooling tent at 15th & Jefferson is full. Ambulance turnaround is up to 22 minutes and about 190,000 people are already holding spots for the fireworks.',
+  q:'Your call',
+  opts:[
+   {l:'Surge medical: open a second casualty collection point and call regional mutual-aid ambulances', o:'Turnaround drops to 12 minutes. Patient count keeps rising, because nothing reduced how many people are in the sun.', fx:{readiness:1, patients:14, ems:-4}},
+   {l:'Cut exposure: heat advisory to phones and PA, open Smithsonian lobbies as cooling centers, add water stations and misting buses', o:'New heat calls drop about 40% within the hour. Museums absorb about 9,000 people. EMS stays stretched for the critical patients.', fx:{readiness:5, patients:6, alerts:1, ems:3}, flow:'cool'},
+   {l:'Hold posture and push hydration reminders through the event app', o:'Calls keep climbing. By 15:00 there are 2 more critical patients and ambulances are being pulled off the parade route.', fx:{readiness:-8, patients:31, ems:10}}
+  ],
+  g:'Cut exposure first, then surge medical if critical calls continue. Treating patients does not reduce how many people get sick; getting them out of the sun and onto water does. The museums are air-conditioned, already staffed and right on the Mall. Watch for a second heat peak around 16:00–17:00 among people who held their spots all afternoon. Pre-position cooling near the Reflecting Pool.'},
+ {id:'drone', at:()=>T('15:30'), place:'mall', sev:'high', title:'Unauthorized drone over the Mall', esf:['ESF-13 Public Safety','ESF-15 External Affairs'],
+  sit:'A small consumer drone is hovering about 120 m over the Mall near 9th St, inside restricted airspace. Federal partners have it on detection; the operator is not yet located. About 160,000 people are below and posts asking "is this a threat?" are spreading.',
+  q:'Your call',
+  opts:[
+   {l:'Federal lead handles the drone; Park Police and MPD sweep for the operator; draft a public message and hold it', o:'Operator found in 14 minutes, a tourist who did not know about the restriction. Drone landed. The rumor fades without a public message.', fx:{readiness:4}},
+   {l:'Clear the area under the drone now', o:'Moving 40,000 people with no clear reason causes a push at the 12th St crossing and 3 minor injuries. The drone was harmless.', fx:{readiness:-5, patients:3}, flow:'clear'},
+   {l:'Post a public message right away: "Authorities are aware of a drone"', o:'It calms some speculation but draws more attention and filming. The wording was fine; the timing came before the facts.', fx:{readiness:-1, alerts:1}}
+  ],
+  g:'Let the federal lead handle the drone itself; the local job is finding the operator and controlling information. With no sign of a threat, moving a crowd is a bigger risk than a hovering drone. Draft and approve the public message now, but hold it until the facts are known. Watch for a second drone and copycat flights after 20:00 when the crowd peaks.'},
+ {id:'package', at:()=>T('17:10'), place:'checkpoint17', sev:'high', title:'Unattended bag at the 17th St checkpoint', esf:['ESF-13 Public Safety','ESF-15 External Affairs'],
+  sit:'Screening staff at 17th St & Constitution Ave report an unattended backpack against the fence line. About 8,000 people are in the queue and it is growing by about 300 a minute ahead of the evening program.',
+  q:'Your call',
+  opts:[
+   {l:'Cordon the bag, close this checkpoint and redirect the line to 15th St and the Ellipse; bomb squad responds', o:'Line rerouted in 9 minutes. The bag is cleared after 38 minutes: a lost backpack with a jacket and snacks. The checkpoint reopens at 17:55.', fx:{readiness:4}, cordon:true},
+   {l:'Hold the queue in place while the bag is examined', o:'8,000 people stay inside the hazard area for 38 minutes and the line grows to 12,000. Had the bag been real, that exposure would have been unacceptable.', fx:{readiness:-7}},
+   {l:'Evacuate the entire Monument Grounds', o:'Moving 150,000 people for one unattended bag creates crush points at 14th St and costs public trust in later instructions.', fx:{readiness:-5, patients:5}, flow:'clear'}
+  ],
+  g:'Cordon, move people away, and keep the rest of the venue running. That is standard unattended-item practice. The key move is rerouting the queue, because a stalled line of 8,000 is a crowd-safety problem on its own. Watch for the redirected line arriving at 15th St. That checkpoint should sweep its own area before the crowd gets there.'},
+ {id:'power', at:()=>T('18:45'), place:'fedtriangle', sev:'moderate', title:'Power outage in Federal Triangle', esf:['ESF-12 Energy','ESF-1 Transportation'],
+  sit:'Pepco reports a feeder failure. Signals are dark on Constitution Ave from 9th to 15th St. The Natural History Museum, a designated cooling center and storm shelter, is on generator at reduced capacity. Federal Triangle Metro is on emergency lighting. Restoration estimate: 90 minutes.',
+  q:'Your call',
+  opts:[
+   {l:'Officers on the dark intersections, Pepco prioritizes the museum, and shelter capacity shifts to American History and Air and Space', o:'Intersections staffed in 20 minutes. The shelter plan is rebuilt before the storm forecast turns into a warning.', fx:{readiness:4}},
+   {l:'Close Constitution Ave to all vehicles', o:'Safe for pedestrians, but ambulance routing gets harder and transports off the Mall take 6 minutes longer.', fx:{readiness:1, ems:2}},
+   {l:'Wait for Pepco\'s 90-minute restoration', o:'Restoration takes 2.5 hours. Natural History is not ready as a shelter when the storm arrives.', fx:{readiness:-7}}
+  ],
+  g:'Treat this as a shelter-capacity problem, not just a traffic problem. The outage is manageable on its own; the real risk is that it takes out a shelter site two hours before likely storms. Watch the NWS timing. If a warning comes, the shelter plan has to already account for the lost capacity.'},
+ {id:'storm', at:()=>T('19:55'), place:'wamo', sev:'critical', title:'Severe Thunderstorm Warning, fireworks at risk', esf:['ESF-15 External Affairs','ESF-13 Public Safety','ESF-6 Mass Care'],
+  sit:'NWS issues a Severe Thunderstorm Warning: a line of storms with 60 mph gusts and frequent lightning, reaching the Mall about 20:35. Lightning is already within 10 miles. About 520,000 people are on site, the concert is underway, and the fireworks are set for 21:09.',
+  q:'Your call',
+  opts:[
+   {l:'Shelter now: stop the program, alert every phone and PA, open museums and federal lobbies, delay fireworks 45 minutes', o:'About 140,000 people get into buildings and the rest move to cars, Metro and nearby structures. The storm passes by 21:05. Fireworks launch at 21:54 to a smaller, safe crowd.', fx:{readiness:7, patients:4, alerts:1}, storm:'shelter'},
+   {l:'Evacuate the Mall now and cancel the fireworks', o:'Clearing 520,000 people in 40 minutes overwhelms Metro. Thousands are still in the open when the gust front hits, and stations become the crush points.', fx:{readiness:-3, patients:12, metro:35}, storm:'evac'},
+   {l:'Hold, keep the program running, and monitor', o:'The gust front hits with people on open grass. Tents collapse, 2 lightning injuries and 25 others, and an uncontrolled rush to the Metro.', fx:{readiness:-15, patients:27, ems:12}, storm:'hold'}
+  ],
+  g:'Shelter close by and delay the show. With lightning inside 10 miles and 40 minutes of lead time, nearby shelter beats evacuation, and moving half a million people through four Metro stations in 40 minutes is not possible. Keep the message simple, send it on every channel, and repeat it. Watch the all-clear: wait 30 minutes after the last lightning, then expect a rush back to the Mall.'},
+ {id:'water', at:()=>S.fwStart + 11, place:'memorial_bridge', sev:'high', title:'Boat capsized off Memorial Bridge', esf:['ESF-9 Search & Rescue','ESF-8 Health & Medical'],
+  sit:'During the fireworks, a 19-ft recreational boat anchored off Memorial Bridge capsizes after being swamped by wakes. Five people are in the water and two are not yet accounted for. More than 200 boats are on the river.',
+  q:'Your call',
+  opts:[
+   {l:'Launch MPD Harbor Patrol, DC Fire boats and the Coast Guard; declare a no-wake zone; stage river EMS at the Lincoln Memorial', o:'All five recovered within 16 minutes, one in critical condition. The no-wake order prevents a second capsizing.', fx:{readiness:5, patients:5, ems:2}},
+   {l:'Stop the fireworks so the river is lit for the search', o:'The pause helps the search, but 500,000 people take it as the end of the show and start leaving at once, overlapping the rescue with an unplanned egress.', fx:{readiness:-3, metro:15}},
+   {l:'Ask nearby boaters to assist', o:'Good Samaritans pull out three people, but two more boats crowd in and another person goes into the water.', fx:{readiness:-5, patients:6}}
+  ],
+  g:'Get the right boats in and control the environment with a no-wake zone so the incident does not multiply. Do not stop the show unless it is interfering with the rescue; the crowd effects on land are bigger than the gain. Watch for the egress starting in about 10 minutes. River EMS staging must not block the Lincoln Memorial exit routes.'},
+ {id:'egress', at:()=>S.fwStart + S.fwDur + 13, place:'smithsonian_metro', sev:'critical', title:'Crowd surge at Smithsonian Metro', esf:['ESF-1 Transportation','ESF-13 Public Safety'],
+  sit:'The fireworks are over. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for four stations.',
+  q:'Your call',
+  opts:[
+   {l:'Meter entry: close Smithsonian to entry, redirect to L\'Enfant Plaza and Federal Triangle with officers, signage and PA; tell people "walk or wait"; WMATA adds trains', o:'The surge eases in 12 minutes. The walk to L\'Enfant adds 15 minutes but there are no injuries. Telling people trains run until 2:00 slows the rush.', fx:{readiness:6, metro:-18}, egress:'redirect'},
+   {l:'Open all fare gates to speed people through', o:'People reach the platform faster, which makes the platform overcrowding worse. The choke point is the platform, not the gates.', fx:{readiness:-4, metro:12, patients:4}, egress:'gates'},
+   {l:'Close Smithsonian entirely with no reroute plan', o:'The crowd stays and the queue compresses. Nine injuries in the crush at the barrier before officers set up the reroute.', fx:{readiness:-9, patients:9}, egress:'closed'}
+  ],
+  g:'Meter entry and redirect. Crowd crush comes from density, and the fix is spreading the load across stations and across time. Metering protects the platform, which is the real choke point. "Walk or wait" works best when it gives people a reason to wait. Watch L\'Enfant Plaza: the reroute moves the pressure there in about 15 minutes, so have officers and a WMATA supervisor in place first.'},
+ {id:'metro', at:()=>S.fwStart + S.fwDur + 48, place:'metro_tunnel', sev:'high', title:'Disabled train under the Mall', esf:['ESF-1 Transportation','ESF-6 Mass Care'],
+  sit:'A disabled train is stuck between Federal Triangle and Smithsonian on the Blue/Orange/Silver lines. WMATA is single-tracking with 20+ minute gaps between trains. About 30,000 riders are waiting at three stations and it is still 85°F.',
+  q:'Your call',
+  opts:[
+   {l:'Request a bus bridge (WMATA, Circulator, charters), point riders to Red Line stations, push real-time updates', o:'First buses arrive in 25 minutes. Platforms are below capacity within the hour.', fx:{readiness:5, metro:-12}},
+   {l:'Hold riders at street level and meter platform entry', o:'Prevents a platform crush, but crowds build on the street and need water, restrooms and information.', fx:{readiness:2, metro:-5}},
+   {l:'Tell riders to walk to Metro Center and Gallery Place', o:'Moves the problem: Metro Center is over capacity within 30 minutes.', fx:{readiness:-3, metro:6}}
+  ],
+  g:'Bus bridge plus metering. This is a long event, not a short one, so take care of people while they wait (water, restrooms, information) and protect the platforms. Watch the late-night tail: riders who cannot get home after 23:00 become a mass care issue. Identify a cooling shelter and a rideshare staging zone now.'}
+];
+SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.scripted = true; });
+
+/* ------------------------------------------------------------------- state */
+const S = {
+  t:T('11:30'), start:T('11:30'), end:T('23:30'), playing:false, speed:10, ff:null,
+  fwStart:T('21:09'), fwDur:18, fwCancelled:false,
+  stormWarn:T('19:55'), stormArrive:T('20:35'), stormEnd:T('21:05'),
+  readiness:92, patients:0, alerts:0, emsTotal:48, emsHold:[], metroAdj:[],
+  crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0,
+  log:[], current:null, deep:false
+};
+
+/* ------------------------------------------------------------------- scene */
+const canvas = $('#c'), stage = $('#stage');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x9cbbe0, 3500, 11000);
+const camera = new THREE.PerspectiveCamera(42, 1, 5, 30000);
+camera.position.set(-1900, 1500, 2100);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.target.set(350, 0, -80);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI*0.47; controls.minDistance = 90; controls.maxDistance = 9000;
+const hemi = new THREE.HemisphereLight(0xe3ecf7, 0x404a38, 0.85);
+const sun = new THREE.DirectionalLight(0xffffff, 0.85); sun.position.set(-2500, 3000, 1800);
+const flash = new THREE.PointLight(0xffffff, 0, 2600, 1.6); flash.position.set(-850, 250, 20);
+scene.add(hemi, sun, flash);
+
+const lam = c => new THREE.MeshLambertMaterial({color:c});
+const MAT = {
+  land:lam(0x4b5544), grass:lam(0x557a43), lawn:lam(0x5f8a4a), path:lam(0xa8a08a), road:lam(0x34373e),
+  water:new THREE.MeshPhongMaterial({color:0x285a7e, shininess:90, specular:0x9ab8d8}),
+  marble:lam(0xe6e1d4), stone:lam(0xc9bfac), red:lam(0x8c4535), bronze:lam(0x86643f), dark:lam(0x55524c),
+  bldg:new THREE.MeshLambertMaterial({color:0xffffff}), tree:lam(0x355f34), tent:lam(0xf2f2ee), metro:lam(0x7a5530)
+};
+const UP = new THREE.Vector3(0,1,0);
+function flat(geo, mat, y){ const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI/2; m.position.y = y; scene.add(m); return m; }
+function rect(x0,x1,z0,z1,mat,y){ const m = flat(new THREE.PlaneGeometry(x1-x0, z1-z0), mat, y); m.position.x = (x0+x1)/2; m.position.z = (z0+z1)/2; return m; }
+function ell(cx,cz,rx,rz,mat,y){ const m = flat(new THREE.CircleGeometry(1,64), mat, y); m.position.x = cx; m.position.z = cz; m.scale.set(rx, rz, 1); return m; }
+function poly(pts, mat, y){ const sh = new THREE.Shape(); pts.forEach(([x,z],i) => i ? sh.lineTo(x,-z) : sh.moveTo(x,-z)); return flat(new THREE.ShapeGeometry(sh), mat, y); }
+function box(x,z,w,h,d,mat,y0=0,ry=0){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); m.position.set(x, y0+h/2, z); m.rotation.y = ry; scene.add(m); return m; }
+function cyl(x,z,rt,rb,h,mat,y0=0,seg=32){ const m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg), mat); m.position.set(x, y0+h/2, z); scene.add(m); return m; }
+function road(x0,z0,x1,z1,w,y=0.35,mat=MAT.road){ const dx=x1-x0, dz=z1-z0, L=Math.hypot(dx,dz); const m = new THREE.Mesh(new THREE.BoxGeometry(L,0.5,w), mat); m.position.set((x0+x1)/2, y, (z0+z1)/2); m.rotation.y = -Math.atan2(dz,dx); scene.add(m); return m; }
+
+// ground, river, water
+flat(new THREE.PlaneGeometry(26000,26000), MAT.land, 0);
+const eastBank = [[-2150,-4200],[-1900,-2200],[-1800,-1200],[-1840,-650],[-1640,-200],[-1570,250],[-1450,650],[-1250,1050],[-950,1450],[-700,1750],[-450,2200],[-200,2900],[100,4200]];
+const westBank = [[-2950,-4200],[-2650,-2200],[-2450,-1200],[-2380,-650],[-2280,-200],[-2180,250],[-2060,650],[-1860,1050],[-1580,1450],[-1330,1750],[-1080,2200],[-850,2900],[-600,4200]];
+poly(eastBank.concat(westBank.slice().reverse()), MAT.water, 0.6);
+poly([[110,980],[240,960],[640,2300],[500,2340]], MAT.water, 0.6); // Washington Channel
+ell(-330,560,300,230,MAT.water,0.6); // Tidal Basin
+// lawns
+rect(295,1734,-140,40,MAT.grass,0.4); rect(295,1734,-152,-140,MAT.path,0.42); rect(295,1734,40,52,MAT.path,0.42);
+ell(0,-10,285,250,MAT.lawn,0.4);
+rect(-1180,-300,-270,-40,MAT.grass,0.38); rect(-1300,-300,40,430,MAT.grass,0.38); rect(-1300,-560,-40,40,MAT.lawn,0.39);
+ell(-104,-488,190,160,MAT.lawn,0.41); rect(-300,90,-880,-670,MAT.lawn,0.41); rect(-260,50,-1100,-990,MAT.grass,0.41);
+rect(1760,2560,-330,250,MAT.lawn,0.4); poly([[-600,880],[110,980],[500,2340],[-450,2200]], MAT.grass, 0.35);
+rect(-2900,-2050,-400,1100,lam(0x4a6a3e),0.3); // Arlington
+rect(-1180,-560,8,32,MAT.water,0.7); rect(1810,1960,-75,-13,MAT.water,0.7); ell(-451,15,50,38,MAT.water,0.7);
+// roads
+const N0=-1900, S0=1400;
+road(-1560,-277,3600,-277,32); road(-1350,205,3600,205,30); road(295,N0,295,950,32); road(295,950,-680,2350,28); road(165,N0,165,-277,26); road(-364,N0,-364,205,26);
+road(2080,-330,165,-830,30); road(-430,-1000,-1250,-1380,26); road(-1560,130,-2160,450,30,6,MAT.stone); // Memorial Bridge deck
+[-1450,-1250,-1050,-860,-680,-530,450,607,740,869,1000,1162,1300,1450,1600,1734,1900,2050].forEach(x => road(x,N0,x,-277,18));
+[607,869,1162,1450,1734,2050].forEach(x => road(x,205,x,900,18));
+[-470,-640,-800,-960].forEach(z => { road(-1650,z,-364,z,16); road(165,z,3600,z,16); });
+[-1120,-1280,-1440,-1600,-1760].forEach(z => road(-1650,z,3600,z,16));
+[360,520,700,880].forEach(z => road(300,z,2400,z,16));
+for (let x=2450; x<3600; x+=150) road(x,-1800,x,900,14);
+for (let z=-700; z<900; z+=140) road(2400,z,3600,z,12);
+
+// procedural city (instanced)
+const inst = []; // [x,z,w,d,h,color]
+function inExcl(x,z){
+  if (x>-400 && x<190 && z>-1120 && z<-270) return true;   // President's Park + Ellipse
+  if (z>-270 && z<230 && x>-1600 && x<3000) return true;     // Mall + Monument + pool band
+  if (x>1760 && x<2600 && z>-340 && z<260) return true;      // Capitol grounds
+  if (x<-380 && z>230) return true;                          // West Potomac Park / basin
+  if (x>-1900 && x<-1550 && z>-760 && z<-600) return true;   // Kennedy Center
+  return false;
+}
+function fillBlock(x0,x1,z0,z1,hmin,hmax,maxN){
+  const w = x1-x0, d = z1-z0; if (w<20 || d<20) return;
+  const n = 1 + Math.floor(R()*maxN);
+  if (n===1){ inst.push([(x0+x1)/2,(z0+z1)/2,w*0.86,d*0.86,lerp(hmin,hmax,R())]); return; }
+  const split = w>d; const k = n;
+  for (let i=0;i<k;i++){
+    const a = i/k, b = (i+1)/k;
+    if (split) inst.push([lerp(x0,x1,(a+b)/2),(z0+z1)/2,(w/k)*0.84,d*0.86,lerp(hmin,hmax,R())]);
+    else inst.push([(x0+x1)/2,lerp(z0,z1,(a+b)/2),w*0.86,(d/k)*0.84,lerp(hmin,hmax,R())]);
+  }
+}
+function grid(xs, zs, hmin, hmax, maxN){
+  for (let i=0;i<xs.length-1;i++) for (let j=0;j<zs.length-1;j++){
+    const x0=xs[i]+12, x1=xs[i+1]-12, z0=zs[j]+11, z1=zs[j+1]-11, cx=(x0+x1)/2, cz=(z0+z1)/2;
+    if (inExcl(cx,cz)) continue; fillBlock(x0,x1,z0,z1,hmin,hmax,maxN);
+  }
+}
+const NX = [-1650,-1450,-1250,-1050,-860,-680,-530,-364,165,295,450,607,740,869,1000,1162,1300,1450,1600,1734,1900,2050,2250,2450];
+grid(NX, [-1900,-1760,-1600,-1440,-1280,-1120,-960,-800,-640,-470,-290], 18, 40, 3);
+grid([300,607,869,1162,1450,1734,2050,2400], [225,360,520,700,880], 22, 36, 2);
+const CHX = []; for (let x=2450;x<=3600;x+=150) CHX.push(x); const CHZ = []; for (let z=-1800; z<=900; z+=140) CHZ.push(z);
+grid(CHX, CHZ, 9, 15, 4);
+grid([-2950,-2800,-2650,-2500], [-1750,-1550,-1350,-1150,-950], 60, 125, 2); // Rosslyn
+const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), MAT.bldg, inst.length);
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _c = new THREE.Color();
+inst.forEach((b,i) => { _p.set(b[0], b[4]/2, b[1]); _s.set(b[2], b[4], b[3]); _m.compose(_p,_q,_s); city.setMatrixAt(i,_m); const v = 0.62 + R()*0.18; _c.setRGB(v*1.02, v*0.98, v*0.9); city.setColorAt(i,_c); });
+scene.add(city);
+
+// landmarks
+const obel = new THREE.Mesh(new THREE.CylinderGeometry(7.4, 11.9, 152, 4, 1), MAT.marble); obel.rotation.y = Math.PI/4; obel.position.set(0,76,0); scene.add(obel);
+const pyr = new THREE.Mesh(new THREE.ConeGeometry(7.4, 17, 4), MAT.marble); pyr.rotation.y = Math.PI/4; pyr.position.set(0,160.5,0); scene.add(pyr);
+const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35,0.35,22,5), MAT.marble, 50);
+for (let i=0;i<50;i++){ const a = i/50*Math.PI*2; _p.set(Math.cos(a)*42, 11, Math.sin(a)*42); _s.set(1,1,1); _m.compose(_p,_q,_s); poles.setMatrixAt(i,_m); } scene.add(poles);
+// Capitol
+const CX = 2272, CZ = -44;
+box(CX,CZ,95,22,229,MAT.marble); box(CX,CZ,70,32,90,MAT.marble); box(CX-70,CZ,40,8,150,MAT.stone);
+cyl(CX,CZ,29,31,22,MAT.marble,32,40);
+const dome = new THREE.Mesh(new THREE.SphereGeometry(29,40,20,0,Math.PI*2,0,Math.PI/2), MAT.marble); dome.position.set(CX,54,CZ); dome.scale.y = 1.05; scene.add(dome);
+cyl(CX,CZ,4,5,10,MAT.marble,84,16);
+box(2040,CZ,26,10,34,MAT.dark); // concert stage
+// Lincoln Memorial
+box(-1292,22,64,8,92,MAT.stone); box(-1292,22,38,14,60,MAT.marble,8); box(-1292,22,32,6,54,MAT.marble,22);
+for (let i=0;i<36;i++){ const per = i/36; let x, z; if (per<.25){ x=-1311+per*4*38; z=-9; } else if (per<.5){ x=-1273; z=-9+(per-.25)*4*62; } else if (per<.75){ x=-1273-(per-.5)*4*38; z=53; } else { x=-1311; z=53-(per-.75)*4*62; } cyl(x,z,1.1,1.2,14,MAT.marble,8,8); }
+// Jefferson Memorial
+cyl(-104,899,52,56,6,MAT.stone); cyl(-104,899,28,28,15,MAT.marble,6,36);
+const jd = new THREE.Mesh(new THREE.SphereGeometry(25,32,16,0,Math.PI*2,0,Math.PI/2), MAT.marble); jd.position.set(-104,21,899); scene.add(jd);
+box(-104,862,30,17,22,MAT.marble,6);
+// White House & neighbors
+box(-104,-910,52,21,26,MAT.marble); cyl(-104,-894,10,10,18,MAT.marble,0,24); box(-30,-905,90,8,10,MAT.marble); box(-178,-905,90,8,10,MAT.marble);
+box(150,-900,70,24,140,MAT.stone); box(-300,-900,80,26,150,MAT.stone);
+// Smithsonian and Mall museums
+box(806,105,136,18,40,MAT.red); [[740,98,30],[860,98,44],[806,85,38]].forEach(([x,z,h]) => box(x,z,12,h,12,MAT.red));
+box(800,-215,150,26,100,MAT.stone); cyl(800,-215,22,24,14,MAT.stone,26); const nd = new THREE.Mesh(new THREE.SphereGeometry(20,24,12,0,Math.PI*2,0,Math.PI/2), MAT.stone); nd.position.set(800,40,-215); scene.add(nd);
+box(420,-212,170,24,90,MAT.stone); box(1400,-212,240,22,90,MAT.stone); box(1700,-225,80,24,70,MAT.stone);
+box(234,-190,62,10,62,MAT.bronze,0); box(234,-190,70,9,70,MAT.bronze,10); box(234,-190,80,10,80,MAT.bronze,19); // NMAAHC corona
+box(520,110,90,15,70,MAT.stone); box(955,110,90,15,90,MAT.red); cyl(1060,115,42,42,22,MAT.stone); box(1330,115,230,25,80,MAT.stone); box(1650,115,100,25,80,lam(0xc9a46a));
+box(-1700,-690,190,30,100,MAT.marble); box(2514,-866,190,25,60,MAT.marble);
+// WWII pillars
+const pil = new THREE.InstancedMesh(new THREE.BoxGeometry(3,13,2), MAT.marble, 56);
+for (let i=0;i<56;i++){ const a = (i/56)*Math.PI*2; _p.set(-451+Math.cos(a)*72, 6.5, 15+Math.sin(a)*52); _s.set(1,1,1); _m.compose(_p,_q,_s); pil.setMatrixAt(i,_m); } scene.add(pil);
+// Pentagon
+const pent = new THREE.Mesh(new THREE.CylinderGeometry(239,239,24,5), MAT.stone); pent.position.set(-1820,12,1950); scene.add(pent);
+const court = new THREE.Mesh(new THREE.CylinderGeometry(105,105,25,5), MAT.lawn); court.position.set(-1820,12.5,1950); scene.add(court);
+// Metro pylons
+Object.entries(PLACES).filter(([,p]) => p.metro).forEach(([,p]) => box(p.x,p.z,3,12,3,MAT.metro));
+// trees
+const trees = [];
+for (let x=310;x<1730;x+=22){ [-162,-147,52,67].forEach(z => trees.push([x + (R()-.5)*4, z + (R()-.5)*3, 7 + R()*2])); }
+for (let i=0;i<260;i++){ const a = R()*Math.PI*2, r = 300 + R()*30; trees.push([-330 + Math.cos(a)*r, 560 + Math.sin(a)*r*0.79, 5 + R()*2]); }
+for (let i=0;i<340;i++){ const x = lerp(-1250,-320,R()), z = R()<.5 ? lerp(-260,-60,R()) : lerp(110,420,R()); if (Math.abs(x+451)<95 && Math.abs(z-15)<75) continue; trees.push([x,z,6+R()*3]); }
+for (let i=0;i<120;i++){ const a = R()*Math.PI*2, r = 200 + R()*80; trees.push([Math.cos(a)*r, -10 + Math.sin(a)*r*0.88, 6+R()*2]); }
+for (let i=0;i<180;i++) trees.push([lerp(1780,2540,R()), R()<.5 ? lerp(-320,-150,R()) : lerp(70,240,R()), 6+R()*2]);
+const tm = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0), MAT.tree, trees.length);
+trees.forEach((t,i) => { _p.set(t[0], t[2]+3, t[1]); _s.set(t[2], t[2]*1.1, t[2]); _m.compose(_p,_q,_s); tm.setMatrixAt(i,_m); }); scene.add(tm);
+// festival tents
+const tents = new THREE.InstancedMesh(new THREE.ConeGeometry(6,6,4), MAT.tent, 70);
+for (let i=0;i<70;i++){ const x = 360 + (i%35)*24, z = i<35 ? -118 : 18; _p.set(x, 3, z); _s.set(1,1,1); _q.setFromAxisAngle(UP, Math.PI/4); _m.compose(_p,_q,_s); tents.setMatrixAt(i,_m); }
+_q.identity(); scene.add(tents);
+// boats on the Potomac
+const boatPts = [];
+for (let i=0;i<220;i++){ const z = lerp(-450,900,R()); const t = (z+200)/850; const xe = lerp(-1640,-1450,clamp(t,0,1)), xw = lerp(-2280,-2060,clamp(t,0,1)); boatPts.push([lerp(xe+40,xw-40,R()), z, R()*Math.PI]); }
+const boats = new THREE.InstancedMesh(new THREE.BoxGeometry(9,2.2,3.5), MAT.marble, boatPts.length);
+boatPts.forEach((b,i) => { _p.set(b[0],1.6,b[1]); _s.set(1,1,1); _q.setFromAxisAngle(UP,b[2]); _m.compose(_p,_q,_s); boats.setMatrixAt(i,_m); }); _q.identity(); scene.add(boats);
+
+/* ------------------------------------------------------------------- crowd */
+const ZONES = [
+  {id:'mall_e', name:'Mall · 7th–3rd St', rects:[[1180,1720,-132,30]], w:85},
+  {id:'mall_c', name:'Mall · 14th–7th St', rects:[[310,1150,-132,30]], w:120},
+  {id:'wamo', name:'Monument Grounds', disc:[0,-10,265,40], w:150},
+  {id:'pool', name:'Reflecting Pool', rects:[[-1180,-560,-46,2],[-1180,-560,38,86]], w:120},
+  {id:'lincoln', name:'Lincoln Memorial', rects:[[-1262,-1192,-46,90]], w:30},
+  {id:'ellipse', name:'The Ellipse', ell:[-104,-488,175,145], w:55},
+  {id:'capitol', name:'Capitol West Lawn', rects:[[1960,2150,-150,60]], w:70},
+  {id:'tidal', name:'Tidal Basin', ring:[-330,560,300,230], w:35},
+  {id:'wpp', name:'West Potomac Park', rects:[[-1250,-480,130,420]], w:60},
+  {id:'parade', name:'Constitution Ave', rects:[[170,1700,-298,-262]], w:28, parade:true}
+];
+const ZI = {}; ZONES.forEach((z,i) => { ZI[z.id] = i; z.n = 0; z.vis = 0; });
+const EXITS = [[607,50,'smi'],[615,-410,'fed'],[1160,520,'lef'],[1162,-455,'arc'],[-1290,-1232,'fog'],[-2250,420,'arl'],[2420,470,'cap'],[295,-1350,'n14'],[-364,-1350,'n17'],[1162,-1350,'n7'],[200,1300,'s14'],[-2100,440,'brg']];
+const SHELTERS = [[800,-160],[420,-160],[806,75],[1330,70],[1400,-160],[1060,70],[234,-150],[520,70],[1650,70],[-1700,-640]];
+const COOL = [[800,-160],[420,-160],[234,-150],[806,75]];
+const NPT = 16000, PPL = 44;
+const wsum = ZONES.reduce((a,z) => a+z.w, 0);
+const P = []; // point records
+function sampleZone(z){
+  if (z.rects){ const areas = z.rects.map(r => (r[1]-r[0])*(r[3]-r[2])); let a = R()*areas.reduce((x,y)=>x+y,0); let r = z.rects[0]; for (let i=0;i<areas.length;i++){ if ((a -= areas[i]) <= 0){ r = z.rects[i]; break; } } return [lerp(r[0],r[1],R()), lerp(r[2],r[3],R())]; }
+  if (z.disc){ const [cx,cz,r,r0] = z.disc; const rr = Math.sqrt(lerp(r0*r0, r*r, R())), a = R()*Math.PI*2; return [cx+Math.cos(a)*rr, cz+Math.sin(a)*rr*0.9]; }
+  if (z.ell){ const [cx,cz,rx,rz] = z.ell; const rr = Math.sqrt(R()), a = R()*Math.PI*2; return [cx+Math.cos(a)*rr*rx, cz+Math.sin(a)*rr*rz]; }
+  if (z.ring){ const [cx,cz,rx,rz] = z.ring; const k = 1.03 + R()*0.12, a = R()*Math.PI*2; return [cx+Math.cos(a)*rx*k, cz+Math.sin(a)*rz*k]; }
+}
+function nearest(list, x, z, skip){ let best = null, bd = 1e12; for (const e of list){ if (skip && skip(e)) continue; const d = (e[0]-x)**2 + (e[1]-z)**2; if (d < bd){ bd = d; best = e; } } return best; }
+ZONES.forEach((z,zi) => {
+  const n = Math.round(NPT * z.w / wsum);
+  for (let i=0;i<n;i++){
+    const [x,zz] = sampleZone(z);
+    const ex = nearest(EXITS, x, zz);
+    const alt = ex[2]==='smi' ? nearest(EXITS, x, zz, e => !(e[2]==='lef' || e[2]==='fed')) : ex;
+    P.push({zi, hx:x, hz:zz, u:R(), u2:R(), u3:R(), jx:(R()-.5)*60, jz:(R()-.5)*60, ex, alt, sh:nearest(SHELTERS,x,zz), co:nearest(COOL,x,zz)});
+    z.n++;
+  }
+});
+const cpos = new Float32Array(P.length*3), ccol = new Float32Array(P.length*3);
+const cgeo = new THREE.BufferGeometry();
+cgeo.setAttribute('position', new THREE.BufferAttribute(cpos,3));
+cgeo.setAttribute('color', new THREE.BufferAttribute(ccol,3));
+const cmat = new THREE.PointsMaterial({size:2.4, sizeAttenuation:false, vertexColors:true, transparent:true, opacity:0.95, depthWrite:false});
+const crowd = new THREE.Points(cgeo, cmat); crowd.frustumCulled = false; scene.add(crowd);
+const CROWD_KEYS = [[690,0.18],[780,0.26],[900,0.34],[1020,0.46],[1140,0.66],[1200,0.8],[1269,0.88],[1300,0.88],[1410,0.88]];
+const PARADE_KEYS = [[690,0.85],[800,0.8],[840,0.35],[880,0.12],[1410,0.12]];
+const cGreen = new THREE.Color(0x7fdcff), cAmber = new THREE.Color(0xffc93c), cRed = new THREE.Color(0xff3d47);
+function densColor(d, out){ if (d < 0.55) out.copy(cGreen).lerp(cAmber, d/0.55); else out.copy(cAmber).lerp(cRed, clamp((d-0.55)/0.3,0,1)); return out; }
+function crowdFrac(z, t){
+  if (z.parade) return keyed(PARADE_KEYS, t);
+  let f = keyed(CROWD_KEYS, Math.min(t, fwEnd()));
+  if (S.crowdCut && t > S.crowdCut.t0) f *= lerp(1, S.crowdCut.f, clamp((t-S.crowdCut.t0)/35,0,1));
+  return f;
+}
+const fwEnd = () => S.fwCancelled ? S.fwCancelledAt : S.fwStart + S.fwDur;
+const zcol = ZONES.map(() => new THREE.Color());
+function updateCrowd(t){
+  const fe = fwEnd(), egr = t > fe;
+  ZONES.forEach(z => z.vis = 0);
+  const frac = ZONES.map(z => crowdFrac(z,t));
+  const shelterOn = S.shelter && t >= S.shelter.t0, coolOn = S.cool && t >= S.cool.t0 && t < S.cool.t1, clearOn = S.clear && t >= S.clear.t0 && t < S.clear.t0 + 40;
+  // per-zone density + incident stress for color
+  const stress = ZONES.map(() => 0);
+  if (S.current && S.current.status==='active'){ const zid = PLACES[S.current.place] && PLACES[S.current.place].zone; if (zid != null && ZI[zid] != null) stress[ZI[zid]] = 0.35; }
+  if (egr && !(S.egress==='redirect')) { stress[ZI.mall_c] += 0.25; stress[ZI.wamo] += 0.15; }
+  for (let i=0;i<P.length;i++){
+    const p = P[i], z = ZONES[p.zi];
+    let x = p.hx, zz = p.hz, show = p.u < frac[p.zi];
+    if (show && egr){
+      let dep = fe + 3 + p.u2*75; if (S.egress==='redirect' && p.ex[2]==='smi') dep += 4;
+      if (t > dep){
+        let tgt = p.ex; let k = (t - dep) / 16;
+        if (p.ex[2]==='smi'){
+          if (S.egress==='redirect' && t > S.egressAt) tgt = p.alt;
+          else if (S.egress==='closed' && t < S.egressAt + 25) k = Math.min(k, 0.86);
+          else if (!S.egress) k = Math.min(k*0.6, 0.9);
+          else if (S.egress==='gates') k = k*0.8;
+        }
+        if (k >= 1) show = false; else { const e = ease(clamp(k,0,1)); x = lerp(p.hx, tgt[0] + p.jx*(1-e*0.6), e); zz = lerp(p.hz, tgt[1] + p.jz*(1-e*0.6), e); }
+      }
+    }
+    if (show && shelterOn){
+      const s = S.shelter; const k = t < s.t1 ? clamp((t-s.t0)/22,0,1) : clamp(1-(t-s.t1)/30,0,1);
+      if (k > 0){ const e = ease(k); const tg = p.u3 < .4 ? p.sh : p.ex; const reach = p.u3 < .4 ? 0.94 : 0.55; x = lerp(x, tg[0]+p.jx*.4, e*reach); zz = lerp(zz, tg[1]+p.jz*.4, e*reach); }
+    }
+    if (show && coolOn && p.u3 < .22 && (p.zi===ZI.wamo || p.zi===ZI.mall_c)){ const k = clamp((t-S.cool.t0)/25,0,1) * clamp((S.cool.t1-t)/20,0,1); const e = ease(k); x = lerp(x, p.co[0]+p.jx*.3, e*.92); zz = lerp(zz, p.co[1]+p.jz*.3, e*.92); }
+    if (show && clearOn && S.clear.zi.includes(p.zi)){ const k = clamp((t-S.clear.t0)/12,0,1) * clamp((S.clear.t0+40-t)/15,0,1); const dx = p.hx - S.clear.x, dz = p.hz - S.clear.z, d = Math.hypot(dx,dz) || 1; if (d < 320){ const push = (320-d)*ease(k); x += dx/d*push; zz += dz/d*push; } }
+    if (show) z.vis++;
+    cpos[i*3] = x; cpos[i*3+1] = show ? 1.4 : -9999; cpos[i*3+2] = zz;
+  }
+  ZONES.forEach((z,zi) => { const d = z.n ? (z.vis / z.n) : 0; densColor(clamp(d*0.74 + stress[zi], 0, 1), zcol[zi]); });
+  for (let i=0;i<P.length;i++){ const c = zcol[P[i].zi]; ccol[i*3]=c.r; ccol[i*3+1]=c.g; ccol[i*3+2]=c.b; }
+  cgeo.attributes.position.needsUpdate = true; cgeo.attributes.color.needsUpdate = true;
+  return ZONES.reduce((a,z) => a + z.vis, 0) * PPL;
+}
+
+/* -------------------------------------------------------- fireworks + rain */
+const FWN = 2400, fwPos = new Float32Array(FWN*3), fwCol = new Float32Array(FWN*3), fwV = new Float32Array(FWN*3), fwLife = new Float32Array(FWN), fwBase = new Float32Array(FWN*3);
+const fwGeo = new THREE.BufferGeometry(); fwGeo.setAttribute('position', new THREE.BufferAttribute(fwPos,3)); fwGeo.setAttribute('color', new THREE.BufferAttribute(fwCol,3));
+const fwMat = new THREE.PointsMaterial({size:3, sizeAttenuation:false, vertexColors:true, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false});
+const fw = new THREE.Points(fwGeo, fwMat); fw.frustumCulled = false; scene.add(fw);
+for (let i=0;i<FWN;i++) fwPos[i*3+1] = -9999;
+let fwCursor = 0; const FWC = [[1,.25,.25],[1,1,1],[.35,.55,1],[1,.8,.35],[1,.4,.2]];
+function burst(){
+  const cx = lerp(-1120,-640,Math.random()), cy = 170 + Math.random()*170, cz = 20 + (Math.random()-.5)*90;
+  const col = FWC[Math.floor(Math.random()*FWC.length)], sp = 45 + Math.random()*35;
+  for (let k=0;k<140;k++){
+    const i = fwCursor; fwCursor = (fwCursor+1) % FWN;
+    const u = Math.random()*2-1, a = Math.random()*Math.PI*2, r = Math.sqrt(1-u*u), s = sp*(0.75+Math.random()*0.25);
+    fwPos[i*3]=cx; fwPos[i*3+1]=cy; fwPos[i*3+2]=cz; fwV[i*3]=r*Math.cos(a)*s; fwV[i*3+1]=u*s; fwV[i*3+2]=r*Math.sin(a)*s;
+    fwLife[i] = 1.6 + Math.random()*0.8; fwBase[i*3]=col[0]; fwBase[i*3+1]=col[1]; fwBase[i*3+2]=col[2];
+  }
+  flash.position.set(cx,cy,cz); flash.intensity = 2.2; flash.color.setRGB(col[0],col[1],col[2]);
+}
+function updateFireworks(dt, active){
+  if (active && Math.random() < dt*3.2) burst();
+  for (let i=0;i<FWN;i++){
+    if (fwLife[i] <= 0){ if (fwPos[i*3+1] > -9000) fwPos[i*3+1] = -9999; continue; }
+    fwLife[i] -= dt; fwV[i*3+1] -= 14*dt; fwV[i*3]*=0.985; fwV[i*3+2]*=0.985;
+    fwPos[i*3]+=fwV[i*3]*dt; fwPos[i*3+1]+=fwV[i*3+1]*dt; fwPos[i*3+2]+=fwV[i*3+2]*dt;
+    const f = clamp(fwLife[i]/1.4,0,1); fwCol[i*3]=fwBase[i*3]*f; fwCol[i*3+1]=fwBase[i*3+1]*f; fwCol[i*3+2]=fwBase[i*3+2]*f;
+  }
+  flash.intensity = Math.max(0, flash.intensity - dt*5);
+  fwGeo.attributes.position.needsUpdate = true; fwGeo.attributes.color.needsUpdate = true;
+}
+const RN = 2600, rPos = new Float32Array(RN*6);
+const rGeo = new THREE.BufferGeometry(); rGeo.setAttribute('position', new THREE.BufferAttribute(rPos,3));
+const rain = new THREE.LineSegments(rGeo, new THREE.LineBasicMaterial({color:0xaabbd0, transparent:true, opacity:0.45})); rain.frustumCulled = false; scene.add(rain);
+for (let i=0;i<RN;i++){ const x=(Math.random()-.5)*2400, y=Math.random()*700, z=(Math.random()-.5)*2400; rPos.set([x,y,z,x-4,y-26,z],i*6); }
+function updateRain(dt, on){
+  rain.visible = on; if (!on) return;
+  const c = controls.target;
+  for (let i=0;i<RN;i++){
+    let y = rPos[i*6+1] - 480*dt; let x = rPos[i*6], z = rPos[i*6+2];
+    if (y < 0){ y = 700; x = c.x + (Math.random()-.5)*2400; z = c.z + (Math.random()-.5)*2400; }
+    rPos[i*6]=x; rPos[i*6+1]=y; rPos[i*6+2]=z; rPos[i*6+3]=x-4; rPos[i*6+4]=y-26; rPos[i*6+5]=z;
+  }
+  rGeo.attributes.position.needsUpdate = true;
+}
+
+/* -------------------------------------------------------- incident markers */
+const markers = {};
+const sevHex = {moderate:0xe8c547, high:0xf08a3a, critical:0xe5484d};
+const sevCss = {moderate:'var(--mod)', high:'var(--high)', critical:'var(--crit)'};
+function addMarker(sc){
+  const p = PLACES[sc.place]; const g = new THREE.Group(); g.position.set(p.x, 0, p.z);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(38,50,48), new THREE.MeshBasicMaterial({color:sevHex[sc.sev], transparent:true, opacity:.85, side:THREE.DoubleSide, depthWrite:false}));
+  ring.rotation.x = -Math.PI/2; ring.position.y = 2.5; g.add(ring);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,360,12,1,true), new THREE.MeshBasicMaterial({color:sevHex[sc.sev], transparent:true, opacity:.4, blending:THREE.AdditiveBlending, depthWrite:false}));
+  beam.position.y = 180; g.add(beam); scene.add(g);
+  markers[sc.id] = {g, ring, beam};
+  addLabel('inc:'+sc.id, 'inc', p.x, 70, p.z, `${esc(sc.title)}<small>${fmt(sc.at())} · ${sc.sev.toUpperCase()}</small>`, () => openCard(sc), sevCss[sc.sev]);
+}
+let cordonMesh = null;
+const drone = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(6,1.5,6), MAT.dark); drone.add(b); const l = new THREE.Mesh(new THREE.SphereGeometry(1.6,8,6), new THREE.MeshBasicMaterial({color:0xff3b3b})); l.position.y = -1; drone.add(l); drone.userData.light = l; } drone.position.set(950,120,-50); drone.visible = false; scene.add(drone);
+const capsized = new THREE.Mesh(new THREE.BoxGeometry(10,3,4), new THREE.MeshLambertMaterial({color:0xff7b2e})); capsized.position.set(-1830,1.2,250); capsized.rotation.z = 2.4; capsized.visible = false; scene.add(capsized);
+
+/* ------------------------------------------------------------------ labels */
+const labels = []; const L = $('#labels');
+function addLabel(id, cls, x, y, z, html, onClick, color){
+  const el = document.createElement('div'); el.className = 'lbl ' + cls; el.innerHTML = html;
+  if (color) el.style.borderLeftColor = color;
+  if (onClick){ el.addEventListener('click', e => { e.stopPropagation(); onClick(); }); el.setAttribute('role','button'); el.tabIndex = 0; el.addEventListener('keydown', e => { if (e.key==='Enter' || e.key===' '){ e.preventDefault(); onClick(); } }); }
+  L.appendChild(el); const rec = {id, el, v:new THREE.Vector3(x,y,z), cls}; labels.push(rec); return rec;
+}
+function removeLabel(id){ const i = labels.findIndex(l => l.id===id); if (i>=0){ labels[i].el.remove(); labels.splice(i,1); } }
+[['wamo','Washington Monument',0,178,0],['capitol','U.S. Capitol',2272,100,-44],['lincoln','Lincoln Memorial',-1292,40,22],['whitehouse','White House',-104,34,-910],['jefferson','Jefferson Memorial',-104,52,899],['wwii','WWII Memorial',-451,20,15],['castle','Smithsonian Castle',806,60,125],['ellipse','The Ellipse',-104,12,-488],['tidal','Tidal Basin',-330,12,520],['pool','Reflecting Pool',-870,10,20],['memorial_bridge','Memorial Bridge',-1860,22,300],['pentagon','Pentagon',-1820,40,1950],['kennedy','Kennedy Center',-1700,42,-690],['union','Union Station',2514,38,-866]]
+  .forEach(([id,n,x,y,z]) => addLabel('lm:'+id, 'lm', x, y, z, esc(n), () => openSite(id)));
+Object.entries(PLACES).filter(([,p]) => p.metro).forEach(([id,p]) => addLabel('mt:'+id, 'mt', p.x, 18, p.z, 'M · ' + esc(p.name.replace(' Metro','')), () => openSite(id)));
+const _v = new THREE.Vector3();
+function updateLabels(){
+  const w = stage.clientWidth, h = canvas.clientHeight, dist = camera.position.distanceTo(controls.target);
+  for (const l of labels){
+    _v.copy(l.v).project(camera);
+    const off = _v.z > 1 || _v.x < -1.15 || _v.x > 1.15 || _v.y < -1.15 || _v.y > 1.15;
+    const hideSmall = l.hidden || (l.cls==='mt' && dist > 3600) || (l.cls==='lm' && dist > 7500);
+    if (off || hideSmall){ if (l.el.style.display !== 'none') l.el.style.display = 'none'; continue; }
+    if (l.el.style.display === 'none') l.el.style.display = '';
+    const x = (_v.x+1)/2*w, y = (1-_v.y)/2*h;
+    l.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`;
+  }
+}
+
+/* -------------------------------------------------------------- sky/light */
+const SKY = {day:new THREE.Color(0x9cc0e6), gold:new THREE.Color(0xe7a774), dusk:new THREE.Color(0x3f3b6b), night:new THREE.Color(0x0b1426), storm:new THREE.Color(0x3a4350)};
+const skyC = new THREE.Color();
+let lightning = 0;
+function updateSky(t, dt){
+  const rise = 347, set = 1237; const el = Math.sin(Math.PI*(t-rise)/(set-rise)) * 74; // degrees (approx)
+  if (el > 14) skyC.copy(SKY.day); else if (el > 2) skyC.copy(SKY.gold).lerp(SKY.day, (el-2)/12); else if (el > -6) skyC.copy(SKY.dusk).lerp(SKY.gold, (el+6)/8); else skyC.copy(SKY.night).lerp(SKY.dusk, clamp((el+12)/6,0,1));
+  const sf = stormFactor(t); if (sf > 0) skyC.lerp(SKY.storm, sf*0.7*(el > -6 ? 1 : 0.4));
+  const day = clamp((el+6)/20, 0, 1);
+  hemi.intensity = lerp(0.28, 0.9, day) * (1 - sf*0.35); sun.intensity = lerp(0.04, 0.85, clamp(el/20,0,1)) * (1 - sf*0.7);
+  sun.color.setRGB(1, lerp(0.7,1,clamp(el/25,0,1)), lerp(0.5,1,clamp(el/25,0,1)));
+  const night = 1 - day;
+  MAT.bldg.emissive.setRGB(0.22*night, 0.17*night, 0.09*night);
+  MAT.marble.emissive.setRGB(0.42*night, 0.40*night, 0.34*night);
+  MAT.stone.emissive.setRGB(0.12*night, 0.11*night, 0.09*night);
+  if (sf > 0.3 && Math.random() < dt*0.9) lightning = 0.12;
+  if (lightning > 0){ lightning -= dt; skyC.lerp(new THREE.Color(0xdde6ff), 0.6); hemi.intensity += 1.2; }
+  scene.background = skyC; scene.fog.color.copy(skyC);
+  scene.fog.near = lerp(2500, 3500, day) * (1 - sf*0.4); scene.fog.far = lerp(8500, 11000, day) * (1 - sf*0.35);
+  return {el, night, sf};
+}
+function stormFactor(t){ if (t < S.stormArrive - 25 || t > S.stormEnd + 15) return 0; if (t < S.stormArrive) return clamp((t-(S.stormArrive-25))/25,0,1)*0.6; if (t <= S.stormEnd) return 1; return clamp(1-(t-S.stormEnd)/15,0,1); }
+const heatIndex = t => keyed([[690,93],[780,101],[870,104],[990,103],[1080,97],[1170,91],[1235,84],[1260,82],[1410,80]], t) - (stormFactor(t) > .5 ? 6 : 0);
+
+/* ------------------------------------------------------------------ feeds */
+const FEEDS = [
+  {id:'CAM-01', name:'Monument deck · east', pos:[-14,166,-24], look:[1300,0,-60], mode:'eo'},
+  {id:'CAM-02', name:'Lincoln steps · east', pos:[-1250,26,22], look:[-300,40,10], mode:'eo'},
+  {id:'CAM-07', name:'Smithsonian Metro · IR', pos:[470,55,200], look:[610,0,30], mode:'ir'},
+  {id:'UAS-1', name:'Drone · orbit', orbit:true, mode:'eo'}
+];
+let feedR = null;
+try { feedR = new THREE.WebGLRenderer({antialias:false, preserveDrawingBuffer:true}); feedR.setPixelRatio(1); feedR.setSize(320,180,false); } catch(e){ feedR = null; }
+const feedsEl = $('#feeds');
+FEEDS.forEach((f,i) => {
+  f.cam = new THREE.PerspectiveCamera(f.orbit ? 50 : 58, 16/9, 3, 16000);
+  if (!f.orbit){ f.cam.position.set(...f.pos); f.cam.lookAt(...f.look); }
+  const b = document.createElement('button'); b.className = 'feed'; b.type = 'button'; b.setAttribute('aria-label', 'Fly to ' + f.id + ' ' + f.name);
+  b.innerHTML = `<canvas width="320" height="180"></canvas><div class="ov"><div class="r"><span>${f.id}</span><span class="rec">REC</span></div><div class="r"><span>${esc(f.name)}</span><span data-ts>--:--:--</span></div></div>`;
+  feedsEl.appendChild(b); f.cv = b.querySelector('canvas'); f.ctx = f.cv.getContext('2d'); f.ts = b.querySelector('[data-ts]'); f.btn = b;
+  b.addEventListener('click', () => { if (f.orbit) flyTo(orbitTarget.x, orbitTarget.z, 650); else flyPose(f.pos, f.look); });
+});
+let orbitTarget = {x:0, z:0}, feedFrame = 0, orbitA = 0;
+function renderFeeds(dt, night){
+  orbitA += dt*0.25;
+  const f4 = FEEDS[3]; f4.cam.position.set(orbitTarget.x + Math.cos(orbitA)*300, 210, orbitTarget.z + Math.sin(orbitA)*300); f4.cam.lookAt(orbitTarget.x, 0, orbitTarget.z);
+  if (!feedR) return;
+  const f = FEEDS[feedFrame++ % FEEDS.length];
+  const mode = f.mode==='ir' ? 'f-ir' : (night > .6 ? (f.orbit ? 'f-ir' : 'f-nv') : '');
+  if (f.cv.className !== mode) f.cv.className = mode;
+  const fogNear = scene.fog.near; scene.fog.near = fogNear*0.6;
+  const ms = cmat.size; cmat.size = f.orbit ? 2 : 2.4;
+  feedR.render(scene, f.cam); f.ctx.drawImage(feedR.domElement, 0, 0, 320, 180);
+  scene.fog.near = fogNear; cmat.size = ms;
+}
+
+/* ------------------------------------------------------------- camera fly */
+let fly = null;
+function flyTo(x, z, dist=900){
+  const tgt = new THREE.Vector3(x, 0, z);
+  const dir = camera.position.clone().sub(controls.target); dir.y = 0; if (dir.lengthSq() < 1) dir.set(-1,0,1); dir.normalize();
+  const pos = tgt.clone().addScaledVector(dir, dist*0.72); pos.y = dist*0.62;
+  fly = {t:0, p0:camera.position.clone(), t0:controls.target.clone(), p1:pos, t1:tgt};
+}
+function flyPose(pos, look){ const p = new THREE.Vector3(...pos), l = new THREE.Vector3(...look); const d = l.clone().sub(p).normalize(); fly = {t:0, p0:camera.position.clone(), t0:controls.target.clone(), p1:p.clone().addScaledVector(d,-40).add(new THREE.Vector3(0,20,0)), t1:p.clone().addScaledVector(d, 260)}; }
+function updateFly(dt){ if (!fly) return; fly.t = Math.min(1, fly.t + dt/1.5); const e = ease(fly.t); camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e); if (fly.t >= 1) fly = null; }
+canvas.addEventListener('pointerdown', () => { fly = null; });
+
+/* ------------------------------------------------------------- metrics */
+function emsFree(t){ let held = 6; S.emsHold.forEach(h => { if (t >= h.t0 && t < h.t1) held += h.n; }); const base = Math.round(keyed([[690,2],[900,5],[1140,6],[1290,9],[1410,4]], t)); return clamp(S.emsTotal - held - base, 0, S.emsTotal); }
+function metroLoad(t){ const fe = fwEnd(); let v = keyed([[690,34],[900,38],[1110,46],[1260,52]], Math.min(t,1260)); if (t > fe) v = 52 + 68*Math.exp(-Math.pow((t-fe-22)/26,2)) - (t > fe+60 ? (t-fe-60)*0.4 : 0); if (t > 1260 && t <= fe) v = 50; S.metroAdj.forEach(a => { if (t >= a.t0 && t < a.t0 + 90) v += a.v * clamp(1-(t-a.t0)/90, 0, 1); }); return Math.round(clamp(v, 8, 140)); }
+function basePatients(t){ return Math.floor((t - S.start) / 60 * 3.5); }
+function setTile(id, v, s, cls, bar, barColor){ const el = $(id); el.querySelector('.v').textContent = v; if (s != null) el.querySelector('.s').textContent = s; el.classList.remove('warn','bad','good'); if (cls) el.classList.add(cls); if (bar != null){ const i = el.querySelector('.bar i'); i.style.width = clamp(bar,0,100)+'%'; i.style.background = barColor; } }
+let crowdNow = 0, lastHud = 0;
+function updateHud(t){
+  setTile('#h-crowd', crowdNow >= 1000 ? Math.round(crowdNow/1000).toLocaleString()+'k' : String(crowdNow), null);
+  const sf = stormFactor(t), warn = t >= S.stormWarn && t <= S.stormEnd + 10;
+  if (warn){ setTile('#h-wx', sf > .5 ? 'STORM' : 'WARNING', sf > .5 ? '60 mph gusts · lightning' : 'Severe T-storm warning', 'bad'); $('#h-wx .k').textContent = 'Weather'; }
+  else { const hi = Math.round(heatIndex(t)); $('#h-wx .k').textContent = 'Heat index'; setTile('#h-wx', hi + '°F', t < S.stormWarn && t > T('15:00') ? 'storms likely after 19:00' : 'NWS Sterling', hi >= 103 ? 'bad' : hi >= 95 ? 'warn' : null); }
+  const open = SCEN.filter(s => s.status==='active').length, decided = SCEN.filter(s => s.status==='done' && t < s.at() + 30).length;
+  setTile('#h-inc', String(open + decided), 'awaiting decision: ' + open, open ? 'bad' : null);
+  setTile('#h-pt', String(S.patients + basePatients(t)), null);
+  const ef = emsFree(t); setTile('#h-ems', ef + ' / ' + S.emsTotal, null, ef < 12 ? 'bad' : ef < 22 ? 'warn' : 'good');
+  const ml = metroLoad(t); setTile('#h-metro', ml + '%', ml > 100 ? 'over platform capacity' : 'Mall-area stations', ml > 100 ? 'bad' : ml > 80 ? 'warn' : null, ml/1.4, ml > 100 ? 'var(--crit)' : ml > 80 ? 'var(--high)' : 'var(--ok)');
+  const r = Math.round(S.readiness); setTile('#h-ready', String(r), null, r < 70 ? 'bad' : r < 85 ? 'warn' : 'good', r, r < 70 ? 'var(--crit)' : r < 85 ? 'var(--high)' : 'var(--ok)');
+  // weather chip on map
+  const wx = $('#wx'); const fe = fwEnd();
+  let txt = `<b>${fmt(t)}</b> · `;
+  if (warn) txt += sf > .5 ? 'Storm over the Mall · lightning' : 'Severe Thunderstorm Warning · arrival ~' + fmt(S.stormArrive);
+  else if (!S.fwCancelled && t >= S.fwStart && t <= fe) txt += 'Fireworks in progress';
+  else if (!S.fwCancelled && t < S.fwStart) txt += 'Fireworks ' + fmt(S.fwStart) + (S.fwStart !== T('21:09') ? ' (delayed)' : '');
+  else if (S.fwCancelled) txt += 'Fireworks cancelled';
+  else txt += 'Egress operations';
+  wx.innerHTML = txt; wx.classList.toggle('alert', warn);
+  $('#clk').textContent = fmt(t);
+  if (document.activeElement !== $('#scrub')) $('#scrub').value = Math.round(t);
+}
+
+/* ------------------------------------------------------------- MSEL + card */
+function renderMsel(){
+  const list = SCEN.slice().sort((a,b) => a.at() - b.at());
+  $('#msel').innerHTML = list.map(s => `<li class="st-${s.status==='pending'?'pending':s.status==='done'?'done':'act'} ${S.current===s?'active':''}"><button type="button" data-id="${s.id}"><span class="tm">${fmt(s.at())}</span><span class="tt">${esc(s.title)}<span class="es">${esc(s.esf[0])}${s.scripted ? '' : ' · from the room'}</span></span><span class="chip sev-${s.sev}">${s.sev}</span></button></li>`).join('');
+  $('#mselCount').textContent = 'MSEL · ' + SCEN.length;
+  renderTicks();
+}
+$('#msel').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; const sc = SCEN.find(s => s.id === b.dataset.id); if (sc.status === 'pending'){ jumpTo(sc); } else openCard(sc); });
+function renderTicks(){
+  const rail = $('#rail'); rail.querySelectorAll('.tick,.band').forEach(n => n.remove());
+  const pct = t => ((t - S.start) / (S.end - S.start) * 100) + '%';
+  const band = (t0,t1,c,title) => { const b = document.createElement('div'); b.className = 'band'; b.style.left = pct(t0); b.style.width = ((t1-t0)/(S.end-S.start)*100)+'%'; b.style.background = c; b.title = title; rail.appendChild(b); };
+  band(S.stormArrive, S.stormEnd, '#5e6b85', 'Storm'); if (!S.fwCancelled) band(S.fwStart, S.fwStart+S.fwDur, '#d9ae55', 'Fireworks');
+  SCEN.forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? '#68748e' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
+}
+function jumpTo(sc){ S.ff = sc; S.playing = true; setPlayBtn(); }
+function fire(sc){
+  sc.status = 'active'; S.current = sc; S.playing = false; S.ff = null; setPlayBtn();
+  addMarker(sc); const p = PLACES[sc.place]; orbitTarget = {x:p.x, z:p.z}; flyTo(p.x, p.z, sc.id==='storm' ? 2600 : 900);
+  if (sc.id==='drone'){ drone.visible = true; }
+  if (sc.id==='water'){ capsized.visible = true; }
+  openCard(sc); renderMsel();
+}
+function fxChips(fx){ const out = []; const add = (k, v, good, label) => { if (!v) return; out.push(`<span class="${good ? 'up' : 'dn'}">${label} ${v > 0 ? '+' : ''}${v}</span>`); };
+  add('r', fx.readiness, fx.readiness > 0, 'Readiness'); add('p', fx.patients, false, 'Patients'); add('e', fx.ems ? -fx.ems : 0, fx.ems < 0, 'EMS free'); add('m', fx.metro ? fx.metro : 0, fx.metro < 0, 'Metro load %'); add('a', fx.alerts, true, 'Alerts'); return out.join(''); }
+function openCard(sc){
+  S.current = sc; const p = PLACES[sc.place]; const card = $('#card');
+  const decided = sc.pick != null;
+  card.innerHTML = `<div class="hd"><div class="meta"><span class="chip sev-${sc.sev}">${sc.sev}</span><span>${fmt(sc.at())} · ${esc(p.name)}</span>${sc.scripted ? '' : '<span class="chip" style="color:var(--brass)">from the room</span>'}</div><h3>${esc(sc.title)}</h3><button class="x" type="button" aria-label="Close">✕</button></div>
+  <div class="bd"><p class="sit">${esc(sc.sit)}</p><div class="esf">${sc.esf.map(e => `<span>${esc(e)}</span>`).join('')}</div>
+  <div class="q">${decided ? 'Your decision' : 'Decision point · ' + esc(sc.q || 'Your call')}</div>
+  <div class="opts">${sc.opts.map((o,i) => `<button class="opt ${sc.pick===i?'pick':''}" type="button" data-i="${i}" ${decided?'disabled':''}><b>${'ABC'[i]}</b><span>${esc(o.l)}</span></button>`).join('')}</div>
+  <div id="cardOut"></div>
+  <div class="row-btns">${p.still ? `<a class="still" href="${STILLS[p.still]}" target="_blank" rel="noopener">◉ Aerial still (AI-simulated) ↗</a>` : ''}</div></div>`;
+  card.hidden = false; stage.classList.add('hascard');
+  card.querySelector('.x').addEventListener('click', closeCard);
+  card.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => decide(sc, +b.dataset.i)));
+  if (decided) renderOutcome(sc);
+  renderMsel();
+}
+function closeCard(){ $('#card').hidden = true; stage.classList.remove('hascard'); }
+function decide(sc, i){
+  if (sc.pick != null) return; sc.pick = i; sc.status = 'done'; sc.doneAt = S.t; const o = sc.opts[i], fx = o.fx || {}; const t = S.t;
+  S.readiness = clamp(S.readiness + (fx.readiness||0), 0, 100); S.patients += fx.patients||0; S.alerts += fx.alerts||0;
+  if (fx.ems) S.emsHold.push({t0:t, t1:t+75, n:fx.ems});
+  if (fx.metro) S.metroAdj.push({t0:t, v:fx.metro});
+  if (o.flow==='cool') S.cool = {t0:t, t1:t+150};
+  if (o.flow==='clear'){ const p = PLACES[sc.place]; S.clear = {t0:t, x:p.x, z:p.z, zi:[ZI.mall_c, ZI.wamo, ZI.mall_e]}; }
+  if (o.cordon) S.cordon = true;
+  if (o.storm==='shelter'){ S.shelter = {t0:t, t1:S.stormEnd + 20}; S.fwStart = T('21:54'); S.crowdCut = {t0:S.stormArrive, f:0.72}; }
+  if (o.storm==='evac'){ S.crowdCut = {t0:t, f:0.45}; S.fwCancelled = true; S.fwCancelledAt = t + 1; }
+  if (o.storm==='hold'){ S.stormArrive -= 0; }
+  if (o.egress){ S.egress = o.egress; S.egressAt = t; }
+  if (sc.id==='drone') setTimeout(() => {}, 0);
+  S.log.push({t, title:sc.title, sev:sc.sev, place:PLACES[sc.place].name, choice:o.l, outcome:o.o, letter:'ABC'[i], scripted:sc.scripted});
+  if (markers[sc.id]){ markers[sc.id].ring.material.color.set(0x7c879e); markers[sc.id].beam.material.opacity = 0.12; }
+  if (sc.id==='package' && o.cordon){ const p = PLACES.checkpoint17; cordonMesh = new THREE.Mesh(new THREE.RingGeometry(118,124,64), new THREE.MeshBasicMaterial({color:0xe5484d, side:THREE.DoubleSide})); cordonMesh.rotation.x = -Math.PI/2; cordonMesh.position.set(p.x, 2, p.z); scene.add(cordonMesh); }
+  openCard(sc); renderTicks(); updateHud(S.t);
+}
+function renderOutcome(sc){
+  const o = sc.opts[sc.pick]; const box = $('#cardOut');
+  box.innerHTML = `<div class="out"><strong>What happened:</strong> ${esc(o.o)}<div class="fx">${fxChips(o.fx||{})}</div></div>
+  <div class="ai" id="crit"><div class="who"><span>${AI.sample ? 'AI advisor' : 'Exercise guidance'}</span><span id="critTag"></span></div><div id="critBody" class="note" style="color:var(--muted)">${AI.sample ? 'Ask the AI to critique this call, live, using the current picture.' : esc(sc.g)}</div></div>
+  <div class="row-btns">${AI.sample ? '<button class="btn" type="button" id="critGo">Critique my call</button>' : ''}<button class="btn pri" type="button" id="resume">Resume clock ▶</button></div>`;
+  $('#resume').addEventListener('click', () => { closeCard(); S.playing = true; setPlayBtn(); });
+  const cg = $('#critGo'); if (cg) cg.addEventListener('click', () => critique(sc));
+  if (sc.critText){ $('#critBody').className = ''; $('#critBody').innerHTML = md(sc.critText); }
+}
+
+/* --------------------------------------------------------- site popover */
+function openSite(id){
+  const p = PLACES[id]; if (!p) return; const el = $('#site');
+  const z = p.zone && ZONES[ZI[p.zone]]; const zl = z ? `${z.name}: ~${(Math.round(z.vis*PPL/1000)).toLocaleString()}k people · ${z.vis/z.n > .7 ? 'dense' : z.vis/z.n > .45 ? 'busy' : 'comfortable'}` : '';
+  el.innerHTML = `<button class="x" type="button" aria-label="Close">✕</button><h4>${esc(p.name)}</h4><p>${esc(p.d)}</p>${zl ? `<p style="color:var(--fg)">${esc(zl)}</p>` : ''}
+  ${p.still ? `<a class="still" href="${STILLS[p.still]}" target="_blank" rel="noopener">◉ Aerial still <small>AI-simulated imagery · opens in a new tab</small></a>` : ''}
+  <div class="row-btns"><button class="btn" type="button" data-fly>Fly here</button><button class="btn" type="button" data-ask>Ask AI about this site</button></div>`;
+  el.hidden = false; orbitTarget = {x:p.x, z:p.z};
+  el.querySelector('.x').addEventListener('click', () => el.hidden = true);
+  el.querySelector('[data-fly]').addEventListener('click', () => flyTo(p.x, p.z, 700));
+  el.querySelector('[data-ask]').addEventListener('click', () => { $('#askText').value = `What are the top risks at ${p.name} right now, and what should be staged there in the next hour?`; $('#askText').focus(); el.hidden = true; });
+}
+
+/* ---------------------------------------------------------------- clock */
+function setPlayBtn(){ const b = $('#play'); b.textContent = S.playing ? '❚❚ Pause' : '▶ Play'; b.setAttribute('aria-label', S.playing ? 'Pause' : 'Play'); }
+$('#play').addEventListener('click', () => { if (S.current && S.current.status==='active'){ openCard(S.current); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
+$('#next').addEventListener('click', () => { if (S.current && S.current.status==='active'){ openCard(S.current); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
+$('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
+$('#scrub').addEventListener('input', e => { S.t = +e.target.value; S.ff = null; });
+$('#reset').addEventListener('click', () => resetAll());
+function advance(dt){
+  const fe = fwEnd(); let spd = S.speed;
+  if (S.ff) spd = Math.max(45, S.speed);
+  else if (!S.fwCancelled && S.t >= S.fwStart - 1 && S.t < fe) spd = Math.min(spd, 1.2);
+  let nt = S.t + spd*dt;
+  const due = SCEN.filter(s => s.status==='pending' && s.at() > S.t - 0.001 && s.at() <= nt).sort((a,b) => a.at()-b.at())[0];
+  if (due){ S.t = due.at(); fire(due); return; }
+  if (nt >= S.end){ nt = S.end; S.playing = false; setPlayBtn(); }
+  S.t = nt;
+}
+function resetAll(){
+  Object.values(markers).forEach(m => scene.remove(m.g)); for (const k in markers) delete markers[k];
+  labels.filter(l => l.id.startsWith('inc:')).map(l => l.id).forEach(removeLabel);
+  if (cordonMesh){ scene.remove(cordonMesh); cordonMesh = null; }
+  for (let i = SCEN.length-1; i >= 0; i--) if (!SCEN[i].scripted) SCEN.splice(i,1);
+  SCEN.forEach(s => { s.status = 'pending'; s.pick = null; s.critText = null; s.doneAt = null; });
+  Object.assign(S, {t:S.start, playing:false, ff:null, fwStart:T('21:09'), fwCancelled:false, readiness:92, patients:0, alerts:0, emsHold:[], metroAdj:[], crowdCut:null, shelter:null, cool:null, clear:null, cordon:false, egress:null, egressAt:0, log:[], current:null});
+  drone.visible = false; capsized.visible = false; closeCard(); $('#site').hidden = true; setPlayBtn(); renderMsel();
+  flyTo(350, -80, 3200);
+}
+
+/* ------------------------------------------------------------------ AI */
+const AI = {sample:null, downloads:null, ready:false};
+const PLACE_IDS = Object.keys(PLACES);
+function brief(){
+  const t = S.t, zl = ZONES.map(z => `${z.name} ~${Math.round(z.vis*PPL/1000)}k (${Math.round(z.vis/z.n*100)}% of peak capacity)`).join('; ');
+  const act = SCEN.filter(s => s.status !== 'pending').map(s => `- ${fmt(s.at())} ${s.title} [${s.sev}] at ${PLACES[s.place].name}: ${s.sit}${s.pick!=null ? ` DECISION: ${s.opts[s.pick].l}. RESULT: ${s.opts[s.pick].o}` : ' (AWAITING DECISION)'}`).join('\n') || '- none yet';
+  const up = SCEN.filter(s => s.status==='pending').map(s => `${fmt(s.at())}`).join(', ');
+  return `EXERCISE (fictional tabletop). America 250 Independence Day on the National Mall, Washington DC, Saturday July 4 2026.
+Exercise clock: ${fmt(t)} EDT. Weather: ${t >= S.stormWarn && t <= S.stormEnd + 10 ? 'Severe Thunderstorm Warning in effect, storm arrival ~' + fmt(S.stormArrive) : 'heat index ' + Math.round(heatIndex(t)) + '°F' + (t < S.stormWarn ? ', storms possible after 19:00' : '')}.
+Crowd on site ~${Math.round(crowdNow/1000)}k. Zones: ${zl}.
+Fireworks: ${S.fwCancelled ? 'cancelled' : fmt(S.fwStart) + '–' + fmt(S.fwStart + S.fwDur)}. Capitol West Lawn concert 20:00–21:30.
+Metrics: EMS units free ${emsFree(t)}/${S.emsTotal}; patients treated ${S.patients + basePatients(t)}; Mall-area Metro load ${metroLoad(t)}% of platform capacity; public alerts sent ${S.alerts}; exercise readiness score ${Math.round(S.readiness)}/100.
+Key agencies: DC HSEMA (EOC), MPD, U.S. Park Police, U.S. Secret Service, U.S. Capitol Police, DC Fire & EMS, WMATA + Metro Transit Police, NPS, NWS Sterling, Pepco, DDOT, Coast Guard, MPD Harbor Patrol.
+Incidents so far:
+${act}
+Scripted injects still pending at: ${up || 'none'}.`;
+}
+const ADVISOR = `You are a senior emergency management advisor supporting a big-city EOC during a fictional tabletop exercise. Be decisive and practical. Use short markdown: a one-line bottom line in bold, then 3-5 bullets of concrete actions (who does what, in the next 15-60 minutes), then one "Watch for" line. Under 170 words. Refer to the numbers in the picture. Public-information level only: never give tactical security, weapons or counter-drone details.`;
+function aiErr(e){ const c = e && e.code; return c==='not_granted' ? 'Live AI was not allowed in this view. You can enable it from the artifact\'s permissions.' : c==='rate_limited' ? 'The AI is busy. Give it a few seconds, then ask again.' : c==='cancelled' ? 'Stopped.' : c==='refused' ? 'The AI declined that request. Try rephrasing it as an exercise scenario.' : 'The AI could not answer just now (' + (c || 'error') + ').'; }
+const tier = () => S.deep ? 'default' : 'quick';
+$('#deep').addEventListener('change', e => S.deep = e.target.checked);
+
+async function initAI(){
+  const cl = window.claude;
+  if (!cl || typeof cl.use !== 'function'){ setAIState(false); return; }
+  try { AI.sample = await cl.use('sample'); } catch(e){ AI.sample = null; }
+  try { AI.downloads = await cl.use('downloads'); } catch(e){ AI.downloads = null; }
+  setAIState(!!AI.sample);
+}
+function setAIState(on){
+  AI.ready = on; const st = $('#aiStat'); st.textContent = on ? '● live' : 'offline in this view'; st.classList.toggle('on', on);
+  $('#cbNote').textContent = on ? 'Uses your Claude account. The first request asks for permission.' : 'Live AI runs when this page is opened in Claude. Offline here, so a pre-built inject is used.';
+  if (!on) addMsg('a', 'Live AI is offline in this view, so built-in exercise guidance appears at each decision. Open this page in Claude to ask questions live.');
+  else addMsg('a', 'Ready. I can see the whole exercise picture: crowd by zone, weather, open incidents, decisions so far and resource levels. Ask me anything, or press **Critique my call** after a decision.');
+  if (S.current && S.current.pick != null) renderOutcome(S.current);
+}
+function md(src){
+  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  let html = '', list = null; const close = () => { if (list){ html += `</${list}>`; list = null; } };
+  for (const raw of String(src).split(/\r?\n/)){
+    const l = raw.trimEnd(); let m;
+    if (!l.trim()){ close(); continue; }
+    if (/^\s*(---|\*\*\*)\s*$/.test(l)){ close(); continue; }
+    if ((m = l.match(/^(#{1,6})\s+(.*)/))){ close(); const lv = Math.min(6, m[1].length + 2); html += `<h${lv}>${inline(m[2])}</h${lv}>`; continue; }
+    if ((m = l.match(/^\s*[-*•]\s+(.*)/))){ if (list !== 'ul'){ close(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if (list !== 'ol'){ close(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if (/^\|/.test(l)){ close(); if (/^\|[\s:-]+\|/.test(l.replace(/[^|:\-\s]/g,'x')) && !/[a-z0-9]/i.test(l)) continue; html += `<p>${inline(l.replace(/^\||\|$/g,'').split('|').map(c => c.trim()).join(' · '))}</p>`; continue; }
+    close(); html += `<p>${inline(l)}</p>`;
+  }
+  close(); return html;
+}
+const msgs = $('#msgs'); const turns = [];
+function addMsg(role, text){ const d = document.createElement('div'); d.className = 'msg ' + (role==='u' ? 'u' : 'a'); if (role==='u') d.textContent = text; else d.innerHTML = '<div class="who">AI advisor</div><div class="body">' + md(text) + '</div>'; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; }
+let askCtl = null;
+async function ask(q){
+  q = (q || '').trim(); if (!q) return;
+  addMsg('u', q); $('#askText').value = '';
+  if (!AI.sample){ addMsg('a', 'Live AI is offline in this view. Open this page in Claude to get a live answer. Meanwhile, the guidance on each decision card shows how an experienced planner would think about it.'); return; }
+  const d = addMsg('a', ''); const body = d.querySelector('.body'); body.innerHTML = '<span class="thinking">Thinking</span>';
+  const hist = turns.slice(-4).map(x => (x.role==='user' ? 'Q: ' : 'A: ') + x.content).join('\n');
+  const input = `${ADVISOR}\n\nCURRENT PICTURE\n${brief()}\n${hist ? '\nEARLIER IN THIS CONVERSATION\n' + hist + '\n' : ''}\nQUESTION FROM THE EOC: ${q}`;
+  askCtl = new AbortController(); $('#askStop').hidden = false; $('#askGo').disabled = true;
+  try {
+    const r = await AI.sample(input, {modelTier:tier(), cache:false, signal:askCtl.signal, onText:({text}) => { body.innerHTML = md(text); msgs.scrollTop = msgs.scrollHeight; }});
+    body.innerHTML = md(r.text); turns.push({role:'user', content:q}, {role:'assistant', content:r.text});
+  } catch(e){ body.innerHTML = (e && e.text ? md(e.text) : '') + `<p class="note">${esc(aiErr(e))}</p>`; }
+  finally { $('#askStop').hidden = true; $('#askGo').disabled = false; msgs.scrollTop = msgs.scrollHeight; }
+}
+$('#askGo').addEventListener('click', () => ask($('#askText').value));
+$('#askText').addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); ask($('#askText').value); } });
+$('#askStop').addEventListener('click', () => askCtl && askCtl.abort());
+['What are my top 3 risks in the next hour?','Brief me like I just walked into the EOC','What should I pre-position before the fireworks?'].forEach(q => { const b = document.createElement('button'); b.className = 'sug'; b.type = 'button'; b.textContent = q; b.addEventListener('click', () => ask(q)); $('#askSug').appendChild(b); });
+
+async function critique(sc){
+  const body = $('#critBody'), go = $('#critGo'); if (!body) return;
+  body.className = ''; body.innerHTML = '<span class="thinking">Reviewing the call</span>'; if (go) go.disabled = true;
+  const o = sc.opts[sc.pick];
+  const input = `You are a senior emergency manager acting as the exercise evaluator in a fictional tabletop exercise. Critique the participant's decision.
+Format (markdown, under 140 words): first line "**Grade: Strong / Workable / Risky** — one-sentence reason". Then "**What the other options would have changed:**" with one bullet per other option. Then "**Next 15 minutes:**" with 2 bullets. Public-information level only.
+
+CURRENT PICTURE
+${brief()}
+
+INJECT: ${sc.title} (${fmt(sc.at())}, ${PLACES[sc.place].name})
+SITUATION: ${sc.sit}
+OPTIONS: ${sc.opts.map((x,i) => 'ABC'[i] + ') ' + x.l).join(' | ')}
+PARTICIPANT CHOSE: ${'ABC'[sc.pick]}) ${o.l}
+SIMULATED RESULT: ${o.o}`;
+  try {
+    const r = await AI.sample(input, {modelTier:tier(), onText:({text}) => { body.innerHTML = md(text); }});
+    sc.critText = r.text; body.innerHTML = md(r.text);
+  } catch(e){ body.innerHTML = `<p class="note">${esc(aiErr(e))}</p><p><strong>Exercise guidance:</strong> ${esc(sc.g)}</p>`; }
+  finally { if (go) go.disabled = false; }
+}
+
+// curveballs
+const CB_SUG = ['Water main break floods Constitution Ave','A rumor of a shooting spreads on social media','GW Hospital goes on diversion','Bus crash on the 14th St Bridge'];
+CB_SUG.forEach(q => { const b = document.createElement('button'); b.className = 'sug'; b.type = 'button'; b.textContent = q; b.addEventListener('click', () => { $('#cbText').value = q; }); $('#cbSug').appendChild(b); });
+const FALLBACK_CB = {title:'Water main break floods Constitution Ave', place:'parade', sev:'moderate', esf:['ESF-3 Public Works','ESF-1 Transportation'],
+  sit:'A 24-inch water main breaks under Constitution Ave at 12th St. Water is 15 cm deep across four lanes, two museum entrances are affected, and the sidewalk crowd is detouring onto the roadway.',
+  opts:[{l:'Close Constitution Ave 9th–14th, DC Water isolates the main, officers reroute pedestrians to Madison Dr', o:'Main isolated in 50 minutes. Pedestrian reroute holds. Two minor slip-and-fall injuries.', fx:{readiness:4, patients:2}},
+        {l:'Keep the road open and cone off the flooded lanes', o:'Vehicles and pedestrians mix in a narrowed corridor and an ambulance is delayed 8 minutes.', fx:{readiness:-4, ems:2}},
+        {l:'Wait for DC Water before acting', o:'Water spreads to Federal Triangle Metro entrance, which closes for 40 minutes.', fx:{readiness:-7, metro:10}}],
+  g:'Close and reroute early. Infrastructure failures become crowd problems when people improvise their own detours. Watch the Federal Triangle Metro entrance, which is downhill from the break.'};
+let cbBusy = false;
+$('#cbGo').addEventListener('click', async () => {
+  const q = $('#cbText').value.trim(); if (!q || cbBusy) return; cbBusy = true; const btn = $('#cbGo'), note = $('#cbNote');
+  btn.disabled = true; btn.textContent = 'Building the inject…';
+  let sc = null;
+  if (AI.sample){
+    note.innerHTML = '<span class="thinking">AI is writing the inject</span>';
+    const input = `You are the exercise controller for a fictional tabletop exercise (America 250, July 4 2026, National Mall, Washington DC). A participant proposed this what-if: "${q.replace(/"/g,"'")}".
+Turn it into ONE realistic inject that happens now, consistent with the current picture below. Keep it non-graphic and at public-information level (no tactical security, weapons or counter-drone detail). If the what-if is not usable for an emergency management exercise, adapt it into the closest realistic version.
+
+CURRENT PICTURE
+${brief()}
+
+Return ONLY JSON with exactly these keys:
+{"title": "max 55 chars", "place": one of ${JSON.stringify(PLACE_IDS)}, "sev": "moderate" | "high" | "critical", "esf": ["1-3 items like 'ESF-8 Health & Medical'"], "situation": "max 60 words with specific numbers", "options": [{"label":"max 110 chars","outcome":"max 40 words","fx":{"readiness": integer -15..8, "patients": integer 0..40, "ems": integer 0..12, "metro": integer -20..30}}, {...}, {...}], "guidance": "max 75 words: which option and why, plus one Watch for"}
+Exactly 3 options with genuinely different strategies.`;
+    try {
+      const j = await AI.sample.json(input, {modelTier:'quick'});
+      if (!j || !Array.isArray(j.options) || j.options.length < 2) throw {code:'invalid_json'};
+      sc = {title:String(j.title||q).slice(0,70), place: PLACES[j.place] ? j.place : 'mall', sev:['moderate','high','critical'].includes(j.sev) ? j.sev : 'high', esf:(Array.isArray(j.esf) && j.esf.length ? j.esf : ['ESF-5 Emergency Management']).slice(0,3).map(String), sit:String(j.situation||''), g:String(j.guidance||''),
+        opts:j.options.slice(0,3).map(o => ({l:String(o.label||''), o:String(o.outcome||''), fx:{readiness:clamp(+((o.fx||{}).readiness)||0,-15,8), patients:clamp(+((o.fx||{}).patients)||0,0,40), ems:clamp(+((o.fx||{}).ems)||0,0,12), metro:clamp(+((o.fx||{}).metro)||0,-20,30)}}))};
+      note.textContent = 'Inject created by the AI from your what-if.';
+    } catch(e){ note.textContent = aiErr(e) + ' Using a pre-built inject instead.'; }
+  }
+  if (!sc){ sc = JSON.parse(JSON.stringify(FALLBACK_CB)); if (!AI.sample) note.textContent = 'Live AI is offline here, so this is a pre-built inject. In Claude, the AI writes one from your exact words.'; }
+  const at = Math.min(S.end - 1, Math.floor(S.t) + 1);
+  Object.assign(sc, {id:'cb' + Date.now(), at:() => at, status:'pending', pick:null, scripted:false, q:'Your call'});
+  SCEN.push(sc); renderMsel(); fire(sc);
+  btn.disabled = false; btn.textContent = 'Generate inject'; cbBusy = false; $('#cbText').value = '';
+});
+
+// after-action report
+let aarText = '', aarCtl = null;
+function localAAR(){
+  const L = S.log; const strong = L.filter(x => { const sc = SCEN.find(s => s.title===x.title); return sc && sc.opts[0].l===x.choice; });
+  return `# After-Action Report (EXERCISE)
+**America 250 · National Mall · July 4, 2026 · tabletop exercise**
+
+## Exercise overview
+Exercise clock ran to ${fmt(S.t)}. ${L.length} decision points were played. Final readiness score: ${Math.round(S.readiness)}/100. Patients treated: ${S.patients + basePatients(S.t)}. Public alerts sent: ${S.alerts}.
+
+## Decisions
+${L.map(x => `- **${fmt(x.t)} ${x.title}:** chose ${x.letter}, "${x.choice}". Result: ${x.outcome}`).join('\n') || '- No decisions recorded yet.'}
+
+## Strengths
+${strong.length ? strong.slice(0,3).map(x => `- ${x.title}: the team picked the response that limited exposure and kept the venue running.`).join('\n') : '- Not enough decisions to assess yet.'}
+
+## Areas for improvement
+${L.filter(x => !strong.includes(x)).slice(0,3).map(x => `- ${x.title}: revisit the decision rule. ${x.outcome}`).join('\n') || '- None flagged.'}
+
+## Improvement plan
+1. Pre-approve public alert templates (heat, storm shelter, egress) — ESF-15 — before next event
+2. Write a lightning shelter-in-place plan with named buildings and capacities — ESF-6 / NPS — 60 days
+3. Exercise a multi-station Metro metering plan with WMATA — ESF-1 — 90 days
+
+*Generated offline from the exercise log. In Claude, the AI writes a full HSEEP-style report.*`;
+}
+$('#aarBtn').addEventListener('click', async () => {
+  const modal = $('#aarModal'), body = $('#aarBody'), stat = $('#aarStat'); modal.hidden = false;
+  $('#aarSave').hidden = !AI.downloads;
+  if (!AI.sample || !S.log.length){ aarText = localAAR(); body.innerHTML = md(aarText); stat.textContent = S.log.length ? 'Built from the exercise log (live AI offline in this view).' : 'Play at least one inject to fill this in.'; return; }
+  stat.textContent = 'AI is drafting the report from ' + S.log.length + ' decisions…'; body.innerHTML = '<span class="thinking">Writing</span>';
+  const input = `Write an HSEEP-style After-Action Report for this fictional tabletop exercise. Mark it EXERCISE. Markdown, under 480 words, plain professional language.
+Sections: # After-Action Report (EXERCISE), a bold one-line exercise name/date line, ## Exercise overview (2-3 sentences with the key numbers), ## Strengths (3 bullets), ## Areas for improvement (3 bullets: observation, then recommendation), ## Improvement plan (numbered: action — lead ESF/agency — timeframe; 4-5 items), ## Bottom line for leadership (2 sentences).
+
+EXERCISE PICTURE AT END
+${brief()}
+
+DECISION LOG
+${S.log.map(x => `${fmt(x.t)} | ${x.title} (${x.sev}) at ${x.place} | chose ${x.letter}: ${x.choice} | result: ${x.outcome}${x.scripted ? '' : ' | inject proposed live by a participant'}`).join('\n')}`;
+  aarCtl = new AbortController(); $('#aarStop').hidden = false;
+  try {
+    const r = await AI.sample(input, {modelTier:'default', signal:aarCtl.signal, onText:({text}) => { body.innerHTML = md(text); stat.textContent = 'AI is writing…'; }});
+    aarText = r.text; body.innerHTML = md(aarText); stat.textContent = 'Drafted by AI from ' + S.log.length + ' decisions. Review before use.';
+  } catch(e){ aarText = localAAR(); body.innerHTML = md(aarText); stat.textContent = aiErr(e) + ' Showing the offline version.'; }
+  finally { $('#aarStop').hidden = true; }
+});
+$('#aarStop').addEventListener('click', () => aarCtl && aarCtl.abort());
+$('#aarCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(aarText); $('#aarStat').textContent = 'Copied.'; } catch(e){ const r = document.createRange(); r.selectNodeContents($('#aarBody')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('#aarStat').textContent = 'Text selected. Press Ctrl/Cmd+C to copy.'; } });
+$('#aarSave').addEventListener('click', async () => { if (!AI.downloads) return; try { await AI.downloads.save({filename:'America250-AAR-exercise.md', data:aarText}); } catch(e){ $('#aarStat').textContent = 'Download was not completed.'; } });
+
+// modals
+$('#how').addEventListener('click', () => { $('#howModal').hidden = false; });
+document.querySelectorAll('.modal').forEach(m => { m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.hidden = true; }); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
+
+/* ------------------------------------------------------------------ loop */
+function resize(){ const w = stage.clientWidth, h = canvas.clientHeight || stage.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+let last = performance.now(), acc = 0, tsAcc = 0;
+function frame(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  if (S.playing) advance(dt);
+  const t = S.t;
+  const sky = updateSky(t, dt);
+  crowdNow = updateCrowd(t);
+  const fwOn = !S.fwCancelled && t >= S.fwStart && t <= S.fwStart + S.fwDur;
+  updateFireworks(dt, fwOn);
+  updateRain(dt, stormFactor(t) > 0.4);
+  boats.visible = t > T('18:00') && t < T('23:00');
+  if (drone.visible){ drone.position.x = 950 + Math.sin(now/1300)*18; drone.position.z = -50 + Math.cos(now/1700)*14; drone.userData.light.visible = (now % 900) < 450; const d = SCEN.find(s => s.id==='drone'); if (d && d.pick != null && t > d.at() + 20) drone.visible = false; }
+  for (const id in markers){ const m = markers[id]; const k = 1 + 0.18*Math.sin(now/260); m.ring.scale.set(k,k,1); const sc = SCEN.find(s => s.id===id); const old = sc && sc.doneAt != null && t > sc.doneAt + 30; m.g.visible = !old; const lb = labels.find(l => l.id==='inc:'+id); if (lb) lb.hidden = old; }
+  const dist = camera.position.distanceTo(controls.target); cmat.size = clamp(2.6 * 2200/dist, 1.6, 7); fwMat.size = clamp(3.2 * 2600/dist, 2, 7);
+  updateFly(dt); controls.update();
+  renderer.render(scene, camera);
+  renderFeeds(dt, sky.night);
+  updateLabels();
+  acc += dt; if (acc > 0.15){ acc = 0; updateHud(t); }
+  tsAcc += dt; if (tsAcc > 0.5){ tsAcc = 0; const ts = fmt(t) + ':' + String(Math.floor((now/1000)%60)).padStart(2,'0'); FEEDS.forEach(f => f.ts.textContent = ts); }
+  requestAnimationFrame(frame);
+}
+renderMsel(); updateHud(S.t); setPlayBtn();
+requestAnimationFrame(frame);
+setTimeout(initAI, 0);
+window.__ex = {S, SCEN, fire, decide, advance, crowd:() => crowdNow, labels:() => labels.length, P:P.length, inst:inst.length};
+})();
+</script>
