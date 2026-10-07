@@ -202,7 +202,7 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
       <svg class="seal" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="none" stroke="#d9ae55" stroke-width="1.5"/><circle cx="20" cy="20" r="14.5" fill="none" stroke="#d9ae55" stroke-width=".8" stroke-dasharray="1.5 2"/><path d="M20 8.5l2.7 8.2h8.6l-7 5.1 2.7 8.2-7-5.1-7 5.1 2.7-8.2-7-5.1h8.6z" fill="#d9ae55"/></svg>
       <div>
         <h1><b>America 250</b> · National Mall</h1>
-        <p>Common operating picture · Saturday, July 4, 2026 · Washington, DC</p>
+        <p>Tabletop exercise · Saturday, July 4, 2026 · Washington, DC</p>
       </div>
     </div>
     <div class="clock">
@@ -276,7 +276,7 @@ textarea,input[type=text]{background:#0d1526;border:1px solid var(--line);border
       <div class="msgs" id="msgs"></div>
       <div class="ask">
         <div class="chips" id="askSug"></div>
-        <textarea id="askText" rows="2" placeholder="Thunderstorm 20 minutes out and 500k on the Mall. What do I do?"></textarea>
+        <textarea id="askText" rows="2" placeholder="Thunderstorm 20 minutes out and 500k on the Mall. What am I missing?"></textarea>
         <div class="row">
           <label class="tog"><input type="checkbox" id="deep"> Deeper analysis (slower)</label>
           <div class="row-btns"><button class="btn" id="askStop" type="button" hidden>Stop</button><button class="btn pri" id="askGo" type="button">Ask</button></div>
@@ -313,7 +313,7 @@ Interview answers: AI as a thinking partner + "my team could do this" · ready b
       <li>Modeled the Mall from public geography: 20+ landmarks, ~800 city blocks of buildings, the Potomac, Metro stations, a crowd model of ~16,000 tracked points.</li>
       <li>Wrote a 9-inject master scenario events list (MSEL) spanning ESF-1, 6, 8, 9, 12, 13 and 15, each with a decision point, consequences and guidance.</li>
       <li>Wired a live AI advisor into the page: it answers questions with the current exercise picture, critiques each decision, invents new injects on request, and drafts the after-action report.</li>
-      <li>Independent AI reviewers checked the scenarios for realism and tested the page on desktop and phone before it was shared.</li>
+      <li>AI reviewers did a first realism pass and tested the page on desktop and phone. Treat it as a first draft for your planners, not a validated MSEL.</li>
     </ul>
     <h3>What it would take for your city</h3>
     <p>Swap the map footprint and the event, keep the engine. Your venues, your MSEL, your ESF structure. A first version is a working session, not a procurement.</p>
@@ -398,17 +398,17 @@ const SCEN = [
   sit:'A 6-year-old was separated from family near the Folklife Festival tents by the Smithsonian Castle 12 minutes ago. The parent is at the 12th St info tent. About 38,000 people are in the area as the parade crowd drifts onto the Mall.',
   q:'Your call',
   opts:[
-   {l:'Activate the pre-planned reunification point at the Castle and broadcast a description on all radio channels and to NPS volunteers', o:'Child found in 18 minutes at the Air and Space entrance by a Park Police officer working from the radio description. Reunited at the designated point.', fx:{readiness:3}},
+   {l:'Activate the pre-planned reunification point at the Castle and broadcast a description on the event operations channels and to NPS volunteers', o:'Child found in 18 minutes at the Air and Space entrance by a Park Police officer working from the radio description. Reunited at the designated point.', fx:{readiness:3}},
    {l:'Push a public alert with the child\'s photo to everyone on the Mall', o:'Child found in 25 minutes, but the photo spreads on social media and brings 40 "sighting" calls that tie up dispatch. Public child-photo alerts need a policy decision before the event, not during it.', fx:{readiness:-1, alerts:1}},
    {l:'Close the Mall exits until the child is found', o:'Not possible on an open Mall with 100,000+ people. The attempt creates bottlenecks at the 7th and 14th St crossings. Child found in 31 minutes.', fx:{readiness:-6}}
   ],
   g:'Go with the reunification point. It is a planned capability, not an improvisation, and a staffed point plus a radio description resolves most cases in under 30 minutes. Keep mass public alerts for confirmed abductions. Watch for a second wave of separations right after the fireworks, when lost-child reports jump. Have staff at the reunification point before the show ends.'},
- {id:'heat', at:()=>T('13:40'), place:'wamo', sev:'high', title:'Heat casualties surge at the Monument Grounds', esf:['ESF-8 Health & Medical','ESF-6 Mass Care'],
-  sit:'Heat index 104°F. DC Fire & EMS has treated 23 heat patients at the Monument Grounds in 40 minutes, 2 of them critical. The cooling tent at 15th & Jefferson is full. Ambulance turnaround is up to 22 minutes and about 190,000 people are already holding spots for the fireworks.',
+ {id:'heat', best:1, at:()=>T('13:40'), place:'wamo', sev:'high', title:'Heat casualties surge at the Monument Grounds', esf:['ESF-8 Health & Medical','ESF-6 Mass Care'],
+  sit:'Heat index 102°F. DC Fire & EMS has treated 23 heat patients at the Monument Grounds in 40 minutes, 2 of them critical. The cooling tent at 15th & Jefferson is full. Ambulance turnaround is up to 22 minutes and about 190,000 people are already holding spots for the fireworks.',
   q:'Your call',
   opts:[
    {l:'Surge medical: open a second casualty collection point and call regional mutual-aid ambulances', o:'Turnaround drops to 12 minutes. Patient count keeps rising, because nothing reduced how many people are in the sun.', fx:{readiness:1, patients:14, ems:-4}},
-   {l:'Cut exposure: heat advisory to phones and PA, open Smithsonian lobbies as cooling centers, add water stations and misting buses', o:'New heat calls drop about 40% within the hour. Museums absorb about 9,000 people. EMS stays stretched for the critical patients.', fx:{readiness:5, patients:6, alerts:1, ems:3}, flow:'cool'},
+   {l:'Cut exposure: heat message via AlertDC, social and PA, open Smithsonian lobbies as cooling centers, add water stations, cooling buses and misting stations', o:'New heat calls drop about 40% within the hour. Museums absorb about 9,000 people. EMS stays stretched for the critical patients.', fx:{readiness:5, patients:6, alerts:1, ems:3}, flow:'cool'},
    {l:'Hold posture and push hydration reminders through the event app', o:'Calls keep climbing. By 15:00 there are 2 more critical patients and ambulances are being pulled off the parade route.', fx:{readiness:-8, patients:31, ems:10}}
   ],
   g:'Cut exposure first, then surge medical if critical calls continue. Treating patients does not reduce how many people get sick; getting them out of the sun and onto water does. The museums are air-conditioned, already staffed and right on the Mall. Watch for a second heat peak around 16:00–17:00 among people who held their spots all afternoon. Pre-position cooling near the Reflecting Pool.'},
@@ -416,52 +416,52 @@ const SCEN = [
   sit:'A small consumer drone is hovering about 120 m over the Mall near 9th St, inside restricted airspace. Federal partners have it on detection; the operator is not yet located. About 160,000 people are below and posts asking "is this a threat?" are spreading.',
   q:'Your call',
   opts:[
-   {l:'Federal lead handles the drone; Park Police and MPD sweep for the operator; draft a public message and hold it', o:'Operator found in 14 minutes, a tourist who did not know about the restriction. Drone landed. The rumor fades without a public message.', fx:{readiness:4}},
+   {l:'Federal lead handles the drone; Park Police and MPD sweep for the operator; post a short holding line on official social channels', o:'Operator found in 14 minutes, a tourist who did not know about the restriction. Drone landed. The holding post keeps the rumor from growing.', fx:{readiness:4}},
    {l:'Clear the area under the drone now', o:'Moving 40,000 people with no clear reason causes a push at the 12th St crossing and 3 minor injuries. The drone was harmless.', fx:{readiness:-5, patients:3}, flow:'clear'},
-   {l:'Post a public message right away: "Authorities are aware of a drone"', o:'It calms some speculation but draws more attention and filming. The wording was fine; the timing came before the facts.', fx:{readiness:-1, alerts:1}}
+   {l:'Announce it on the PA and push a phone alert: "Authorities are aware of a drone"', o:'It calms some speculation but draws more attention and filming. The wording was fine; the channel was out of proportion.', fx:{readiness:-1, alerts:1}}
   ],
-  g:'Let the federal lead handle the drone itself; the local job is finding the operator and controlling information. With no sign of a threat, moving a crowd is a bigger risk than a hovering drone. Draft and approve the public message now, but hold it until the facts are known. Watch for a second drone and copycat flights after 20:00 when the crowd peaks.'},
- {id:'package', at:()=>T('17:10'), place:'checkpoint17', sev:'high', title:'Unattended bag at the 17th St checkpoint', esf:['ESF-13 Public Safety','ESF-15 External Affairs'],
-  sit:'Screening staff at 17th St & Constitution Ave report an unattended backpack against the fence line. About 8,000 people are in the queue and it is growing by about 300 a minute ahead of the evening program.',
+  g:'Let the federal lead handle the drone itself; the local job is finding the operator and controlling information. With no sign of a threat, moving a crowd is a bigger risk than a hovering drone. Answer the rumor with a short holding line on social; save PA and phone alerts for when people need to act. Watch for a second drone and copycat flights after 20:00 when the crowd peaks.'},
+ {id:'package', at:()=>T('17:10'), place:'checkpoint17', sev:'high', title:'Suspicious bag at the 17th St checkpoint', esf:['ESF-13 Public Safety','ESF-15 External Affairs'],
+  sit:'Screening staff at 17th St & Constitution Ave report a backpack against the fence line. No owner was found after a check of the queue, and officers have assessed it as suspicious. About 8,000 people are in the queue and it is growing by about 100 a minute ahead of the evening program.',
   q:'Your call',
   opts:[
    {l:'Cordon the bag, close this checkpoint and redirect the line to 15th St and the Ellipse; bomb squad responds', o:'Line rerouted in 9 minutes. The bag is cleared after 38 minutes: a lost backpack with a jacket and snacks. The checkpoint reopens at 17:55.', fx:{readiness:4}, cordon:true},
    {l:'Hold the queue in place while the bag is examined', o:'8,000 people stay inside the hazard area for 38 minutes and the line grows to 12,000. Had the bag been real, that exposure would have been unacceptable.', fx:{readiness:-7}},
-   {l:'Evacuate the entire Monument Grounds', o:'Moving 150,000 people for one unattended bag creates crush points at 14th St and costs public trust in later instructions.', fx:{readiness:-5, patients:5}, flow:'clear'}
+   {l:'Evacuate the entire Monument Grounds', o:'Moving 150,000 people for one suspicious bag creates crush points at 14th St and costs public trust in later instructions.', fx:{readiness:-5, patients:5}, flow:'clear'}
   ],
-  g:'Cordon, move people away, and keep the rest of the venue running. That is standard unattended-item practice. The key move is rerouting the queue, because a stalled line of 8,000 is a crowd-safety problem on its own. Watch for the redirected line arriving at 15th St. That checkpoint should sweep its own area before the crowd gets there.'},
+  g:'Cordon, move people away, and keep the rest of the venue running. That is standard suspicious-item practice. The key move is rerouting the queue, because a stalled line of 8,000 is a crowd-safety problem on its own. Watch for the redirected line arriving at 15th St. That checkpoint should sweep its own area before the crowd gets there.'},
  {id:'power', at:()=>T('18:45'), place:'fedtriangle', sev:'moderate', title:'Power outage in Federal Triangle', esf:['ESF-12 Energy','ESF-1 Transportation'],
   sit:'Pepco reports a feeder failure. Signals are dark on Constitution Ave from 9th to 15th St. The Natural History Museum, a designated cooling center and storm shelter, is on generator at reduced capacity. Federal Triangle Metro is on emergency lighting. Restoration estimate: 90 minutes.',
   q:'Your call',
   opts:[
-   {l:'Officers on the dark intersections, Pepco prioritizes the museum, and shelter capacity shifts to American History and Air and Space', o:'Intersections staffed in 20 minutes. The shelter plan is rebuilt before the storm forecast turns into a warning.', fx:{readiness:4}},
+   {l:'Officers on the dark intersections, Pepco prioritizes the museum, and shelter capacity shifts to Air and Space and the National Gallery of Art', o:'Intersections staffed in 20 minutes. The shelter plan is rebuilt before the storm forecast turns into a warning.', fx:{readiness:4}},
    {l:'Close Constitution Ave to all vehicles', o:'Safe for pedestrians, but ambulance routing gets harder and transports off the Mall take 6 minutes longer.', fx:{readiness:1, ems:2}},
    {l:'Wait for Pepco\'s 90-minute restoration', o:'Restoration takes 2.5 hours. Natural History is not ready as a shelter when the storm arrives.', fx:{readiness:-7}}
   ],
   g:'Treat this as a shelter-capacity problem, not just a traffic problem. The outage is manageable on its own; the real risk is that it takes out a shelter site two hours before likely storms. Watch the NWS timing. If a warning comes, the shelter plan has to already account for the lost capacity.'},
  {id:'storm', at:()=>T('19:55'), place:'wamo', sev:'critical', title:'Severe Thunderstorm Warning, fireworks at risk', esf:['ESF-15 External Affairs','ESF-13 Public Safety','ESF-6 Mass Care'],
-  sit:'NWS issues a Severe Thunderstorm Warning: a line of storms with 60 mph gusts and frequent lightning, reaching the Mall about 20:35. Lightning is already within 10 miles. About 520,000 people are on site, the concert is underway, and the fireworks are set for 21:09.',
+  sit:'NWS issues a Severe Thunderstorm Warning: a line of storms with 60 mph gusts and frequent lightning, reaching the Mall about 20:35. Lightning is already within 10 miles. About 520,000 people are on site, the Capitol concert starts at 20:00, and the fireworks are set for 21:09.',
   q:'Your call',
   opts:[
-   {l:'Shelter now: stop the program, alert every phone and PA, open museums and federal lobbies, delay fireworks 45 minutes', o:'About 140,000 people get into buildings and the rest move to cars, Metro and nearby structures. The storm passes by 21:05. Fireworks launch at 21:54 to a smaller, safe crowd.', fx:{readiness:7, patients:4, alerts:1}, storm:'shelter'},
+   {l:'Shelter now: stop the program, alert every phone and PA, open museums and federal lobbies, hold fireworks until 30 minutes after the last strike', o:'About 60,000 get into museums and federal buildings; most of the rest reach Metro, cars and buildings off the Mall, and thousands ride it out in the open. The storm passes by 21:05. Fireworks launch at 21:54 to a smaller, safe crowd.', fx:{readiness:7, patients:4, alerts:1}, storm:'shelter'},
    {l:'Evacuate the Mall now and cancel the fireworks', o:'Clearing 520,000 people in 40 minutes overwhelms Metro. Thousands are still in the open when the gust front hits, and stations become the crush points.', fx:{readiness:-3, patients:12, metro:35}, storm:'evac'},
    {l:'Hold, keep the program running, and monitor', o:'The gust front hits with people on open grass. Tents collapse, 2 lightning injuries and 25 others, and an uncontrolled rush to the Metro.', fx:{readiness:-15, patients:27, ems:12}, storm:'hold'}
   ],
-  g:'Shelter close by and delay the show. With lightning inside 10 miles and 40 minutes of lead time, nearby shelter beats evacuation, and moving half a million people through four Metro stations in 40 minutes is not possible. Keep the message simple, send it on every channel, and repeat it. Watch the all-clear: wait 30 minutes after the last lightning, then expect a rush back to the Mall.'},
+  g:'Shelter close by and hold the show. There is not enough hard shelter for 520,000, so fill the pre-agreed buildings and push everyone else toward Metro, vehicles and buildings off the Mall; a full evacuation in 40 minutes is not possible. Keep the message simple, send it on every channel, and repeat it. Watch the all-clear: wait 30 minutes after the last lightning, then expect a rush back to the Mall.'},
  {id:'water', at:()=>S.fwStart + 11, place:'memorial_bridge', sev:'high', title:'Boat capsized off Memorial Bridge', esf:['ESF-9 Search & Rescue','ESF-8 Health & Medical'],
   sit:'During the fireworks, a 19-ft recreational boat anchored off Memorial Bridge capsizes after being swamped by wakes. Five people are in the water and two are not yet accounted for. More than 200 boats are on the river.',
   q:'Your call',
   opts:[
-   {l:'Launch MPD Harbor Patrol, DC Fire boats and the Coast Guard; declare a no-wake zone; stage river EMS at the Lincoln Memorial', o:'All five recovered within 16 minutes, one in critical condition. The no-wake order prevents a second capsizing.', fx:{readiness:5, patients:5, ems:2}},
-   {l:'Stop the fireworks so the river is lit for the search', o:'The pause helps the search, but 500,000 people take it as the end of the show and start leaving at once, overlapping the rescue with an unplanned egress.', fx:{readiness:-3, metro:15}},
+   {l:'Launch MPD Harbor Patrol, DC Fire boats and the Coast Guard; Coast Guard and Harbor Patrol enforce a no-wake zone; stage river EMS at the Lincoln Memorial', o:'All five recovered within 16 minutes, one in critical condition. The no-wake order prevents a second capsizing.', fx:{readiness:5, patients:5, ems:2}},
+   {l:'Stop the fireworks so rescue boats and aircraft can work safely', o:'The pause helps the search, but 500,000 people take it as the end of the show and start leaving at once, overlapping the rescue with an unplanned egress.', fx:{readiness:-3, metro:15}},
    {l:'Ask nearby boaters to assist', o:'Good Samaritans pull out three people, but two more boats crowd in and another person goes into the water.', fx:{readiness:-5, patients:6}}
   ],
   g:'Get the right boats in and control the environment with a no-wake zone so the incident does not multiply. Do not stop the show unless it is interfering with the rescue; the crowd effects on land are bigger than the gain. Watch for the egress starting in about 10 minutes. River EMS staging must not block the Lincoln Memorial exit routes.'},
  {id:'egress', at:()=>S.fwStart + S.fwDur + 13, place:'smithsonian_metro', sev:'critical', title:'Crowd surge at Smithsonian Metro', esf:['ESF-1 Transportation','ESF-13 Public Safety'],
-  sit:'The fireworks are over. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for four stations.',
+  sit:'The fireworks are over. The Smithsonian entrance queue is backed up 400 m onto the Mall, the platform is at capacity, an escalator has stopped, and a surge is reported at the top of the escalators. More than 180,000 people are heading for the Mall-area stations.',
   q:'Your call',
   opts:[
-   {l:'Meter entry: close Smithsonian to entry, redirect to L\'Enfant Plaza and Federal Triangle with officers, signage and PA; tell people "walk or wait"; WMATA adds trains', o:'The surge eases in 12 minutes. The walk to L\'Enfant adds 15 minutes but there are no injuries. Telling people trains run until 2:00 slows the rush.', fx:{readiness:6, metro:-18}, egress:'redirect'},
+   {l:'Pause entry at Smithsonian until the platform clears, then meter it; redirect to L\'Enfant Plaza and Federal Triangle with officers, signage and PA; tell people "walk or wait"', o:'The surge eases in 12 minutes. The walk to L\'Enfant adds 15 minutes but there are no injuries. Telling people trains run until 2:00 slows the rush.', fx:{readiness:6, metro:-18}, egress:'redirect'},
    {l:'Open all fare gates to speed people through', o:'People reach the platform faster, which makes the platform overcrowding worse. The choke point is the platform, not the gates.', fx:{readiness:-4, metro:12, patients:4}, egress:'gates'},
    {l:'Close Smithsonian entirely with no reroute plan', o:'The crowd stays and the queue compresses. Nine injuries in the crush at the barrier before officers set up the reroute.', fx:{readiness:-9, patients:9}, egress:'closed'}
   ],
@@ -470,7 +470,7 @@ const SCEN = [
   sit:'A disabled train is stuck between Federal Triangle and Smithsonian on the Blue/Orange/Silver lines. WMATA is single-tracking with 20+ minute gaps between trains. About 30,000 riders are waiting at three stations and it is still 85°F.',
   q:'Your call',
   opts:[
-   {l:'Request a bus bridge (WMATA, Circulator, charters), point riders to Red Line stations, push real-time updates', o:'First buses arrive in 25 minutes. Platforms are below capacity within the hour.', fx:{readiness:5, metro:-12}},
+   {l:'Request a bus bridge (Metrobus and charter buses), point riders to Red Line stations, push real-time updates', o:'First buses arrive in 25 minutes. Platforms are below capacity within the hour.', fx:{readiness:5, metro:-12}},
    {l:'Hold riders at street level and meter platform entry', o:'Prevents a platform crush, but crowds build on the street and need water, restrooms and information.', fx:{readiness:2, metro:-5}},
    {l:'Tell riders to walk to Metro Center and Gallery Place', o:'Moves the problem: Metro Center is over capacity within 30 minutes.', fx:{readiness:-3, metro:6}}
   ],
@@ -895,7 +895,7 @@ canvas.addEventListener('pointerdown', () => { fly = null; });
 /* ------------------------------------------------------------- metrics */
 function emsFree(t){ let held = 6; S.emsHold.forEach(h => { if (t >= h.t0 && t < h.t1) held += h.n; }); const base = Math.round(keyed([[690,2],[900,5],[1140,6],[1290,9],[1410,4]], t)); return clamp(S.emsTotal - held - base, 0, S.emsTotal); }
 function metroLoad(t){ const fe = fwEnd(); let v = keyed([[690,34],[900,38],[1110,46],[1260,52]], Math.min(t,1260)); if (t > fe) v = 52 + 68*Math.exp(-Math.pow((t-fe-22)/26,2)) - (t > fe+60 ? (t-fe-60)*0.4 : 0); if (t > 1260 && t <= fe) v = 50; S.metroAdj.forEach(a => { if (t >= a.t0 && t < a.t0 + 90) v += a.v * clamp(1-(t-a.t0)/90, 0, 1); }); return Math.round(clamp(v, 8, 140)); }
-function basePatients(t){ return Math.floor((t - S.start) / 60 * 3.5); }
+function basePatients(t){ return Math.round(keyed([[690,0],[820,40],[960,105],[1140,160],[1260,195],[1410,250]], t)); }
 function setTile(id, v, s, cls, bar, barColor){ const el = $(id); el.querySelector('.v').textContent = v; if (s != null) el.querySelector('.s').textContent = s; el.classList.remove('warn','bad','good'); if (cls) el.classList.add(cls); if (bar != null){ const i = el.querySelector('.bar i'); i.style.width = clamp(bar,0,100)+'%'; i.style.background = barColor; } }
 let crowdNow = 0, lastHud = 0;
 function updateHud(t){
@@ -1044,7 +1044,7 @@ Exercise clock: ${fmt(t)} EDT. Weather: ${t >= S.stormWarn && t <= S.stormEnd + 
 Crowd on site ~${Math.round(crowdNow/1000)}k. Zones: ${zl}.
 Fireworks: ${S.fwCancelled ? 'cancelled' : fmt(S.fwStart) + '–' + fmt(S.fwStart + S.fwDur)}. Capitol West Lawn concert 20:00–21:30.
 Metrics: EMS units free ${emsFree(t)}/${S.emsTotal}; patients treated ${S.patients + basePatients(t)}; Mall-area Metro load ${metroLoad(t)}% of platform capacity; public alerts sent ${S.alerts}; exercise readiness score ${Math.round(S.readiness)}/100.
-Key agencies: DC HSEMA (EOC), MPD, U.S. Park Police, U.S. Secret Service, U.S. Capitol Police, DC Fire & EMS, WMATA + Metro Transit Police, NPS, NWS Sterling, Pepco, DDOT, Coast Guard, MPD Harbor Patrol.
+Jurisdiction: Mall, Monument Grounds and memorials are NPS land policed by U.S. Park Police; Capitol grounds by U.S. Capitol Police; White House complex by U.S. Secret Service; city streets by MPD; Metro by Metro Transit Police; river by MPD Harbor Patrol and Coast Guard. Also: DC HSEMA (EOC), DC Fire & EMS, FBI, NWS Sterling, Pepco, DC Water, DDOT.
 Incidents so far:
 ${act}
 Scripted injects still pending at: ${up || 'none'}.`;
@@ -1170,7 +1170,7 @@ Exactly 3 options with genuinely different strategies.`;
 // after-action report
 let aarText = '', aarCtl = null;
 function localAAR(){
-  const L = S.log; const strong = L.filter(x => { const sc = SCEN.find(s => s.title===x.title); return sc && sc.opts[0].l===x.choice; });
+  const L = S.log; const strong = L.filter(x => { const sc = SCEN.find(s => s.title===x.title); return sc && sc.opts[sc.best||0].l===x.choice; });
   return `# After-Action Report (EXERCISE)
 **America 250 · National Mall · July 4, 2026 · tabletop exercise**
 
