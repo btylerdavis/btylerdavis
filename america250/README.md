@@ -54,3 +54,5 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 ## Updating the public site
 
 Edit `index.html`, run `./build.sh`, commit and push. Then redeploy the Vercel project `america250-mall-ops` (team `ad-astra-ai`) from the new commit with root directory `america250/site`. The project is not linked to this repo, so pushes don't deploy automatically.
+
+Deployment Protection on the project is set to "Only Preview Deployments", so the public address and the QR code open for anyone, with no Vercel login. Keep it that way, or the QR code will send people to a login page.

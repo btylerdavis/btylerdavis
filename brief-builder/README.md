@@ -17,8 +17,16 @@ It is live at **https://adastra-brief-builder.vercel.app**.
 
 The Vercel project is `adastra-brief-builder` (team `ad-astra-ai`), with root directory `brief-builder`. It isn't linked to the repo, so push the change, then redeploy from the new commit.
 
+Deployment Protection is set to "Only Preview Deployments", so the production address opens for anyone with the link. If it is raised to a stricter level, visitors outside the team land on a Vercel login page instead of the tool.
+
+## Where it's linked
+
+- **adastra-ai.com/services**, under item 03 "One working proof tool" in the AI Edge Audit section. The label is "Try a free general-purpose example: the Brief Builder ↗". It opens in a new tab and carries `utm_source=adastra-ai.com`, `utm_medium=site` and `utm_campaign=services-edge-audit`. It was added in `btylerdavis/byte-perfect-page` PR #4.
+- The address lives in one place: the `BRIEF_BUILDER_URL` constant in that repo's `src/lib/links.ts`. If this tool moves or is taken down, change that line, or the Services page will point at a dead link.
+
 ## Before moving it to adastra-ai.com
 
 1. Remove `<meta name="robots" content="noindex">`. It's there so the vercel.app copy isn't indexed.
 2. Add a canonical link to the final address.
 3. Turn on Vercel Web Analytics for the project. Then track opens, copies, downloads and clicks on the two booking links, so you know whether the tool books calls.
+4. Change `BRIEF_BUILDER_URL` in the website repo to the new address, and keep the old address redirecting to it so links already shared keep working.
