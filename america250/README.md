@@ -52,6 +52,16 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 5. Tap **Your city**, hand over the phone, and let them name their city and event. Play one inject, then copy or share the packet.
 6. Finish with **How this was built** and **Share** (people can scan the QR code from your screen).
 
+## Where it's linked
+
+On adastra-ai.com (website repo `btylerdavis/byte-perfect-page`, PR #5). Every link opens in a new tab and carries `utm_source=adastra-ai.com` and `utm_medium=site`, plus its own `utm_campaign`:
+
+- **Homepage**, in the "Free tools" section right after the diagnostic (`home-tools`): "America 250 National Mall, a bigger build for emergency managers".
+- **Every page's footer**, as "America 250 demo" (`footer`).
+- **Services**, under item 03 "One working proof tool": "See how far a build can go: a 3D demo for emergency managers ↗" (`services-edge-audit`).
+
+The address lives in one place: the `AMERICA_250_URL` constant in that repo's `src/lib/links.ts`. If this site moves, change that line. The page stays `noindex`, so linking to it does not make it appear in search results.
+
 ## Updating the public site
 
 Edit `index.html`, run `./build.sh`, commit and push. Then redeploy the Vercel project `america250-mall-ops` (team `ad-astra-ai`) from the new commit with root directory `america250/site`. The project is not linked to this repo, so pushes don't deploy automatically.

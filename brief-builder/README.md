@@ -21,8 +21,13 @@ Deployment Protection is set to "Only Preview Deployments", so the production ad
 
 ## Where it's linked
 
-- **adastra-ai.com/services**, under item 03 "One working proof tool" in the AI Edge Audit section. The label is "Try a free general-purpose example: the Brief Builder ↗". It opens in a new tab and carries `utm_source=adastra-ai.com`, `utm_medium=site` and `utm_campaign=services-edge-audit`. It was added in `btylerdavis/byte-perfect-page` PR #4.
-- The address lives in one place: the `BRIEF_BUILDER_URL` constant in that repo's `src/lib/links.ts`. If this tool moves or is taken down, change that line, or the Services page will point at a dead link.
+On adastra-ai.com (website repo `btylerdavis/byte-perfect-page`, PRs #4 and #5). Every link opens in a new tab and carries `utm_source=adastra-ai.com` and `utm_medium=site`, plus its own `utm_campaign`:
+
+- **Homepage**, in the "Free tools" section right after the diagnostic (`home-tools`).
+- **Every page's footer**, next to Assessment and Agent Check (`footer`).
+- **Services**, under item 03 "One working proof tool" in the AI Edge Audit section: "Try a free general-purpose example: the Brief Builder ↗" (`services-edge-audit`).
+
+The address lives in one place: the `BRIEF_BUILDER_URL` constant in that repo's `src/lib/links.ts`. If this tool moves or is taken down, change that line, or all three placements will point at a dead link.
 
 ## Before moving it to adastra-ai.com
 
