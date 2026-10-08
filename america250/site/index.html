@@ -1,22 +1,22 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:dark}body{margin:0}img{max-width:100%}</style>
-<meta name="description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI from public information. Not an operational tool.">
+<meta name="description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI. Real places, invented incidents. Not an operational tool.">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ad Astra AI">
 <meta property="og:url" content="https://america250-mall-ops.vercel.app/">
-<meta property="og:title" content="America 250 Mall Ops · fictional tabletop exercise">
-<meta property="og:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI from public information. Not an operational tool.">
+<meta property="og:title" content="America 250 · National Mall exercise (fictional)">
+<meta property="og:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI. Real places, invented incidents. Not an operational tool.">
 <meta property="og:image" content="https://america250-mall-ops.vercel.app/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
-<meta property="og:image:alt" content="America 250 Mall Ops: a 3D model of the National Mall with a crowd shown by density, beside the title and a note that it is a fictional exercise.">
+<meta property="og:image:alt" content="America 250, National Mall: a fictional tabletop exercise. A 3D model of the Mall with a crowd shown by density, beside the title.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="America 250 Mall Ops · fictional tabletop exercise">
-<meta name="twitter:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI from public information. Not an operational tool.">
+<meta name="twitter:title" content="America 250 · National Mall exercise (fictional)">
+<meta name="twitter:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI. Real places, invented incidents. Not an operational tool.">
 <meta name="twitter:image" content="https://america250-mall-ops.vercel.app/og.jpg">
 </head><body>
-<title>America 250 Mall Ops</title>
+<title>America 250 · National Mall exercise</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -204,6 +204,7 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
 .aar h3,.aar h4,.aar h5{color:var(--navy)}
 .aar.ai{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0 0}
 .foot{grid-column:1/-1;color:var(--dim);font-size:11.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot a{color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 @media (max-width:1180px){.app{grid-template-columns:260px minmax(0,1fr) 300px}.hud{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:980px){
   html,body{height:auto}
@@ -349,7 +350,7 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
 </style>
 
 <div class="app" id="app">
-  <div class="exstrip">EXERCISE · EXERCISE · EXERCISE <span>— fictional tabletop scenario · public information only —</span> EXERCISE · EXERCISE · EXERCISE</div>
+  <div class="exstrip">EXERCISE · EXERCISE · EXERCISE <span>— fictional tabletop scenario · real places, invented incidents —</span> EXERCISE · EXERCISE · EXERCISE</div>
 
   <header class="top">
     <div class="brand">
@@ -459,8 +460,8 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
   </aside>
 
   <footer class="foot">
-    <span>Fictional exercise built on public information. Not an operational tool. Aerial stills are AI-generated and labeled as simulated.</span>
-    <span>Built with Claude</span>
+    <span>Fictional exercise: real places, invented incidents, illustrative numbers. Not an operational tool. No emergency manager or agency has reviewed it, and it is not affiliated with America250 or any agency. Aerial stills are AI-generated and labeled as simulated.</span>
+    <span>Built with Claude by <a href="https://adastra-ai.com/?utm_source=america250&amp;utm_medium=footer&amp;utm_campaign=linkedin" target="_blank" rel="noopener">Ben Davis, Ad Astra AI</a></span>
   </footer>
 </div>
 
@@ -476,28 +477,28 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <button class="x" type="button" data-close aria-label="Close">✕</button>
     <h2 id="howTitle">How this was built</h2>
-    <p style="color:var(--muted);margin:0">One request typed during the meeting. Everything on this page came back from it.</p>
+    <p style="color:var(--muted);margin:0">One request typed during the meeting started it. A day of follow-up requests, testing and AI review finished it.</p>
     <h3>The request</h3>
     <div class="prompt">Build me a 3D model of America 250 event over the 4th of July in DC with lots of event scenarios, scans of places in DC of the event, etc.
 
 Interview answers: AI as a thinking partner + "my team could do this" · ready by the next break · live exercise framing · Ask-the-AI, after-action report, aerial stills · make it interactive.</div>
     <h3>The receipt</h3>
     <div class="steps">
-      <div><b>28 min</b><span>request to tested, published model (3:53 PM → 4:21 PM ET)</span></div>
-      <div><b>1,260</b><span>lines of code written by AI</span></div>
-      <div><b>9 + ∞</b><span>scripted injects, plus any what-if the room invents</span></div>
-      <div><b>9</b><span>AI-generated aerial stills</span></div>
+      <div><b>30 min</b><span>from the request to a first working link. A rough first version.</span></div>
+      <div><b>+1 day</b><span>of follow-up requests, testing and AI review before it looked like this</span></div>
+      <div><b>~1,800</b><span>lines of code, all written by AI</span></div>
+      <div><b>9</b><span>scripted injects. Any what-if the room invents runs live inside Claude.</span></div>
     </div>
     <h3>What the AI did</h3>
     <ul>
       <li>Modeled the Mall from public geography: 20+ landmarks, ~800 city blocks of buildings, the Potomac, Metro stations, a crowd model of ~16,000 tracked points.</li>
       <li>Wrote a 9-inject master scenario events list (MSEL) spanning ESF-1, 6, 8, 9, 12, 13 and 15, each with a decision point, consequences and guidance.</li>
-      <li>Wired a live AI advisor into the page: it answers questions with the current exercise picture, critiques each decision, invents new injects on request, and drafts the after-action report.</li>
-      <li>AI reviewers did a first realism pass and tested the page on desktop and phone. Treat it as a first draft for your planners, not a validated MSEL.</li>
-      <li>Added the same evening, on request: a phone layout, What-if dials for planning assumptions, and Your City, which drafts a six-inject exercise for any city. Each was tested on a phone-sized screen before going live.</li>
+      <li>Wired in an AI advisor that answers questions with the current exercise picture, critiques each decision, invents new injects on request, and drafts the after-action report. It runs live when this page is opened in Claude; on this public copy it falls back to built-in guidance.</li>
+      <li>AI reviewers did realism passes and tested the page on desktop and phone. No emergency manager or agency has reviewed it. Treat it as a first draft for your planners, not a validated MSEL.</li>
+      <li>Added over the next day, on request: a phone layout, What-if dials for planning assumptions, Your City, which drafts a six-inject exercise for any city, and the Ad Astra AI look. Each was tested on a phone-sized screen before going live.</li>
     </ul>
     <h3>What it would take for your city</h3>
-    <p>Swap the map footprint and the event, keep the engine. Your venues, your MSEL, your ESF structure. A first version is a working session, not a procurement.</p>
+    <p>Swap the map footprint and the event, keep the engine. Your venues, your MSEL, your ESF structure. A first version is a working session, not a procurement. <a href="https://adastra-ai.com/?utm_source=america250&amp;utm_medium=how-built&amp;utm_campaign=linkedin" target="_blank" rel="noopener">Talk to Ad Astra AI</a>.</p>
     <button class="btn pri" type="button" id="howCity">Draft your city's exercise now</button>
   </div>
 </div>
@@ -549,8 +550,8 @@ Interview answers: AI as a thinking partner + "my team could do this" · ready b
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="/vendor/three.min.js"></script>
+<script src="/vendor/OrbitControls.js"></script>
 <script>
 (function(){
 'use strict';
@@ -708,7 +709,10 @@ const S = {
 const canvas = $('#c'), stage = $('#stage');
 const phoneMQ = matchMedia('(max-width:640px)'), calmMQ = matchMedia('(prefers-reduced-motion: reduce)');
 const behavior = () => calmMQ.matches ? 'auto' : 'smooth';
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+// If the 3D library is blocked (some managed networks) or WebGL is off, say so instead of leaving a dead page.
+function noMap(why){ const d = document.createElement('div'); d.setAttribute('role', 'alert'); d.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:#0E2240;color:#FBF8F2;font:500 16px/1.5 var(--f-body)'; d.textContent = why; stage.appendChild(d); }
+if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') { noMap('The 3D map could not load. Your network or browser may be blocking it. Try another network, or open this link on your phone.'); throw new Error('three.js did not load'); }
+let renderer; try { renderer = new THREE.WebGLRenderer({canvas, antialias:true}); } catch (e) { noMap('This browser could not start 3D graphics. Try another browser, or open this link on your phone.'); throw e; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x9cbbe0, 3500, 11000);

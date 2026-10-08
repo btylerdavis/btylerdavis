@@ -1,6 +1,6 @@
-# America 250 Mall Ops
+# America 250 · National Mall exercise
 
-An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026 (America 250). It was built as a live demo for the Big City Emergency Managers meeting. It is a fictional tabletop exercise built from public information, not an operational tool.
+An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026 (America 250). It was built as a live demo for the Big City Emergency Managers meeting. It is a fictional tabletop exercise: real places, invented incidents, illustrative numbers. It is not an operational tool, and no emergency manager or agency has reviewed it. It began under the working name Mall Ops, and the Vercel project is still called `america250-mall-ops`.
 
 ## Files
 
@@ -8,7 +8,7 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 |---|---|
 | `index.html` | Page source published as a claude.ai Artifact. Live AI features (Ask the AI, decision critique, curveball injects, after-action report) only run inside Claude. |
 | `standalone.html` | The same page with a full HTML wrapper, for opening straight from a laptop browser. It needs internet access for three.js and fonts. AI features fall back to the built-in exercise guidance. |
-| `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags and asks search engines not to index it. |
+| `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags, asks search engines not to index it, and loads the 3D library from `site/vendor` instead of a CDN, because some managed networks block the CDNs. |
 | `site/og.jpg` | The 1200×627 link-preview card shown when the address is shared (LinkedIn, Slack, iMessage). It is a render of the app's map beside the title, served from the site itself. Replace it if the look changes. |
 | `build.sh` | Rebuilds `standalone.html` and `site/index.html` from `index.html`. Run it after every edit. |
 | `america250-qr.png` | QR code for the public address, for slides or handouts. The page's **Share** button shows the same code. |
