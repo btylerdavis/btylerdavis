@@ -4,7 +4,6 @@
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ad Astra AI">
-<meta property="og:url" content="https://america250-mall-ops.vercel.app/">
 <meta property="og:title" content="America 250 · National Mall exercise (fictional)">
 <meta property="og:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI. Real places, invented incidents. Not an operational tool.">
 <meta property="og:image" content="https://america250-mall-ops.vercel.app/og.jpg">
@@ -15,6 +14,8 @@
 <meta name="twitter:title" content="America 250 · National Mall exercise (fictional)">
 <meta name="twitter:description" content="Make the call at nine incidents on the National Mall. A free, fictional tabletop exercise built with AI. Real places, invented incidents. Not an operational tool.">
 <meta name="twitter:image" content="https://america250-mall-ops.vercel.app/og.jpg">
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};window.va("beforeSend",function(e){return navigator.doNotTrack==="1"||navigator.globalPrivacyControl?null:e})</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head><body>
 <title>America 250 · National Mall exercise</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -460,7 +461,7 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
   </aside>
 
   <footer class="foot">
-    <span>Fictional exercise: real places, invented incidents, illustrative numbers. Not an operational tool. No emergency manager or agency has reviewed it, and it is not affiliated with America250 or any agency. Aerial stills are AI-generated and labeled as simulated.</span>
+    <span>Fictional exercise: real places, invented incidents, illustrative numbers. Not an operational tool. No emergency manager or agency has reviewed it, and it is not affiliated with America250 or any agency. Aerial stills are AI-generated and labeled as simulated. This page counts visits and clicks, and skips browsers that send Do Not Track or Global Privacy Control. Nothing you type into the page is recorded.</span>
     <span>Built with Claude by <a href="https://adastra-ai.com/?utm_source=america250&amp;utm_medium=footer&amp;utm_campaign=linkedin" target="_blank" rel="noopener">Ben Davis, Ad Astra AI</a></span>
   </footer>
 </div>
@@ -556,6 +557,14 @@ Interview answers: AI as a thinking partner + "my team could do this" · ready b
 (function(){
 'use strict';
 const $ = s => document.querySelector(s);
+// Visit counting. Only the public copy (build.sh adds Vercel Web Analytics) defines window.va, so in Claude and in standalone.html track() does nothing.
+// An event is a fixed name plus short fixed labels (an incident from the fixed list, an option letter, where a link sat), never anything the visitor typed.
+const track = (name, data) => { try { if (window.va) window.va('event', data ? {name, data} : {name}); } catch (e) {} };
+// "start" is the first Play, Next, incident picked from the list or timeline, or decision, whichever comes first.
+let began = false; const begin = () => { if (!began){ began = true; track('start'); } };
+// Clicks on links to adastra-ai.com. A middle-click (open in a new tab) fires auxclick rather than click; a right-click is not counted.
+const ctaClick = e => { try { if (e.type === 'auxclick' && e.button !== 1) return; const a = e.target.closest('a[href*="adastra-ai.com"]'); if (a){ const m = new URL(a.href).searchParams.get('utm_medium'); track('cta_click', {where: m === 'footer' || m === 'how-built' ? m : 'link'}); } } catch (err) {} };
+['click', 'auxclick'].forEach(t => document.addEventListener(t, ctaClick, true));
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const lerp = (a,b,t) => a + (b-a)*t;
 const ease = t => t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
@@ -1171,7 +1180,7 @@ function renderTicks(){
   if (S.wi.storm != null) band(S.stormArrive, S.stormEnd, '#8DA0B8', 'Storm'); if (!S.fwCancelled) band(S.fwStart, S.fwStart+S.fwDur, '#C9A968', 'Fireworks');
   SCEN.filter(s => s.status !== 'skipped').forEach(s => { const k = document.createElement('button'); k.type = 'button'; k.className = 'tick'; k.style.left = pct(s.at()); k.style.background = s.status==='done' ? 'var(--dim)' : sevCss[s.sev]; k.title = fmt(s.at()) + ' ' + s.title; k.setAttribute('aria-label', 'Inject ' + fmt(s.at()) + ': ' + s.title); k.addEventListener('click', () => s.status==='skipped' ? null : s.status==='pending' ? jumpTo(s) : openCard(s)); rail.appendChild(k); });
 }
-function jumpTo(sc){ if (wiPrev != null) closeDials(); if (sc.at() <= S.t + 0.01){ S.t = sc.at(); fire(sc); return; } S.ff = sc; S.playing = true; setPlayBtn(); }
+function jumpTo(sc){ begin(); if (wiPrev != null) closeDials(); if (sc.at() <= S.t + 0.01){ S.t = sc.at(); fire(sc); return; } S.ff = sc; S.playing = true; setPlayBtn(); }
 function fire(sc){
   sc.status = 'active'; S.current = sc; S.playing = false; S.ff = null; setPlayBtn();
   if (sc.id==='storm') sc.sit = sc.sit0.replace('20:35', fmt(S.stormArrive)).replace('21:09', fmt(S.fwStart)).replace('520,000', roundK(crowdNow));
@@ -1227,7 +1236,7 @@ addEventListener('resize', fitStage); phoneMQ.addEventListener('change', fitStag
 function toStage(){ const tb = $('#tabs').offsetHeight, top = stage.getBoundingClientRect().top + window.scrollY; if (top + stage.offsetHeight <= innerHeight - tb) window.scrollTo({top:0, behavior:behavior()}); else stage.scrollIntoView({block:'start', behavior:behavior()}); }
 function showStage(){ if (!phoneMQ.matches) return; const r = stage.getBoundingClientRect(); if (r.top < -1 || r.bottom > innerHeight - $('#tabs').offsetHeight + 1) toStage(); }
 function decide(sc, i){
-  if (sc.pick != null) return; sc.pick = i; sc.status = 'done'; sc.doneAt = S.t; const o = sc.opts[i], fx = o.fx || {}; const t = S.t;
+  if (sc.pick != null) return; begin(); track('decision', {inject: sc.scripted ? sc.id : 'curveball', option: 'ABC'[i]}); sc.pick = i; sc.status = 'done'; sc.doneAt = S.t; const o = sc.opts[i], fx = o.fx || {}; const t = S.t;
   S.readiness = clamp(S.readiness + (fx.readiness||0), 0, 100); S.patients += fx.patients||0; S.alerts += fx.alerts||0;
   if (fx.ems) S.emsHold.push({t0:t, t1:t+75, n:fx.ems});
   if (fx.metro) S.metroAdj.push({t0:t, v:fx.metro});
@@ -1270,8 +1279,8 @@ function openSite(id){
 /* ---------------------------------------------------------------- clock */
 function setPlayBtn(){ const b = $('#play'); b.textContent = S.playing ? '❚❚ Pause' : '▶ Play'; b.setAttribute('aria-label', S.playing ? 'Pause' : 'Play'); }
 const activeInject = () => SCEN.find(s => s.status==='active');
-$('#play').addEventListener('click', () => { if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
-$('#next').addEventListener('click', () => { if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
+$('#play').addEventListener('click', () => { begin(); if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } S.playing = !S.playing; S.ff = null; setPlayBtn(); if (S.playing) closeCard(); });
+$('#next').addEventListener('click', () => { begin(); if (wiPrev != null) closeDials(); const act = activeInject(); if (act){ openCard(act); return; } const nx = SCEN.filter(s => s.status==='pending' && s.at() >= S.t - 0.01).sort((a,b) => a.at()-b.at())[0]; if (nx){ closeCard(); jumpTo(nx); } });
 $('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
 $('#scrub').addEventListener('input', e => { S.t = +e.target.value; S.ff = null; endPreview(false); });
 $('#reset').addEventListener('click', () => resetAll());
@@ -1353,6 +1362,7 @@ function addMsg(role, text){ const d = document.createElement('div'); d.classNam
 let askCtl = null;
 async function ask(q){
   q = (q || '').trim(); if (!q || askCtl) return;
+  track('ask');
   addMsg('u', q); $('#askText').value = '';
   if (!AI.sample){ addMsg('a', 'Live AI is offline in this view. Open this page in Claude to get a live answer. Meanwhile, the guidance on each decision card shows how an experienced planner would think about it.'); return; }
   const d = addMsg('a', ''); const body = d.querySelector('.body'); body.innerHTML = '<span class="thinking">Thinking</span>';
@@ -1461,6 +1471,7 @@ ${L.filter(x => !strong.includes(x)).slice(0,3).map(x => `- ${x.title}: revisit 
 *Generated offline from the exercise log. In Claude, the AI writes a full HSEEP-style report.*`;
 }
 $('#aarBtn').addEventListener('click', async () => {
+  track('aar');
   if (aarCtl){ $('#aarModal').hidden = false; return; }
   const modal = $('#aarModal'), body = $('#aarBody'), stat = $('#aarStat'); modal.hidden = false;
   $('#aarSave').hidden = !AI.downloads;
@@ -1486,9 +1497,9 @@ $('#aarCopy').addEventListener('click', async () => { try { await navigator.clip
 $('#aarSave').addEventListener('click', async () => { if (!AI.downloads) return; try { await AI.downloads.save({filename:'America250-AAR-exercise.md', data:aarText}); } catch(e){ $('#aarStat').textContent = 'Download was not completed.'; } });
 
 // modals
-$('#how').addEventListener('click', () => { $('#howModal').hidden = false; });
-$('#share').addEventListener('click', () => { $('#shareModal').hidden = false; });
-$('#shareCopy').addEventListener('click', async () => { const url = $('#shareUrl').textContent; try { await navigator.clipboard.writeText(url); $('#shareNote').textContent = 'Link copied.'; } catch(e){ const r = document.createRange(); r.selectNodeContents($('#shareUrl')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#shareNote').textContent = 'Link selected. Press Ctrl/Cmd+C to copy.'; } });
+$('#how').addEventListener('click', () => { track('how_built'); $('#howModal').hidden = false; });
+$('#share').addEventListener('click', () => { track('share'); $('#shareModal').hidden = false; });
+$('#shareCopy').addEventListener('click', async () => { track('share_copy'); const url = $('#shareUrl').textContent; try { await navigator.clipboard.writeText(url); $('#shareNote').textContent = 'Link copied.'; } catch(e){ const r = document.createRange(); r.selectNodeContents($('#shareUrl')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#shareNote').textContent = 'Link selected. Press Ctrl/Cmd+C to copy.'; } });
 document.querySelectorAll('.modal').forEach(m => { m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.hidden = true; }); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
 
@@ -1585,7 +1596,7 @@ $('#wiHeat').addEventListener('input', e => { S.wi.heat = +e.target.value; wiCha
 $('#wiStorm').addEventListener('input', e => { const v = +e.target.value; S.wi.storm = v >= 1265 ? null : v; wiChanged(); });
 $('#wiLine').addEventListener('change', e => { S.wi.line = e.target.checked; wiChanged(); });
 $('#wiReset').addEventListener('click', () => { const st = SCEN.find(s => s.id==='storm'); S.wi = Object.assign({}, PLAN_WI, /active|done/.test(st.status) ? {storm:S.wi.storm} : {}); syncDialsUI(); wiChanged(); });
-function openDials(){ $('#site').hidden = true; closeCard(); $('#dials').hidden = false; stage.classList.add('hasdials'); $('#wiChip').setAttribute('aria-expanded', 'true'); syncDialsUI(); renderDelta(); showStage(); }
+function openDials(){ track('whatif'); $('#site').hidden = true; closeCard(); $('#dials').hidden = false; stage.classList.add('hasdials'); $('#wiChip').setAttribute('aria-expanded', 'true'); syncDialsUI(); renderDelta(); showStage(); }
 function closeDials(reopen){
   const d = $('#dials'); if (d.hidden) return;
   endPreview(true);
@@ -1684,7 +1695,7 @@ const CITY_EXAMPLE = {city:'Chicago', event:'Fourth of July at Navy Pier and Gra
  ]};
 let cityData = null, cityBusy = false, cityRun = 0;
 CITY_SUG.forEach(([c, e]) => { const b = document.createElement('button'); b.className = 'sug'; b.type = 'button'; b.textContent = c; b.title = e; b.addEventListener('click', () => { $('#cityName').value = c; $('#cityEvent').value = e; }); $('#citySug').appendChild(b); });
-function openCity(){ $('#cityModal').hidden = false; if (!AI.sample && !cityData) renderCity(CITY_EXAMPLE, true); }
+function openCity(){ track('your_city'); $('#cityModal').hidden = false; if (!AI.sample && !cityData) renderCity(CITY_EXAMPLE, true); }
 $('#cityBtn').addEventListener('click', openCity);
 $('#tabCity').addEventListener('click', openCity);
 $('#howCity').addEventListener('click', () => { $('#howModal').hidden = true; openCity(); });

@@ -8,7 +8,7 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 |---|---|
 | `index.html` | Page source published as a claude.ai Artifact. Live AI features (Ask the AI, decision critique, curveball injects, after-action report) only run inside Claude. |
 | `standalone.html` | The same page with a full HTML wrapper, for opening straight from a laptop browser. It needs internet access for three.js and fonts. AI features fall back to the built-in exercise guidance. |
-| `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags, asks search engines not to index it, and loads the 3D library from `site/vendor` instead of a CDN, because some managed networks block the CDNs. |
+| `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags, asks search engines not to index it, counts visits (see "Visit counting"), and loads the 3D library from `site/vendor` instead of a CDN, because some managed networks block the CDNs. |
 | `site/og.jpg` | The 1200×627 link-preview card shown when the address is shared (LinkedIn, Slack, iMessage). It is a render of the app's map beside the title, served from the site itself. Replace it if the look changes. |
 | `build.sh` | Rebuilds `standalone.html` and `site/index.html` from `index.html`. Run it after every edit. |
 | `america250-qr.png` | QR code for the public address, for slides or handouts. The page's **Share** button shows the same code. |
@@ -61,6 +61,20 @@ On adastra-ai.com (website repo `btylerdavis/byte-perfect-page`, PR #5). Every l
 - **Services**, under item 03 "One working proof tool": "See how far a build can go: a 3D demo for emergency managers ↗" (`services-edge-audit`).
 
 The address lives in one place: the `AMERICA_250_URL` constant in that repo's `src/lib/links.ts`. If this site moves, change that line. The page stays `noindex`, so linking to it does not make it appear in search results.
+
+## Visit counting
+
+The public copy counts visits and a few button clicks with Vercel Web Analytics. The Claude copy (`index.html`) and `standalone.html` count nothing: `build.sh` adds the snippet to `site/index.html` only, and `track()` in the page does nothing where the snippet is absent.
+
+- **Counted:** page views (with referrer, country and device, which Vercel supplies) and ten named events: `start` (the first Play, Next, incident picked from the list or timeline, or decision), `decision` (`inject` is one of the nine incident ids, or `curveball` for one made up in the room, plus option A, B or C), `whatif`, `your_city`, `how_built`, `share`, `share_copy`, `ask`, `aar`, and `cta_click` (`where` is `footer`, `how-built` or `link`; middle-clicks count, right-clicks don't).
+- **Never sent:** anything a visitor types (city, event, questions, curveball text), or the wording of any incident or decision. The only exercise detail is which of the fixed incidents was decided and which option letter. An event is a fixed name plus short fixed labels.
+- **Do Not Track and Global Privacy Control:** a visitor who sends either is not counted at all (`beforeSend` in the snippet).
+- **Cookies:** the footer says the page counts visits and clicks, and does not say "no cookies". Vercel describes the product as cookie-free (a daily hash of the request instead), but its docs only name third-party cookies. If a reviewer needs that in writing, ask Vercel.
+- **Turning it on:** Vercel dashboard, project `america250-mall-ops`, Analytics, Enable. Then redeploy: the `/_vercel/insights/script.js` route exists only on deployments made after the switch is on.
+- **Reading it:** the project's Analytics tab, or ask Claude to query it (page views and events, by `eventName`, `utmSource` or `referrerHostname`). Which breakdowns you get can depend on the Vercel plan.
+- **Tagging links:** LinkedIn posts use `?utm_source=linkedin`. QR-code and slide traffic is untagged and shows as direct. The page has no `og:url` on purpose: LinkedIn may treat it as the canonical address and drop the tag from card clicks.
+- **Turning it off:** set `ANALYTICS=''` and `COUNT_NOTE=''` in `build.sh`, rebuild and redeploy. Do not only switch Analytics off in the dashboard: the footer would still say the page counts visits, and every load would ask for a script that returns 404.
+- **Build guard:** `build.sh` builds the public copy in a temp file and refuses to replace `site/index.html` if the footer sentence did not make it in (for example if `<!--COUNT_NOTE-->` was deleted from `index.html`), so the counting script can never ship without its disclosure.
 
 ## Updating the public site
 
