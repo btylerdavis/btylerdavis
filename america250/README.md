@@ -35,8 +35,9 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 - **Ad Astra AI look:**
   - Colors come from the brand tokens in `adastra-ai.com/brand.css`: paper `#FBF8F2`, navy `#0E2240` and gold `#C9A968`.
   - Headings are set in Cormorant Garamond and the interface in Inter.
-  - Gold is used for fills and rules. Gold-toned text uses a darker shade, `#7D5F25`, so it stays readable on paper.
+  - Gold is used for fills, rules and text on navy, never for text on paper. Labels and accents on paper are navy, as on the site.
   - Every text element passes WCAG AA contrast in the tested states, on desktop and phone.
+- **Map labels don't pile up.** When two labels would overlap, the lower-priority one hides until you zoom or rotate. The order is: the active incident, other incidents, landmarks, then Metro stations.
 
 ## Presenter flow on a phone (about 5 minutes)
 
