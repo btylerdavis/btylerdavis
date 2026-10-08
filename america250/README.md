@@ -9,6 +9,7 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 | `index.html` | Page source published as a claude.ai Artifact. Live AI features (Ask the AI, decision critique, curveball injects, after-action report) only run inside Claude. |
 | `standalone.html` | The same page with a full HTML wrapper, for opening straight from a laptop browser. It needs internet access for three.js and fonts. AI features fall back to the built-in exercise guidance. |
 | `site/index.html` | Public copy, hosted at **https://america250-mall-ops.vercel.app**. It adds link-preview tags and asks search engines not to index it. |
+| `site/og.jpg` | The 1200×627 link-preview card shown when the address is shared (LinkedIn, Slack, iMessage). It is a render of the app's map beside the title, served from the site itself. Replace it if the look changes. |
 | `build.sh` | Rebuilds `standalone.html` and `site/index.html` from `index.html`. Run it after every edit. |
 | `america250-qr.png` | QR code for the public address, for slides or handouts. The page's **Share** button shows the same code. |
 
@@ -56,3 +57,5 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
 Edit `index.html`, run `./build.sh`, commit and push. Then redeploy the Vercel project `america250-mall-ops` (team `ad-astra-ai`) from the new commit with root directory `america250/site`. The project is not linked to this repo, so pushes don't deploy automatically.
 
 Deployment Protection on the project is set to "Only Preview Deployments", so the public address and the QR code open for anyone, with no Vercel login. Keep it that way, or the QR code will send people to a login page.
+
+LinkedIn caches the first preview it sees for a link. After changing the preview tags or `site/og.jpg`, run the address through LinkedIn's Post Inspector (https://www.linkedin.com/post-inspector/) to refresh it before sharing.
