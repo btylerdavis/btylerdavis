@@ -120,6 +120,10 @@ textarea:focus,input:focus{outline:2px solid var(--navy);outline-offset:0;border
 .howto{padding:16px 22px 20px;border-top:1px solid var(--rule);font-size:14px;line-height:1.65;color:var(--ink-soft)}
 .howto p{margin:0 0 8px}
 .howto b{color:var(--ink);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.exbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 16px;padding:6px 22px;background:var(--wash);border-bottom:1px solid var(--rule);font-size:14px;color:var(--ink)}
+.doc .lead{color:var(--ink-soft)}
 .privacy{margin-top:24px;padding:14px 16px;background:var(--wash);font-size:14px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
 
 /* the paid version, on navy */
@@ -191,8 +195,9 @@ footer a:hover{color:var(--paper)}
 
     <section class="q" id="q2">
       <div class="qh"><span class="qn" aria-hidden="true">02</span><h3 class="qt">You, and the work you hand to AI</h3></div>
-      <p class="qd">Your role, then the jobs you use AI for most.</p>
+      <p class="qd">Who you are, then the jobs you use AI for most.</p>
       <div class="qb">
+        <div class="two"><div><label class="sub" for="name">Your name</label><input type="text" id="name" data-k="name" autocomplete="name" placeholder="First and last name"></div><div><label class="sub" for="company">Business name</label><input type="text" id="company" data-k="company" autocomplete="organization" placeholder="As customers know it"></div></div>
         <div><label class="sub" for="role">Your role</label><input type="text" id="role" data-k="role" placeholder="Owner and lead estimator"></div>
         <div><span class="sub" id="usesL">What you use it for</span><div class="chips" data-chips="uses" role="group" aria-labelledby="usesL"></div></div>
       </div>
@@ -243,7 +248,7 @@ footer a:hover{color:var(--paper)}
       <div class="qb"><div class="chips" data-chips="posture" role="group" aria-label="Working style"></div></div>
     </section>
 
-    <div class="privacy"><span>Your answers save on this device as you type. Nothing is sent anywhere.</span><button class="link" type="button" id="clear">Clear my answers</button></div>
+    <div class="privacy"><span>Your answers save on this device as you type and never leave it.</span><button class="link" type="button" id="clear">Clear my answers</button></div>
   </form>
 
   <aside class="out" id="brief" aria-labelledby="briefTitle">
@@ -252,6 +257,7 @@ footer a:hover{color:var(--paper)}
       <h2 id="briefTitle">Your standing brief</h2>
       <div class="meter"><div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div><span id="meterTxt" role="status"><b>0 of 8</b> answered</span></div>
     </div>
+    <div class="exbar" id="exbar" hidden><span>Example: a fictional financial planning practice. Your own answers are untouched.</span><button class="link" type="button" id="startMine">Start mine</button></div>
     <div class="doc" id="doc"><p class="empty">Answer any question and your brief starts building here. Or tap <b>Try an example first</b> to see a finished one.</p></div>
     <div class="acts2">
       <button class="btn sm" type="button" id="copy" disabled>Copy brief</button>
@@ -305,15 +311,16 @@ const KEY = 'aa-brief-builder-v1';
 // Chip options. Each use adds its own short rule block to the brief.
 const USES = [
   ['email', 'Emails', ['Put the subject line first, then the email.', 'Keep it under 150 words unless I ask for more.', 'Make one clear ask, and put it near the top.']],
-  ['quote', 'Proposals and quotes', ['Lead with the outcome for the customer, then scope, timeline and price.', 'Use only prices and ranges from the Facts section. Mark anything else [CONFIRM].']],
+  ['quote', 'Proposals and quotes', ['Lead with the outcome for the customer, then scope, timeline and price.', 'Use only prices and ranges from the Facts section. Mark anything else [CONFIRM: …].']],
   ['marketing', 'Marketing posts', ['Write to one customer, not to everyone.', 'One idea per post. Give me three versions with different openings.', 'No hashtags or emoji unless I ask.']],
-  ['report', 'Reports and summaries', ['Start with the three things that matter most.', 'Say what changed since last time and what needs a decision.', 'Put numbers in a table when there are more than three.']],
+  ['report', 'Reports and summaries', ['Start with the three things that matter most.', 'Always say what needs a decision. If I give you the last report, say what changed since then.', 'Put numbers in a table when there are more than three.']],
   ['meeting', 'Meeting notes', ['Decisions, owners and dates first. Discussion last.', 'List anything left open as a question with an owner.']],
-  ['research', 'Research', ['Link every source. Separate what is known from what is estimated.', 'Say plainly when you are not sure.']],
+  ['research', 'Research', ['Link only sources you actually opened. Separate what is known from what is estimated.', 'Say plainly when you are not sure.']],
   ['plan', 'Planning and decisions', ['State the decision in one line before you analyze it.', 'Name the one risk that would change your answer.']],
   ['reply', 'Customer replies', ['Acknowledge the issue in the first sentence.', 'Never promise anything that isn’t in the Facts section.', 'End with one next step and how to reach a person.']],
   ['sop', 'Policies and how-tos', ['Numbered steps, one action per step, with who does it.', 'Say what to do when something goes wrong.']]
 ];
+const SENDABLE = ['email', 'reply', 'marketing', 'quote'];
 const VOICE = ['Plain', 'Warm', 'Direct', 'Friendly', 'Formal', 'Confident', 'Reassuring', 'Technical', 'Concise', 'Playful'].map(v => [v.toLowerCase(), v]);
 const GOOD = [['answer', 'Lead with the answer'], ['short', 'Keep it short'], ['paras', 'Short paragraphs'], ['jargon', 'No jargon'], ['bullets', 'Bullets for three or more items'], ['next', 'End with one clear next step']];
 const POSTURE = [
@@ -321,31 +328,46 @@ const POSTURE = [
   ['assume', 'Just do it', 'For small tasks, don’t ask. Make a sensible assumption, note it in one line and do the work.'],
   ['push', 'Push back when I’m wrong', 'If I’m wrong or missing something, say so plainly and tell me why.'],
   ['options', 'Options, then a recommendation', 'For decisions, give me two or three options with the trade-offs, then recommend one and say why.'],
-  ['check', 'Show your assumptions', 'End anything important with the assumptions you made, so I can check them.']
+  ['check', 'Show your assumptions', 'Under anything important, list the assumptions you made, separate from the draft, so I can check them.']
 ];
 const CHIPS = {uses: USES, voice: VOICE, good: GOOD, posture: POSTURE};
 const MAX = {voice: 3};
 const EXCLUSIVE = {ask: 'assume', assume: 'ask'};
-const TEXT = ['biz', 'role', 'customers', 'sample', 'goodMore', 'facts', 'wrong', 'never'];
+const TEXT = ['biz', 'company', 'name', 'role', 'customers', 'sample', 'goodMore', 'facts', 'wrong', 'never'];
 
-const blank = () => ({biz: '', role: '', customers: '', sample: '', goodMore: '', facts: '', wrong: '', never: '', uses: [], voice: [], good: [], posture: []});
+const blank = () => ({biz: '', company: '', name: '', role: '', customers: '', sample: '', goodMore: '', facts: '', wrong: '', never: '', uses: [], voice: [], good: [], posture: []});
 let st = blank();
-try { const saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && typeof saved === 'object') st = Object.assign(blank(), saved); } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && typeof saved === 'object' && !Array.isArray(saved)) st = Object.assign(blank(), saved); } catch (e) {}
+// Saved answers from an older or damaged copy must not break the page: wrong types fall back to empty, unknown chips are dropped.
+(() => { const b = blank(); for (const k in b) if (Array.isArray(b[k]) ? !Array.isArray(st[k]) : typeof st[k] !== 'string') st[k] = b[k];
+  for (const k of Object.keys(st)) if (!(k in b)) delete st[k];
+  for (const g in CHIPS) st[g] = st[g].filter(v => CHIPS[g].some(o => o[0] === v)); })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 
 // ---------- the brief ----------
-const lines = s => String(s || '').split(/\n+/).map(x => x.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim()).filter(Boolean);
+// List markers need a space after them, so "0.75%" or "-5°F" keep their numbers.
+const lines = s => String(s || '').split(/\n+/).map(x => x.replace(/^\s*(?:[-*]\s+|•\s*|\d+[.)]\s+)/, '').trim()).filter(Boolean);
 const sent = s => { s = s.trim(); return s && !/[.!?:)\]"”]$/.test(s) ? s + '.' : s; };
+const soft = s => /^[A-Z][a-z]+\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s; // "Owner" -> "owner", but "CEO" and "IRS" stay
 const listJoin = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
 const pick = (opts, keys) => opts.filter(o => keys.includes(o[0]));
-const answered = v => [v.biz.trim(), v.role.trim() || v.uses.length, v.customers.trim(), v.voice.length || v.sample.trim(), v.good.length || v.goodMore.trim(), v.facts.trim(), v.wrong.trim() || v.never.trim(), v.posture.length].filter(Boolean).length;
+// A hard line keeps the owner's own words when it already says "never", "don't", "avoid" and so on; a bare action gets "Never" in front.
+const hasNeg = s => /^(never|don['’]?t|do not|does not|doesn['’]?t|no|not|avoid|stop|refrain)\b/i.test(s) || /\bnever\b/i.test(s);
+const asRule = s => hasNeg(s) ? s : 'Never ' + soft(s);
+const answered = v => [v.biz.trim() || v.company.trim(), v.name.trim() || v.role.trim() || v.uses.length, v.customers.trim(), v.voice.length || v.sample.trim(), v.good.length || v.goodMore.trim(), v.facts.trim(), v.wrong.trim() || v.never.trim(), v.posture.length].filter(Boolean).length;
 
-// Sections: {h, p:[paragraphs], quote, ul:[bullets], sub:[{h, ul}]}
+// Sections: {h, p:[paragraphs], quote, ul:[bullets], sub:[{h, ul}]}; the first one has no heading.
 function build(v){
-  const S = [];
-  const who = [];
+  const S = [{p: [
+    'Use this for every task in this project. When my message asks for something different, follow my message. If a request would break a fact or a hard line in this brief, say so in one line and offer the closest version that doesn’t.',
+    'If you need a fact about our business that isn’t in this brief, the project files or my message, don’t guess and don’t hold up the work. Write [CONFIRM: what’s missing] in its place and list each one under the draft.'
+  ]}];
+  const who = [], name = v.name.trim(), role = v.role.trim().replace(/\.$/, ''), company = v.company.trim();
+  if (company) who.push('Business: ' + sent(company));
   if (v.biz.trim()) who.push(...lines(v.biz).map(sent));
-  if (v.role.trim()) who.push('My role: ' + sent(v.role.trim()));
+  if (name && role) who.push('I’m ' + name + ', ' + soft(role) + '.');
+  else if (name) who.push('I’m ' + sent(name));
+  else if (role) who.push('My role: ' + sent(role));
   if (who.length) S.push({h: 'Who you’re working for', p: who});
   if (v.customers.trim()) S.push({h: 'Our customers', p: lines(v.customers).map(sent)});
   const uses = pick(USES, v.uses);
@@ -360,15 +382,20 @@ function build(v){
   const good = pick(GOOD, v.good).map(x => sent(x[1])).concat(lines(v.goodMore).map(sent));
   if (good.length) S.push({h: 'What good looks like', ul: good});
   const facts = lines(v.facts).map(sent);
-  S.push({h: 'Facts you must get right', ul: facts.concat('If you need a fact that isn’t in this brief, write [CONFIRM: what you need] instead of guessing.')});
+  if (facts.length) S.push({h: 'Facts you must get right', ul: facts});
   const wrong = lines(v.wrong).map(sent);
   if (wrong.length) S.push({h: 'Stop doing this', ul: wrong});
-  const never = lines(v.never).map(x => sent(/^(never|don['’]?t|do not|no)\b/i.test(x) ? x : 'Never ' + x.charAt(0).toLowerCase() + x.slice(1)));
-  if (never.length) S.push({h: 'Never', ul: never});
+  const never = lines(v.never).map(x => sent(asRule(x)));
+  if (never.length) S.push({h: 'Hard lines', ul: never});
+  if (v.uses.some(u => SENDABLE.includes(u))){
+    const ul = ['Write anything I’ll send as plain text, ready to paste. No Markdown symbols like ** or #.', 'Keep notes and assumptions under the draft, never inside it. A [CONFIRM: …] placeholder is the only thing that may appear inside a draft.'];
+    if (name) ul.push('Sign off as ' + name + (company ? ', ' + company : '') + '.');
+    S.push({h: 'Drafts I’ll send', ul});
+  }
   const posture = pick(POSTURE, v.posture).map(x => x[2]);
   if (posture.length) S.push({h: 'How to work with me', ul: posture});
   if (uses.length){
-    const sub = uses.map(u => ({h: u[1], ul: u[2].filter(r => !(u[0] === 'plan' && v.posture.includes('options') && /options/.test(r)))}));
+    const sub = uses.map(u => ({h: u[1], ul: u[2].slice()}));
     const plan = sub.find(s => s.h === 'Planning and decisions');
     if (plan && !v.posture.includes('options')) plan.ul.splice(1, 0, 'Give me two or three options with the trade-offs, then your recommendation.');
     S.push({h: 'By task', sub});
@@ -377,47 +404,68 @@ function build(v){
 }
 
 function toMD(S){
-  const out = ['# Standing brief', '', 'Use this for every task in this project. If something here conflicts with a request, ask me.', ''];
+  const out = ['# Standing brief'];
   for (const s of S){
-    out.push('## ' + s.h);
-    (s.p || []).forEach(p => out.push(p));
-    if (s.quote) out.push('', s.quote.split(/\n/).map(l => '> ' + l).join('\n'));
-    (s.ul || []).forEach(li => out.push('- ' + li));
-    (s.sub || []).forEach(x => { out.push('', '### ' + x.h); x.ul.forEach(li => out.push('- ' + li)); });
     out.push('');
+    if (s.h) out.push('## ' + s.h);
+    (s.p || []).forEach((p, i) => { if (i) out.push(''); out.push(p); });
+    if (s.quote) out.push('', s.quote.split(/\n/).map(l => '> ' + l).join('\n'));
+    if (s.ul && s.ul.length){ if ((s.p || []).length || s.quote) out.push(''); s.ul.forEach(li => out.push('- ' + li)); }
+    (s.sub || []).forEach(x => { out.push('', '### ' + x.h); x.ul.forEach(li => out.push('- ' + li)); });
   }
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
 }
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 function toHTML(S){
-  return S.map(s => '<h3>' + esc(s.h) + '</h3>' +
-    (s.p || []).map(p => '<p>' + esc(p) + '</p>').join('') +
+  return S.map(s => (s.h ? '<h3>' + esc(s.h) + '</h3>' : '') +
+    (s.p || []).map(p => '<p' + (s.h ? '' : ' class="lead"') + '>' + esc(p) + '</p>').join('') +
     (s.quote ? '<blockquote>' + esc(s.quote).replace(/\n/g, '<br>') + '</blockquote>' : '') +
     (s.ul && s.ul.length ? '<ul>' + s.ul.map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>' : '') +
     (s.sub || []).map(x => '<h4>' + esc(x.h) + '</h4><ul>' + x.ul.map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>').join('')).join('');
 }
 
 // ---------- UI ----------
+// A fictional practice. It is only ever previewed: it never replaces or saves over the visitor's own answers.
+const EXAMPLE = {
+  biz: 'We’re a six-person, fee-only financial planning practice in Wichita, Kansas. We help families within about an hour of town plan for retirement, college and taxes. We don’t sell insurance or investment products.',
+  company: 'Larkspur Planning',
+  name: 'Jordan Lee',
+  role: 'Owner and lead planner',
+  uses: ['email', 'reply', 'report', 'meeting', 'marketing'],
+  customers: 'Couples and families, mostly 45 to 65, with $500,000 to $3 million saved. They worry about running out of money and about making a mistake they can’t undo. They ask most about when they can retire and how much they can spend. They leave when they feel rushed or sold to.',
+  voice: ['warm', 'plain', 'reassuring'],
+  sample: 'Good news first: you’re in better shape than you think. There are two things I’d like us to decide before year-end, and neither is urgent. I’ll walk you through both on Thursday.',
+  good: ['answer', 'paras', 'jargon', 'next'],
+  goodMore: 'Explain any number in one sentence a client could repeat to their spouse.',
+  facts: 'Office hours: Monday to Thursday 8 to 5, Friday 8 to noon\nWe take new clients within about an hour of Wichita\nPlanning fee: a flat annual fee from $3,000, quoted after a first meeting\nThe first meeting is free and takes about an hour\nMain line: (316) 555-0142',
+  wrong: 'Sounding like a sales pitch\nUsing words like delve, leverage and robust\nWriting three paragraphs when two sentences would do\nOffering services we don’t provide, like insurance',
+  never: 'In marketing and public posts, never give specific investment, tax or legal advice\nNever promise or imply returns\nNever name a client or share a client’s details\nNever say we are the best or the cheapest',
+  posture: ['ask', 'push', 'check']
+};
 const LEVELS = [[0, 'Nothing yet'], [1, 'Too thin to help'], [3, 'Getting useful'], [6, 'Strong'], [8, 'Ready to paste']];
-let md = '', lastN = -1;
+let md = '', lastKey = '', exampleOn = false;
 function render(){
-  const n = answered(st), lvl = LEVELS.filter(l => n >= l[0]).pop()[1];
+  const v = exampleOn ? Object.assign(blank(), EXAMPLE) : st, n = answered(v), lvl = LEVELS.filter(l => n >= l[0]).pop()[1];
+  $('#exbar').hidden = !exampleOn;
   $('#fill').style.width = (n / 8 * 100) + '%';
-  if (n !== lastN){ $('#meterTxt').innerHTML = '<b>' + n + ' of 8</b> answered · ' + esc(lvl); lastN = n; }
-  $('#dockTxt').innerHTML = '<b>' + n + ' of 8 answered</b>' + (n ? esc(lvl) : 'Your brief builds as you type');
+  const key = exampleOn ? 'ex' : String(n);
+  if (key !== lastKey){ $('#meterTxt').innerHTML = exampleOn ? '<b>Example</b> · 8 of 8 answered' : '<b>' + n + ' of 8</b> answered · ' + esc(lvl); lastKey = key; }
+  $('#dockTxt').innerHTML = exampleOn ? '<b>Viewing an example</b>Your own answers are untouched' : '<b>' + n + ' of 8 answered</b>' + (n ? esc(lvl) : 'Your brief builds as you type');
   if (!n){
     md = '';
     $('#doc').innerHTML = '<p class="empty">Answer any question and your brief starts building here. Or tap <b>Try an example first</b> to see a finished one.</p>';
     $('#words').textContent = '';
   } else {
-    const S = build(st); md = toMD(S);
+    const S = build(v); md = toMD(S);
     $('#doc').innerHTML = toHTML(S);
     $('#words').textContent = md.split(/\s+/).filter(w => /\w/.test(w)).length + ' words';
   }
-  ['#copy', '#dl', '#share'].forEach(id => { $(id).disabled = !n; });
-  if (!$('#rawBox').hidden) $('#raw').value = md;
+  const can = n > 0 && !exampleOn;
+  ['#copy', '#dl', '#share'].forEach(id => { $(id).disabled = !can; });
+  if (!$('#rawBox').hidden) $('#raw').value = can ? md : '';
 }
+function leaveExample(){ if (exampleOn){ exampleOn = false; lastKey = ''; } }
 
 function syncInputs(){
   TEXT.forEach(k => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.value !== st[k]) el.value = st[k]; });
@@ -430,11 +478,12 @@ Object.entries(CHIPS).forEach(([group, opts]) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'chip'; b.textContent = label; b.dataset.group = group; b.dataset.v = v; b.setAttribute('aria-pressed', 'false');
     b.addEventListener('click', () => {
-      const cur = st[group], on = cur.includes(v);
-      if (on) st[group] = cur.filter(x => x !== v);
+      leaveExample();
+      const cur = st[group];
+      if (cur.includes(v)) st[group] = cur.filter(x => x !== v);
       else {
-        if (MAX[group] && cur.length >= MAX[group]){ status('Pick up to ' + MAX[group] + '. Tap one to remove it first.'); return; }
-        st[group] = cur.concat(v);
+        // At the limit the oldest pick makes way, so the tap always does something visible.
+        st[group] = (MAX[group] && cur.length >= MAX[group] ? cur.slice(1) : cur).concat(v);
         if (group === 'posture' && EXCLUSIVE[v]) st[group] = st[group].filter(x => x !== EXCLUSIVE[v]);
       }
       syncInputs(); save(); render();
@@ -442,7 +491,9 @@ Object.entries(CHIPS).forEach(([group, opts]) => {
     box.appendChild(b);
   });
 });
-TEXT.forEach(k => { const el = document.querySelector('[data-k="' + k + '"]'); el.addEventListener('input', () => { st[k] = el.value; save(); render(); }); });
+TEXT.forEach(k => { const el = document.querySelector('[data-k="' + k + '"]'); el.addEventListener('input', () => { leaveExample(); st[k] = el.value; save(); render(); }); });
+// There is nothing to submit; return in a one-line field must not reload the page.
+$('#f').addEventListener('submit', e => e.preventDefault());
 
 let stTimer;
 function status(msg){ const s = $('#status'); s.textContent = msg; clearTimeout(stTimer); stTimer = setTimeout(() => { s.textContent = ''; }, 4000); }
@@ -465,30 +516,14 @@ if (navigator.share){
   $('#share').addEventListener('click', async () => { try { await navigator.share({title: 'My AI standing brief', text: md}); } catch (e) {} });
 }
 $('#clear').addEventListener('click', () => {
-  if (!answered(st) || confirm('Clear all your answers? This can’t be undone.')){ st = blank(); try { localStorage.removeItem(KEY); } catch (e) {} syncInputs(); render(); status('Cleared.'); }
+  if (!answered(st) || confirm('Clear all your answers? This can’t be undone.')){ leaveExample(); st = blank(); try { localStorage.removeItem(KEY); } catch (e) {} syncInputs(); render(); status('Cleared.'); }
 });
-
-// A fictional practice, so people can see a finished brief in one tap.
-const EXAMPLE = {
-  biz: 'We’re a six-person, fee-only financial planning practice in Wichita, Kansas. We help families within about an hour of town plan for retirement, college and taxes. We don’t sell insurance or investment products.',
-  role: 'Owner and lead planner',
-  uses: ['email', 'reply', 'report', 'meeting', 'marketing'],
-  customers: 'Couples and families, mostly 45 to 65, with $500,000 to $3 million saved. They worry about running out of money and about making a mistake they can’t undo. They ask most about when they can retire and how much they can spend. They leave when they feel rushed or sold to.',
-  voice: ['warm', 'plain', 'reassuring'],
-  sample: 'Good news first: you’re in better shape than you think. There are two things I’d like us to decide before year-end, and neither is urgent. I’ll walk you through both on Thursday.',
-  good: ['answer', 'paras', 'jargon', 'next'],
-  goodMore: 'Explain any number in one sentence a client could repeat to their spouse.',
-  facts: 'Office hours: Monday to Thursday 8 to 5, Friday 8 to noon\nWe take new clients within about an hour of Wichita\nPlanning fee: a flat annual fee from $3,000, quoted after a first meeting\nThe first meeting is free and takes about an hour\nMain line: (316) 555-0142',
-  wrong: 'Sounding like a sales pitch\nUsing words like delve, leverage and robust\nWriting three paragraphs when two sentences would do\nOffering services we don’t provide, like insurance',
-  never: 'Never give specific investment, tax or legal advice in writing\nNever promise or imply returns\nNever name a client or share a client’s details\nNever say we are the best or the cheapest',
-  posture: ['ask', 'push', 'check']
-};
+const smooth = () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 $('#example').addEventListener('click', () => {
-  if (answered(st) && !confirm('Replace your answers with the example?')) return;
-  st = Object.assign(blank(), JSON.parse(JSON.stringify(EXAMPLE))); syncInputs(); save(); render();
-  status('Example: a fictional financial planning practice. Edit anything to make it yours.');
-  $('#brief').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+  exampleOn = true; lastKey = ''; render();
+  $('#brief').scrollIntoView({behavior: smooth(), block: 'start'});
 });
+$('#startMine').addEventListener('click', () => { leaveExample(); render(); $('#q1').scrollIntoView({behavior: smooth(), block: 'start'}); });
 
 // Phone dock steps aside once the brief itself is on screen.
 if ('IntersectionObserver' in window){

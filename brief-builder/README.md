@@ -8,9 +8,10 @@ It is live at **https://adastra-brief-builder.vercel.app**.
 
 - **One static file, no backend.** `index.html` is the whole tool. It has no build step, no server and no live AI, so it costs nothing to run.
 - **Brand tokens.** Colors and fonts come from `https://adastra-ai.com/brand.css`, the site's single source of truth. Every token has a fallback, so the page still renders if that file fails to load.
-- **Privacy.** Answers stay in the visitor's browser. They are saved to `localStorage` under `aa-brief-builder-v1`, and nothing is sent anywhere.
+- **Privacy.** Answers are saved in the visitor's browser under the `localStorage` key `aa-brief-builder-v1` and never leave the device. Damaged or outdated saved data is cleaned up when the page loads.
 - **The brief.** It is built as Markdown. Each use the visitor picks (emails, quotes, reports and so on) adds a short block of task rules. The brief always tells the AI to write `[CONFIRM: …]` instead of guessing a missing fact.
-- **Example.** "Try an example first" fills in a fictional financial planning practice, so visitors see a finished brief in one tap.
+- **Example.** "Try an example first" previews the brief for a fictional financial planning practice. It never replaces or saves over the visitor's own answers, and copying stays off until they start their own.
+- **Exact wording.** Facts keep their numbers ("0.75%" stays "0.75%"). Hard lines keep the owner's wording. "Never" is only added in front of a bare action, so a line like "Avoid…" is never flipped.
 
 ## Deploying
 
