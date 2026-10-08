@@ -32,6 +32,9 @@ An interactive 3D exercise model of the National Mall for Saturday, July 4, 2026
   - The draft is playable as graded decision cards, and the exercise packet can be copied, saved or shared.
   - Offline, a prepared Chicago example is shown.
 - **Phone layout** (≤640px): opens on the map, decisions slide up from the bottom, a bottom tab bar, and a floating Next button.
+  - While a decision is open, the controls and stat tiles step aside and the map fills the screen down to the tab bar.
+  - The card is only as tall as the question and its options, so the map keeps 2–3 times more room above it.
+  - The header and clock stay visible, and everything returns when you resume.
 - **Ad Astra AI look:**
   - Colors come from the brand tokens in `adastra-ai.com/brand.css`: paper `#FBF8F2`, navy `#0E2240` and gold `#C9A968`.
   - Headings are set in Cormorant Garamond and the interface in Inter.

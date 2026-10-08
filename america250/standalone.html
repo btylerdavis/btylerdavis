@@ -275,6 +275,7 @@ textarea,input[type=text]{background:var(--bg);border:1px solid var(--line);bord
   .ctrls::-webkit-scrollbar,.hud::-webkit-scrollbar{display:none}
   .ctrls::after,.hud::after{content:"";flex:0 0 1px}
   .ctrls{grid-column:1/-1}
+  .app.focus .ctrls,.app.focus .hud{display:none}
   .ctrls .btn{flex:none;min-height:38px;white-space:nowrap}
   textarea,select.btn{font-size:16px}
   .hud{display:flex;gap:6px}
@@ -1179,9 +1180,29 @@ function openCard(sc){
   if (decided) renderOutcome(sc);
   renderMsel();
   // phone: the card is a bottom sheet; after a decision, slide its content to the outcome (Resume stays pinned at the sheet's bottom)
-  if (phoneMQ.matches){ card.scrollTo({top: decided ? Math.max(0, $('#cardOut').offsetTop - 8) : 0, behavior: decided ? behavior() : 'auto'}); showStage(); }
+  fitStage();
+  if (phoneMQ.matches){ card.scrollTo({top: decided ? Math.max(0, $('#cardOut').offsetTop - 8) : 0, behavior: decided ? behavior() : 'auto'}); showStage(); fitCard(); }
 }
-function closeCard(){ $('#card').hidden = true; stage.classList.remove('hascard'); }
+function closeCard(){ $('#card').hidden = true; stage.classList.remove('hascard'); fitStage(); }
+// phone: while a card is open the map fills the screen down to the tab bar, so the sheet leaves real map above it
+function fitStage(){
+  const on = phoneMQ.matches && !$('#card').hidden;
+  $('#app').classList.toggle('focus', on);
+  if (!on){ stage.style.height = ''; return; }
+  const top = stage.getBoundingClientRect().top + window.scrollY;
+  stage.style.height = Math.max(320, Math.round(innerHeight - top - $('#tabs').offsetHeight - 8)) + 'px';
+  fitCard();
+}
+// phone: an open decision is only as tall as the question and its options (the situation scrolls below them); a decided card stops at two thirds
+function fitCard(){
+  const card = $('#card'); card.style.maxHeight = '';
+  if (!phoneMQ.matches || card.hidden) return;
+  const sh = stage.clientHeight, opts = card.querySelectorAll('.opt'), last = opts[opts.length - 1];
+  const decided = S.current && S.current.pick != null;
+  const want = decided || !last ? sh * 0.66 : last.getBoundingClientRect().bottom - card.getBoundingClientRect().top + card.scrollTop + 14;
+  card.style.maxHeight = Math.round(Math.min(sh * 0.78, want)) + 'px';
+}
+addEventListener('resize', fitStage); phoneMQ.addEventListener('change', fitStage);
 // phone: bring the map back on screen if the presenter has scrolled away (top of page if the map fits there)
 function toStage(){ const tb = $('#tabs').offsetHeight, top = stage.getBoundingClientRect().top + window.scrollY; if (top + stage.offsetHeight <= innerHeight - tb) window.scrollTo({top:0, behavior:behavior()}); else stage.scrollIntoView({block:'start', behavior:behavior()}); }
 function showStage(){ if (!phoneMQ.matches) return; const r = stage.getBoundingClientRect(); if (r.top < -1 || r.bottom > innerHeight - $('#tabs').offsetHeight + 1) toStage(); }
