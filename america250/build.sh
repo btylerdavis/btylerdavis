@@ -38,7 +38,17 @@ TMP=$(mktemp); trap 'rm -f "$TMP"' EXIT
   printf '<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:title" content="%s">\n<meta name="twitter:description" content="%s">\n<meta name="twitter:image" content="%s">\n' "$OG_TITLE" "$DESC" "$OG_IMG"
   printf '%s\n' "$ANALYTICS"
   printf '</head><body>\n'; SELF_HOSTED; printf '\n</body></html>\n'; } > "$TMP"
-if ! grep -qF -- "$COUNT_NOTE" "$TMP"; then
+# Counting and its disclosure ship together or not at all. (grep -F with an empty pattern matches everything, so an empty sentence has to be refused here.)
+if [ -n "$ANALYTICS" ] && [ -z "$COUNT_NOTE" ]; then
+  echo "build.sh: ANALYTICS is set but COUNT_NOTE is empty, so the page would count visits without saying so. Set both or clear both. site/index.html was left as it was." >&2
+  exit 1
+fi
+if [ -z "$ANALYTICS" ] && [ -n "$COUNT_NOTE" ]; then
+  echo "build.sh: COUNT_NOTE is set but ANALYTICS is empty, so the footer would claim counting that is not happening. Set both or clear both. site/index.html was left as it was." >&2
+  exit 1
+fi
+# This checks that the sentence is in the page, not that it is visible there.
+if [ -n "$COUNT_NOTE" ] && ! grep -qF -- "$COUNT_NOTE" "$TMP"; then
   echo "build.sh: the footer sentence is missing from the public copy. Is <!--COUNT_NOTE--> still in index.html? site/index.html was left as it was." >&2
   exit 1
 fi

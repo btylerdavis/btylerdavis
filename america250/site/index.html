@@ -719,9 +719,9 @@ const canvas = $('#c'), stage = $('#stage');
 const phoneMQ = matchMedia('(max-width:640px)'), calmMQ = matchMedia('(prefers-reduced-motion: reduce)');
 const behavior = () => calmMQ.matches ? 'auto' : 'smooth';
 // If the 3D library is blocked (some managed networks) or WebGL is off, say so instead of leaving a dead page.
-function noMap(why){ const d = document.createElement('div'); d.setAttribute('role', 'alert'); d.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:#0E2240;color:#FBF8F2;font:500 16px/1.5 var(--f-body)'; d.textContent = why; stage.appendChild(d); }
-if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') { noMap('The 3D map could not load. Your network or browser may be blocking it. Try another network, or open this link on your phone.'); throw new Error('three.js did not load'); }
-let renderer; try { renderer = new THREE.WebGLRenderer({canvas, antialias:true}); } catch (e) { noMap('This browser could not start 3D graphics. Try another browser, or open this link on your phone.'); throw e; }
+function noMap(why, kind){ track('no_map', {why: kind}); const d = document.createElement('div'); d.setAttribute('role', 'alert'); d.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:#0E2240;color:#FBF8F2;font:500 16px/1.5 var(--f-body)'; d.textContent = why; stage.appendChild(d); }
+if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') { noMap('The 3D map could not load. Your network or browser may be blocking it. Try another network, or open this link on your phone.', 'library'); throw new Error('three.js did not load'); }
+let renderer; try { renderer = new THREE.WebGLRenderer({canvas, antialias:true}); } catch (e) { noMap('This browser could not start 3D graphics. Try another browser, or open this link on your phone.', 'webgl'); throw e; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x9cbbe0, 3500, 11000);
