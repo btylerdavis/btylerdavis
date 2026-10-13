@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { DemoNavigator } from "@/components/DemoNavigator";
-import { DemoWatermark } from "@/components/DemoWatermark";
+import { DemoChrome } from "@/components/DemoChrome";
 
 /**
  * Self-hosted fonts (no Google-hosted font loader — builds never fetch
@@ -50,8 +49,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         {children}
-        <DemoNavigator />
-        <DemoWatermark />
+        <DemoChrome />
       </body>
     </html>
   );

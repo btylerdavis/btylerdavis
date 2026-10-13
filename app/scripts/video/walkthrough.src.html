@@ -1,0 +1,276 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sleeptopia Phase 1 video</title>
+<style>
+@font-face{font-family:'Hanken Grotesk';src:url(fonts/hanken.woff2) format('woff2');font-weight:100 900;font-style:normal;font-display:block}
+@font-face{font-family:'Playfair Display';src:url(fonts/playfair.woff2) format('woff2');font-weight:400 900;font-style:normal;font-display:block}
+@font-face{font-family:'Playfair Display';src:url(fonts/playfair-italic.woff2) format('woff2');font-weight:400 900;font-style:italic;font-display:block}
+html,body{margin:0;padding:0;background:#16304e}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:#16304e}
+.n{position:absolute;box-sizing:border-box;left:0;top:0}
+.t{white-space:pre;margin:0;text-rendering:geometricPrecision;font-kerning:normal;font-variant-numeric:lining-nums}
+.t.w{white-space:pre-wrap}
+.n svg{display:block}
+</style></head>
+<body><div id="stage"></div>
+<script>
+// Same palette, helpers and timings as the Figma file (G2GV4D1qKxbGMPnJtQu3jC), rendered in the browser.
+const C={navy:[22,48,78],cream:[244,240,232],vel:[250,247,241],sun:[246,196,83],sky:[95,174,221],skyl:[169,214,240],ink:[32,36,43],gr:[71,80,94],white:[255,255,255],lake:[44,107,160],brand:[63,146,206],hair:[227,221,209],ok:[46,125,79],wm:[143,136,121]};
+const rgba=(c,o=1)=>`rgba(${C[c].join(',')},${o})`;
+const LOGOSVG=`__LOGO__`;
+const ALL=[];
+class N{
+  constructor(el){this.el=el;this.tracks={};}
+  get x(){return parseFloat(this.el.style.left)||0} set x(v){this.el.style.left=v+'px'}
+  get y(){return parseFloat(this.el.style.top)||0} set y(v){this.el.style.top=v+'px'}
+  get width(){return this.el.offsetWidth} get height(){return this.el.offsetHeight}
+  resize(w,h){this.el.style.width=w+'px';if(h!=null)this.el.style.height=h+'px';}
+}
+function mk(p){const el=document.createElement('div');el.className='n';(p.el||p).appendChild(el);const n=new N(el);ALL.push(n);return n;}
+const WT={Regular:400,Italic:400,Medium:500,SemiBold:600,Bold:700};
+function T(p,str,o={}){const n=mk(p),s=n.el.style;n.el.classList.add('t');
+  if(o.w){n.el.classList.add('w');s.width=o.w+'px';}
+  const st=o.style||'Regular';s.fontFamily=`'${o.font||'Hanken Grotesk'}'`;s.fontStyle=st==='Italic'?'italic':'normal';s.fontWeight=WT[st];
+  s.fontSize=(o.size||24)+'px';s.color=rgba(o.color||'ink',o.op??1);s.lineHeight=o.lh?String(o.lh/100):'normal';
+  if(o.ls!=null)s.letterSpacing=(o.ls/100)+'em';if(o.align)s.textAlign=o.align.toLowerCase();
+  n.el.textContent=str;n.x=o.x||0;n.y=o.y||0;return n;}
+function G(p,o){const n=mk(p),s=n.el.style;n.resize(o.w,o.h);n.x=o.x||0;n.y=o.y||0;
+  if(o.fill)s.background=rgba(o.fill,o.op??1);s.borderRadius=(o.r||0)+'px';
+  const sh=[];if(o.shadow)sh.push(o.shadow);if(o.stroke)sh.push(`inset 0 0 0 ${o.sw||2}px ${rgba(o.stroke,o.sop??1)}`);if(sh.length)s.boxShadow=sh.join(',');
+  if(o.clip)s.overflow='hidden';if(o.name)n.el.dataset.name=o.name;return n;}
+const R=(p,o)=>G(p,o);
+function E(p,o){const n=G(p,{...o,w:o.d,h:o.d});n.el.style.borderRadius='50%';return n;}
+function ICON(p,svg,x,y){const n=mk(p);n.el.innerHTML=svg;const sv=n.el.firstElementChild;n.resize(+sv.getAttribute('width'),+sv.getAttribute('height'));n.x=x;n.y=y;return n;}
+function LOGO(p,dark,x,y,w){const n=mk(p);n.el.innerHTML=dark?LOGOSVG:LOGOSVG.split('#ffffff').join('#002d9e');const sv=n.el.firstElementChild;const h=w*99.5/439;sv.setAttribute('width',w);sv.setAttribute('height',h);n.resize(w,h);n.x=x;n.y=y;return n;}
+function hl(t,word,style,color){const txt=t.el.textContent,i=txt.indexOf(word);if(i<0)throw new Error('hl miss: '+word);t.el.textContent='';const sp=document.createElement('span');sp.textContent=word;sp.style.fontStyle=style==='Italic'?'italic':'normal';sp.style.color=rgba(color);t.el.append(txt.slice(0,i),sp,txt.slice(i+word.length));}
+const CHECK=(bg,fg,sz=26)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="13" cy="13" r="13" fill="${bg}"/><path d="M7.5 13.5l3.5 3.5 7.5-8" stroke="${fg}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const STAR=(fill,stroke,sz=40)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="${stroke?18.75:20}" fill="${fill}" ${stroke?`stroke="${stroke}" stroke-width="2.5"`:''}/><path d="M20 9.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L20 25.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z" fill="${stroke?stroke:'#16304e'}"/></svg>`;
+const MIC='<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" stroke="#16304e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#16304e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 19v3" stroke="#16304e" stroke-width="2" stroke-linecap="round"/></svg>';
+
+// ---------- keyframes (timeline seconds) ----------
+const kf=(t,v,e)=>({t,v,e});
+function IN(n,t,o={}){const d=o.d||0.7,dy=o.dy??36;const ok=[kf(t,0),kf(t+d,1,'EASE_OUT')];if(o.out)ok.push(kf(o.out,1),kf(o.out+0.4,0,'EASE_IN_AND_OUT'));n.tracks.opacity=ok;if(dy)n.tracks.ty=[kf(t,dy),kf(t+d,0,'EASE_OUT')];}
+function GROW(n,t,w,d=0.9){n.tracks.w=[kf(t,1),kf(t+d,w,'EASE_OUT')];}
+function bez(x1,y1,x2,y2){const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx,cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by;
+  const sx=t=>((ax*t+bx)*t+cx)*t,sy=t=>((ay*t+by)*t+cy)*t,dx=t=>(3*ax*t+2*bx)*t+cx;
+  return x=>{if(x<=0)return 0;if(x>=1)return 1;let t=x;for(let i=0;i<8;i++){const e=sx(t)-x;if(Math.abs(e)<1e-6)return sy(t);const d=dx(t);if(Math.abs(d)<1e-6)break;t-=e/d;}
+    let lo=0,hi=1;t=x;while(hi-lo>1e-6){const v=sx(t);if(v<x)lo=t;else hi=t;t=(lo+hi)/2;}return sy(t);};}
+const EASE={EASE_OUT:bez(0.22,1,0.36,1),EASE_IN_AND_OUT:bez(0.65,0,0.35,1)};
+function val(k,t){if(t<=k[0].t)return k[0].v;for(let i=0;i<k.length-1;i++){const a=k[i],b=k[i+1];if(t<b.t){const p=(t-a.t)/(b.t-a.t),f=EASE[b.e]||(x=>x);return a.v+(b.v-a.v)*f(p);}}return k[k.length-1].v;}
+window.seek=function(t){const sig=[];for(const n of ALL){const k=n.tracks;if(!k.opacity&&!k.ty&&!k.tx&&!k.w)continue;const s=n.el.style;
+  if(k.opacity){const v=Math.round(val(k.opacity,t)*1000)/1000;s.opacity=v;sig.push(v);}
+  if(k.ty||k.tx){const y=k.ty?Math.round(val(k.ty,t)*10)/10:0,x=k.tx?Math.round(val(k.tx,t)*10)/10:0;s.transform=`translate(${x}px,${y}px)`;sig.push(x,y);}
+  if(k.w){const w=Math.round(val(k.w,t)*10)/10;s.width=w+'px';sig.push(w);}}
+  return sig.join(',');};
+window.DURATION=132.13;
+
+function build(){
+const stage=document.getElementById('stage');
+// ---------- scenes and crossfades ----------
+const SCN=[['S1 Title','navy',0,8.91],['S2 Today','cream',8.91,30.85],['S3 Make it real','cream',30.85,50.85],['S4 Make it smart','cream',50.85,74.76],['S5 Make it trustworthy','navy',74.76,93.96],['S6 Test data only','cream',93.96,107.82],['S7 Road ahead','navy',107.82,124.44],['S8 Close','cream',124.44,null]];
+const X=0.35;
+const SC=SCN.map(([nm,bg,a,b])=>{const f=G(stage,{name:nm,x:0,y:0,w:1920,h:1080,fill:bg,clip:true});
+  f.tracks.opacity=a===0?[kf(b,1),kf(b+X,0,'EASE_IN_AND_OUT')]:b===null?[kf(a,0),kf(a+X,1,'EASE_IN_AND_OUT')]:[kf(a,0),kf(a+X,1,'EASE_IN_AND_OUT'),kf(b,1),kf(b+X,0,'EASE_IN_AND_OUT')];return f;});
+
+// ---------- Scene 1: title (navy) ----------
+{const s1=SC[0];
+E(s1,{x:1180,y:-260,d:1100,fill:'sky',op:0.10});
+E(s1,{x:1420,y:520,d:760,fill:'sun',op:0.06});
+const l1=LOGO(s1,true,160,150,300);IN(l1,0.3,{dy:16});
+IN(T(s1,'SLEEP OUTCOMES PLATFORM  ·  OCTOBER 2026',{x:160,y:372,size:22,style:'SemiBold',color:'skyl',ls:16}),0.7,{dy:16});
+const h1=T(s1,'From prototype to finished,\none phase at a time.',{x:160,y:420,w:1560,size:108,font:'Playfair Display',color:'white',lh:104});hl(h1,'finished','Italic','sky');IN(h1,1.0,{d:0.9,dy:50});
+IN(T(s1,'Prepared for Kevin Kunz  ·  Ben Davis, Cato Consulting Group',{x:160,y:720,size:30,color:'white',op:0.75}),2.6,{dy:18});
+const stops=['Today','Phase 1','Phase 2','Phase 3','Phase 4','Complete'];
+IN(R(s1,{x:172,y:893,w:1576,h:2,fill:'white',op:0.25}),3.6,{dy:0,d:0.6});
+stops.forEach((s,i)=>{const x=160+i*315.2;const dot=E(s1,{x,y:882,d:24,fill:i===0?'skyl':i===1?'sun':'navy',stroke:i>1?'white':null,sop:0.5});
+  const lab=T(s1,s,{x:x-40,y:922,w:104,size:22,style:'SemiBold',color:'white',op:i<2?1:0.7,align:'CENTER'});
+  IN(dot,3.9+0.22*i,{dy:0,d:0.45});IN(lab,3.95+0.22*i,{dy:12,d:0.45});});}
+
+// ---------- Scene 2: where it is today (cream) ----------
+{const s2=SC[1];const S=9.26;
+IN(T(s2,'WHERE IT IS TODAY',{x:160,y:140,size:24,style:'SemiBold',color:'brand',ls:16}),S+0.2,{dy:14});
+IN(T(s2,'A working, audited prototype.',{x:160,y:184,w:1600,size:84,font:'Playfair Display',color:'navy'}),S+0.4,{d:0.8,dy:40});
+[['30','working screens',3.03],['2,000','realistic test patients',4.53],['320','automated tests',7.53],['3','outside AI code audits',10.68]].forEach(([n,l,t],i)=>{
+  const card=G(s2,{name:'Stat '+l,x:160+i*410,y:360,w:380,h:270,fill:'white',r:28,stroke:'hair'});
+  T(card,n,{x:36,y:40,size:112,font:'Playfair Display',color:'navy'});
+  T(card,l,{x:36,y:190,w:320,size:28,style:'Medium',color:'gr'});
+  IN(card,S+t,{d:0.6,dy:40});});
+const band=G(s2,{name:'But band',x:160,y:700,w:1600,h:230,fill:'navy',r:28});IN(band,S+14.45,{d:0.6,dy:30});
+T(band,'BUT TODAY, IT…',{x:50,y:40,size:24,style:'SemiBold',color:'skyl',ls:16});
+[['Runs on one laptop',14.9],['Has only made-up patients',16.9],['Simulates wearable data',18.85]].forEach(([txt,t],i)=>{
+  const chip=G(band,{name:'Gap '+(i+1),x:50+i*510,y:105,w:480,h:84,fill:'white',op:0.08,r:42});
+  E(chip,{x:30,y:32,d:20,fill:'sun'});
+  T(chip,txt,{x:68,y:22,size:32,style:'Medium',color:'white'});
+  IN(chip,S+t,{d:0.5,dy:18});});}
+
+// ---------- Scene 3: make it real (cream) ----------
+{const s3=SC[2];const S=31.2;
+E(s3,{x:980,y:-180,d:1000,fill:'sky',op:0.10});
+IN(T(s3,'PHASE 1  ·  WHAT CHANGES',{x:160,y:150,size:24,style:'SemiBold',color:'brand',ls:16}),S+0.2,{dy:14});
+const h=T(s3,'Live & Real.',{x:160,y:194,w:900,size:120,font:'Playfair Display',color:'navy'});hl(h,'Real','Italic','lake');IN(h,S+0.4,{d:0.8,dy:40});
+[['Sign in from your own phone',5.25],['Scan, consent and connect a Garmin at the front desk',9.1],['Every night syncs on its own',15.8]].forEach(([txt,t],i)=>{
+  const row=G(s3,{name:'Bullet '+(i+1),x:160,y:420+i*150,w:880,h:120});
+  E(row,{x:0,y:6,d:56,fill:'sun'});
+  T(row,String(i+1),{x:0,y:14,w:56,size:30,style:'Bold',color:'ink',align:'CENTER'});
+  T(row,txt,{x:84,y:6,w:790,size:42,style:'Medium',color:'navy',lh:118});
+  IN(row,S+t,{d:0.6,dy:24});});
+const phone=G(s3,{name:'Phone',x:1200,y:90,w:440,h:900,fill:'navy',r:64,shadow:'0 40px 90px rgba(22,48,78,0.22)'});IN(phone,S+4.6,{d:0.8,dy:80});
+const scr=G(phone,{name:'Screen',x:18,y:18,w:404,h:864,fill:'white',r:48,clip:true});
+R(phone,{x:170,y:30,w:100,h:10,r:5,fill:'white',op:0.25});
+const A=G(scr,{name:'Screen A sign-in',x:0,y:0,w:404,h:864,fill:'white'});IN(A,S+5.0,{d:0.5,dy:0,out:S+8.7});
+T(A,'Sleeptopia',{x:36,y:90,size:30,style:'Bold',color:'navy'});
+T(A,'Sign in',{x:36,y:200,size:56,font:'Playfair Display',color:'navy'});
+T(A,'We’ll email you a link. No password to remember.',{x:36,y:280,w:330,size:22,color:'gr',lh:130});
+const fld=G(A,{name:'Email field',x:36,y:400,w:332,h:72,fill:'vel',r:14,stroke:'hair'});T(fld,'kevin@sleeptopia.com',{x:20,y:22,size:22,color:'ink'});
+const btn=G(A,{name:'Button',x:36,y:500,w:332,h:72,fill:'sun',r:36});T(btn,'Send my sign-in link',{x:0,y:22,w:332,size:22,style:'SemiBold',color:'ink',align:'CENTER'});
+const B=G(scr,{name:'Screen B scan-to-join',x:0,y:0,w:404,h:864,fill:'white'});IN(B,S+9.1,{d:0.5,dy:0,out:S+16.7});
+T(B,'Staff pilot',{x:36,y:90,size:26,style:'SemiBold',color:'brand',ls:10});
+T(B,'Scan to join',{x:36,y:130,size:52,font:'Playfair Display',color:'navy'});
+const qr=G(B,{name:'QR code',x:82,y:230,w:240,h:240,fill:'white',r:16,stroke:'hair'});
+const pat='1111111010111111100000101010100000111011100101011101101110100101011101101110101110101110110000010010100000111111101010111111100000000110000000101101110101101101001011001010110111100101101011000010111010110010101110100100000000101110101011111110110101011000001001011010101011101010110110010111010101110011011101100101011110100000101101011001111111011011010101';
+for(let r=0;r<17;r++)for(let c=0;c<17;c++){if(pat[(r*17+c)%pat.length]==='1')R(qr,{x:18+c*12,y:18+r*12,w:12,h:12,fill:'navy'});}
+[['Plain-language consent',12.5],['Garmin connected',14.2],['Nightly sync turned on',15.0]].forEach(([txt,t],i)=>{
+  const row=G(B,{name:'Step '+(i+1),x:36,y:510+i*80,w:332,h:60});
+  ICON(row,CHECK('#2e7d4f','#ffffff',36),0,12);
+  T(row,txt,{x:54,y:14,w:278,size:24,style:'Medium',color:'ink'});IN(row,S+t,{d:0.45,dy:12});});
+const Cs=G(scr,{name:'Screen C last night',x:0,y:0,w:404,h:864,fill:'white'});IN(Cs,S+17.1,{d:0.5,dy:0});
+T(Cs,'Last night',{x:36,y:90,size:26,style:'SemiBold',color:'brand',ls:10});
+T(Cs,'7h 12m',{x:36,y:130,size:80,font:'Playfair Display',color:'navy'});
+T(Cs,'asleep  ·  synced from Garmin at 6:02 AM',{x:36,y:240,w:340,size:20,color:'gr'});
+[['Deep','lake',150],['Light','sky',260],['REM','brand',190],['Awake','sun',60]].forEach(([nm,col,w],i)=>{T(Cs,nm,{x:36,y:320+i*90,size:22,style:'Medium',color:'ink'});const b=R(Cs,{x:36,y:352+i*90,w,h:26,r:13,fill:col});GROW(b,S+17.5+i*0.35,w);});
+const tag=G(Cs,{name:'Sample tag',x:36,y:720,w:200,h:44,fill:'vel',r:22,stroke:'hair'});T(tag,'Sample data',{x:0,y:11,w:200,size:18,style:'SemiBold',color:'wm',align:'CENTER'});}
+
+// ---------- Scene 4: make it smart (cream) ----------
+{const s=SC[3];const S=51.2;
+E(s,{x:-420,y:380,d:1000,fill:'sky',op:0.10});
+IN(T(s,'PHASE 1  ·  WHAT CHANGES',{x:160,y:150,size:24,style:'SemiBold',color:'brand',ls:16}),S+0.3);
+const ti=T(s,'Make it smart.',{x:160,y:194,size:120,font:'Playfair Display',color:'navy'});hl(ti,'smart','Italic','lake');IN(ti,S+0.5,{d:0.8});
+IN(T(s,'Claude, built in. No patient data until Phase 2.',{x:160,y:372,w:780,size:32,style:'Medium',color:'gr'}),S+1.2);
+const pan=G(s,{name:'Ask your data panel',x:1000,y:150,w:760,h:830,fill:'white',r:28,stroke:'hair',shadow:'0 24px 60px rgba(22,48,78,0.08)'});IN(pan,S+2.3);
+T(pan,'ASK YOUR DATA',{x:48,y:48,size:20,style:'SemiBold',color:'brand',ls:16});
+const bub=G(pan,{name:'Question bubble',x:150,y:100,w:562,h:120,fill:'navy',r:28});bub.el.style.borderBottomRightRadius='8px';
+const q=T(bub,'Do CPAP patients sleep longer after their first 30 days?',{x:32,y:24,w:498,size:30,style:'Medium',color:'white',lh:120});
+bub.resize(562,Math.round(q.height+48));IN(bub,S+2.85,{dy:20});
+const ans=G(pan,{name:'Answer',x:0,y:0,w:760,h:830});IN(ans,S+5.75,{dy:0,d:0.5});
+T(ans,'Average sleep per night  ·  illustration',{x:48,y:268,size:22,style:'Medium',color:'gr'});
+T(ans,'Before CPAP',{x:48,y:316,size:26,style:'Medium',color:'ink'});
+GROW(R(ans,{x:48,y:356,w:442,h:40,fill:'skyl',r:20}),S+6.05,442);
+IN(T(ans,'6.1 h',{x:510,y:358,size:28,style:'SemiBold',color:'navy'}),S+6.75,{dy:0,d:0.4});
+T(ans,'After 30 days on CPAP',{x:48,y:420,size:26,style:'Medium',color:'ink'});
+GROW(R(ans,{x:48,y:460,w:500,h:40,fill:'sky',r:20}),S+6.35,500);
+IN(T(ans,'6.9 h',{x:568,y:462,size:28,style:'SemiBold',color:'navy'}),S+7.05,{dy:0,d:0.4});
+const at=T(ans,'On average, patients sleep 48 minutes longer after 30 days.',{x:48,y:540,w:664,size:38,font:'Playfair Display',color:'navy',lh:118});IN(at,S+7.25,{dy:16});
+const qb=G(ans,{name:'Query shown',x:48,y:at.y+at.height+28,w:664,h:64,fill:'vel',r:14,stroke:'hair',sw:1.5});
+T(qb,'Query shown: average nightly sleep, before vs. after CPAP start',{x:20,y:20,w:624,size:20,color:'gr'});IN(qb,S+8.0,{dy:12});
+IN(T(ans,'Illustration  ·  made-up numbers, not from any data',{x:48,y:qb.y+qb.height+22,size:18,style:'Medium',color:'wm'}),S+8.0,{dy:0});
+const cc=G(s,{name:'Claude app card',x:160,y:470,w:760,h:190,fill:'white',r:28,stroke:'hair'});
+E(cc,{x:36,y:51,d:88,fill:'sun'});ICON(cc,MIC,60,75);
+T(cc,'FROM YOUR CLAUDE APP',{x:152,y:44,size:20,style:'SemiBold',color:'brand',ls:12});
+T(cc,'“How did our testers sleep this week?”',{x:152,y:76,w:580,size:34,font:'Playfair Display',style:'Italic',color:'navy'});
+T(cc,'Read-only  ·  every lookup logged',{x:152,y:132,size:20,style:'Medium',color:'gr'});
+IN(cc,S+9.0);
+const co=G(s,{name:'Coordinator card',x:160,y:690,w:760,h:290,fill:'navy',r:28});
+T(co,'EVERY NIGHT',{x:40,y:34,size:20,style:'SemiBold',color:'skyl',ls:16});
+const ctag=T(co,'Illustration',{x:0,y:36,size:18,style:'Medium',color:'skyl',op:0.75});ctag.x=760-40-ctag.width;
+T(co,'AI research coordinator',{x:40,y:62,size:40,font:'Playfair Display',color:'white'});
+IN(co,S+14.15);
+[['Checked every tester’s data',16.1],['Flagged 2 missed nights',17.8],['Wrote 6 coach notes',19.3],['Sent Kevin’s Monday update',21.1]].forEach(([txt,t],i)=>{
+  const row=G(co,{name:'Check '+(i+1),x:40,y:136+i*36,w:680,h:34});
+  ICON(row,CHECK('#5faedd','#16304e'),0,4);T(row,txt,{x:42,y:0,size:26,style:'Medium',color:'white'});IN(row,S+t,{dy:10,d:0.5});});}
+
+// ---------- Scene 5: make it trustworthy (navy) ----------
+{const s=SC[4];const S=75.11;
+E(s,{x:1250,y:-700,d:1100,fill:'sky',op:0.10});
+IN(T(s,'PHASE 1  ·  WHAT CHANGES',{x:160,y:150,size:24,style:'SemiBold',color:'skyl',ls:16}),S+0.3);
+const ti=T(s,'Make it trustworthy.',{x:160,y:194,size:120,font:'Playfair Display',color:'white'});hl(ti,'trustworthy','Italic','sky');IN(ti,S+0.5,{d:0.8});
+const card=(name,x,w)=>G(s,{name,x,y:420,w,h:540,fill:'white',op:0.06,r:28,stroke:'white',sop:0.12,sw:1.5});
+const A=card('Kill switch card',160,520);
+T(A,'CONSENT KILL SWITCH',{x:40,y:40,size:20,style:'SemiBold',color:'skyl',ls:16});
+T(A,'Revoke consent',{x:40,y:80,size:38,font:'Playfair Display',color:'white'});
+const tg=G(A,{name:'Toggle',x:368,y:78,w:112,h:60,fill:'white',op:0.2,r:30});
+const on=R(tg,{name:'Toggle on',x:0,y:0,w:112,h:60,fill:'sky',r:30});on.tracks.opacity=[kf(S+2.8,1),kf(S+3.3,0,'EASE_IN_AND_OUT')];
+const knob=E(tg,{name:'Knob',d:48,x:58,y:6,fill:'white'});knob.tracks.tx=[kf(S+2.8,0),kf(S+3.3,-52,'EASE_IN_AND_OUT')];
+R(A,{x:40,y:170,w:440,h:1.5,fill:'white',op:0.12});
+[['Syncing stops',4.15],['Data is purged',5.8],['Certificate is issued',7.5]].forEach(([txt,t],i)=>{const row=G(A,{name:'Step '+(i+1),x:40,y:200+i*62,w:440,h:40});ICON(row,CHECK('#f6c453','#16304e',32),0,4);T(row,txt,{x:50,y:0,size:30,style:'Medium',color:'white'});IN(row,S+t,{dy:10,d:0.5});});
+const cert=G(A,{name:'Certificate',x:40,y:398,w:440,h:102,fill:'vel',r:16});
+T(cert,'DELETION CERTIFICATE',{x:24,y:20,size:16,style:'SemiBold',color:'brand',ls:14});
+T(cert,'Tester 07  ·  all wearable data purged',{x:24,y:46,size:22,style:'Medium',color:'ink'});
+const cs=T(cert,'Sample',{x:0,y:20,size:16,style:'Medium',color:'wm'});cs.x=440-24-cs.width;
+IN(cert,S+7.85,{dy:14});IN(A,S+2.0);
+const B=card('Scorecard card',710,520);
+T(B,'DATA-QUALITY SCORECARD',{x:40,y:40,size:20,style:'SemiBold',color:'skyl',ls:16});
+T(B,'Research-grade data',{x:40,y:80,size:38,font:'Playfair Display',color:'white'});
+[['Wear time','94%',0.94,11.9],['Nights captured','27 of 30',0.9,12.4],['Testers syncing','5 of 5',1,12.9]].forEach(([lab,v,pct,t],i)=>{const y=180+i*92;
+  T(B,lab,{x:40,y,size:24,style:'Medium',color:'white',op:0.85});const vt=T(B,v,{x:0,y,size:24,style:'SemiBold',color:'white'});vt.x=480-vt.width;
+  R(B,{x:40,y:y+42,w:440,h:14,fill:'white',op:0.12,r:7});GROW(R(B,{x:40,y:y+42,w:Math.round(440*pct),h:14,fill:'sky',r:7}),S+t,Math.round(440*pct));});
+T(B,'Illustration  ·  made-up numbers',{x:40,y:470,size:18,style:'Medium',color:'skyl',op:0.75});
+IN(B,S+10.1);
+const D=card('Dashboard card',1260,500);
+T(D,'YOUR DASHBOARD',{x:40,y:40,size:20,style:'SemiBold',color:'skyl',ls:16});
+T(D,'Every phase, live.',{x:40,y:80,size:38,font:'Playfair Display',color:'white'});
+R(D,{x:56,y:200,w:336,h:3,fill:'white',op:0.2});
+['Today','P1','P2','P3','P4','Done'].forEach((l,i)=>{const cx=56+i*67.2;
+  if(i===0)ICON(D,CHECK('#5faedd','#16304e',32),cx-16,185);
+  else if(i===1)E(D,{d:32,x:cx-16,y:185,fill:'sun'});
+  else if(i===5)ICON(D,STAR('#16304e','#f6c453',32),cx-16,185);
+  else E(D,{d:32,x:cx-16,y:185,fill:'navy',stroke:'white',sop:0.35,sw:2});
+  const lt=T(D,l,{x:0,y:228,size:16,style:'SemiBold',color:i===1?'sun':'skyl'});lt.x=Math.round(cx-lt.width/2);});
+[['Live, with real logins','Planned',false],['Garmin, through a partner','Planned',false],['This dashboard','Live',true]].forEach(([txt,st,live],i)=>{const row=G(D,{x:40,y:290+i*64,w:420,h:52,fill:'white',op:0.06,r:14});
+  T(row,txt,{x:18,y:14,size:20,style:'Medium',color:'white'});const chip=G(row,{x:0,y:12,w:80,h:28,fill:live?'sky':'white',op:live?1:0.14,r:14});
+  const ct=T(chip,st,{x:12,y:4,size:15,style:'SemiBold',color:live?'navy':'white'});chip.resize(Math.round(ct.width+24),28);chip.x=420-14-chip.width;});
+T(D,'Kevin and Ben, one shared view',{x:40,y:486,size:18,style:'Medium',color:'skyl',op:0.75});
+IN(D,S+14.75);}
+
+// ---------- Scene 6: what Phase 1 runs on (cream) ----------
+{const s6=SC[5];const S6=94.31;
+E(s6,{x:1260,y:-200,d:900,fill:'sun',op:0.12});
+IN(T(s6,'PHASE 1  ·  LIVE & REAL',{x:160,y:300,size:26,style:'SemiBold',color:'brand',ls:16}),S6+0.2,{dy:14});
+const h6=T(s6,'Test data and staff testers only.',{x:160,y:346,w:1600,size:104,font:'Playfair Display',color:'navy'});hl(h6,'only','Italic','lake');IN(h6,S6+1.05,{d:0.8,dy:50});
+IN(R(s6,{x:160,y:512,w:220,h:10,r:5,fill:'sun'}),S6+3.4,{dy:0,d:0.6});
+[['No patient data until Phase 2',4.8],['Every addition is shown working before Phase 1 closes',8.45]].forEach(([txt,t],i)=>{const row=G(s6,{name:'Line '+(i+1),x:160,y:610+i*130,w:1600,h:100});
+  E(row,{x:0,y:30,d:30,fill:'sun'});T(row,txt,{x:58,y:12,w:1540,size:52,style:'Medium',color:'navy',lh:115});IN(row,S6+t,{d:0.6,dy:24});});}
+
+// ---------- Scene 7: the road ahead (navy) ----------
+{const s=SC[6];const S=108.17;
+E(s,{x:-320,y:560,d:900,fill:'sky',op:0.08});
+E(s,{x:1460,y:-300,d:700,fill:'sun',op:0.05});
+IN(T(s,'THE ROAD AHEAD',{x:160,y:150,size:24,style:'SemiBold',color:'skyl',ls:16}),S+0.2,{dy:14});
+const h=T(s,'From there, the road to finished.',{x:160,y:194,w:1600,size:96,font:'Playfair Display',color:'white'});hl(h,'finished','Italic','sky');IN(h,S+0.4,{d:0.8,dy:40});
+const X0=i=>150+i*330, RX=170, RW=1320;
+IN(R(s,{x:RX,y:468,w:RW,h:4,r:2,fill:'white',op:0.15}),S+0.4,{dy:0,d:0.6});
+const prog=R(s,{x:RX,y:468,w:RW,h:4,r:2,fill:'sun'});
+prog.tracks.w=[kf(S+0.5,1),kf(S+1.2,330,'EASE_IN_AND_OUT'),kf(S+5.25,330),kf(S+6.0,660,'EASE_IN_AND_OUT'),kf(S+11.15,660),kf(S+11.9,990,'EASE_IN_AND_OUT'),kf(S+14.0,990),kf(S+14.8,RW,'EASE_IN_AND_OUT')];
+const cols=[
+ ['PHASE 1','Live & Real','Real logins, Garmin from staff testers, Claude built in.',0.5],
+ ['PHASE 2','Ready for Real Patients','HIPAA-ready hosting and research approval, then the first 100 patients.',1.0],
+ ['PHASE 3','Retail & the Positional Study','The Mattress Hub door opens, and under-mattress sensors power the positional sleep study.',5.25],
+ ['PHASE 4','Research & Revenue','De-identified research, published papers and sponsored studies.',11.15],
+ ['COMPLETE','Your finish line','Defined by your answer to one question.',14.0]];
+cols.forEach(([eb,name,det,t],i)=>{const x=X0(i);
+  // resting node (hollow), then the lit node when the road reaches it
+  if(i===4){IN(ICON(s,STAR('#16304e','rgba(255,255,255,0.45)',40),x,450),S+0.45+i*0.08,{dy:0,d:0.4});IN(ICON(s,STAR('#f6c453',null,40),x,450),S+t+0.1,{dy:0,d:0.4});}
+  else{const base=E(s,{x,y:450,d:40,fill:'navy',stroke:'white',sop:0.45,sw:2.5});T(base,String(i+1),{x:0,y:8,w:40,size:18,style:'Bold',color:'white',op:0.6,align:'CENTER'});IN(base,S+0.45+i*0.08,{dy:0,d:0.4});
+    const lit=E(s,{x,y:450,d:40,fill:'sun'});T(lit,String(i+1),{x:0,y:8,w:40,size:18,style:'Bold',color:'navy',align:'CENTER'});IN(lit,S+t+0.1,{dy:0,d:0.4});}
+  const col=G(s,{name:'Column '+eb,x,y:530,w:290,h:440});
+  const e=T(col,eb,{x:0,y:0,size:20,style:'SemiBold',color:'sun',ls:14});
+  const n=T(col,name,{x:0,y:34,w:290,size:34,font:'Playfair Display',color:'white',lh:118});
+  T(col,det,{x:0,y:132,w:290,size:22,color:'white',op:0.75,lh:140});
+  IN(col,S+t,{d:0.6,dy:24});});}
+
+// ---------- Scene 8: closing question (cream) ----------
+{const s8=SC[7];const S=124.79;
+E(s8,{x:-320,y:560,d:900,fill:'sky',op:0.10});
+IN(T(s8,'ONE QUESTION FOR YOU',{x:160,y:250,size:24,style:'SemiBold',color:'brand',ls:16}),S+0.15,{dy:16});
+const q=T(s8,'What does success look like,\nin your words?',{x:160,y:300,w:1600,size:112,font:'Playfair Display',color:'navy',lh:104});hl(q,'success','Italic','lake');IN(q,S+0.35,{d:0.9,dy:50});
+IN(R(s8,{x:160,y:590,w:140,h:8,r:4,fill:'sun'}),S+1.4,{dy:0});
+IN(T(s8,'Your answer becomes the finish line for the whole platform,\nand it goes on your dashboard.',{x:160,y:640,w:1500,size:36,color:'gr',lh:135}),S+2.6,{dy:20});
+IN(LOGO(s8,false,160,900,250),S+3.4,{dy:12});
+IN(T(s8,'ben@catoconsultinggroup.com  ·  (316) 655-2992',{x:1100,y:920,w:660,size:26,color:'gr',align:'RIGHT'}),S+3.6,{dy:12});}
+}
+
+window.READY=(async()=>{
+  await Promise.all([["400","normal","Hanken Grotesk"],["500","normal","Hanken Grotesk"],["600","normal","Hanken Grotesk"],["700","normal","Hanken Grotesk"],["400","normal","Playfair Display"],["400","italic","Playfair Display"]].map(([w,st,f])=>document.fonts.load(`${st} ${w} 40px '${f}'`)));
+  await document.fonts.ready;
+  build();window.seek(0);
+  return {nodes:ALL.length,fonts:[...document.fonts].filter(f=>f.status==='loaded').length};
+})();
+</script></body></html>

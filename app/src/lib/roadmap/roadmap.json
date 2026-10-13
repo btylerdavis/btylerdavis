@@ -1,0 +1,149 @@
+{
+  "updated": "2026-10-13",
+  "product": "Sleeptopia Sleep Outcomes Platform",
+  "video": {
+    "title": "The 2-minute walkthrough",
+    "caption": "Where the platform stands today, what Phase 1 adds, and the road to finished.",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3ElygVjTX24E5NzAtPDUPVlTTIu/0fbe0749-0630-4db3-a87d-741d0b506b27.mp4",
+    "poster": "https://d2ol7oe51mr4n9.cloudfront.net/user_3ElygVjTX24E5NzAtPDUPVlTTIu/5ed2c568-c59b-48b2-9ce8-4fc782f9009e.jpg"
+  },
+  "today": {
+    "label": "Where it is today",
+    "headline": "A working, audited prototype on a laptop.",
+    "built": [
+      "30 working screens: clinic and retail sign-up, coach, executive, partner and research views",
+      "A consent engine that enforces every toggle, plus deletion that issues a dated, printable certificate of what was erased",
+      "2,000 realistic test patients with simulated sleep histories",
+      "320 automated tests, all passing, and three outside AI code audits with every serious finding fixed"
+    ],
+    "gaps": [
+      "Runs on one laptop, with no web address or logins",
+      "Every patient is made up, and wearable data is simulated",
+      "The care assistant is scripted; no AI runs inside it yet",
+      "Too many screens for daily use"
+    ]
+  },
+  "phases": [
+    {
+      "id": "p1",
+      "number": 1,
+      "name": "Live & Real",
+      "tagline": "Real logins, real Garmin data from staff testers, Claude built in. No patients yet.",
+      "status": "proposed",
+      "items": [
+        { "id": "p1-live", "title": "Live, with real logins", "detail": "A real web address with email sign-in and separate views for Kevin, coaches and staff, on a hosted database.", "area": "real", "status": "planned" },
+        { "id": "p1-garmin", "title": "Garmin, through a data partner", "detail": "Testers connect their Garmin and each night syncs automatically, through a data partner that already has Garmin access. Partners like this also cover other brands that sync online, such as Fitbit and Oura. It can switch to a direct Garmin connection if Garmin reopens developer approvals.", "area": "real", "status": "planned" },
+        { "id": "p1-home", "title": "One home screen per person", "detail": "Kevin sees five numbers and coaches see today's list. The research screens move behind an Advanced tab.", "area": "real", "status": "planned" },
+        { "id": "p1-pilot", "title": "Staff pilot, scan to join", "detail": "Staff testers scan a QR code at the front desk, then consent and connect a watch from their own phone. Every screen shows what is real and what is simulated.", "area": "real", "status": "planned" },
+        { "id": "p1-phone", "title": "Phone sleep view", "detail": "Testers see their own nights on their phone, from an icon they add to their home screen. No app store download.", "area": "real", "status": "planned" },
+        { "id": "p1-ask", "title": "Ask your data", "detail": "Type a question, get a chart and a plain-English answer, with the query shown in plain words so Kevin can see what was counted.", "area": "smart", "status": "planned" },
+        { "id": "p1-claude-app", "title": "Ask Sleeptopia from the Claude app", "detail": "A secure, read-only Sleeptopia connector in Kevin's own Claude account, on the web and on the phone. Ask by typing or out loud (dictation, or Claude's voice mode once it is tested with the connector). Every lookup it makes is logged. Staff-tester data appears there only as totals for the whole tester group, never a slice small enough to point to one person. Patient data stays out of it: a personal Claude account isn't covered by any HIPAA agreement, and even Anthropic's enterprise HIPAA agreement doesn't cover connectors.", "area": "smart", "status": "planned" },
+        { "id": "p1-coordinator", "title": "Nightly AI research coordinator", "detail": "A scheduled Claude agent checks every tester's data each night, flags gaps, writes coach notes and sends Kevin a Monday status email.", "area": "smart", "status": "planned" },
+        { "id": "p1-assistant", "title": "Smart Care Assistant", "detail": "Claude replaces the scripted assistant. The same consent checks and clinical-escalation rules stay in front of it, every reply is checked against the existing safety rules, and new AI safety tests are added. Simulated patients and consenting staff testers only.", "area": "smart", "status": "planned" },
+        { "id": "p1-sadie", "title": "Sadie as the in-app guide", "detail": "The face from the website gives a short tour at first login and explains any screen on request.", "area": "smart", "status": "planned" },
+        { "id": "p1-killswitch", "title": "Garmin obeys the consent kill switch", "detail": "A tester revokes consent, syncing stops, their data is deleted from Sleeptopia, the data partner is told to disconnect and delete it, and they get a deletion certificate with the real date. Proven on real wearable data.", "area": "trust", "status": "planned" },
+        { "id": "p1-quality", "title": "Data-quality scorecard", "detail": "Nights received, missing nights and coverage for every tester, plus estimated wear time where the watch's data allows, so gaps are caught and fixed early.", "area": "trust", "status": "planned" },
+        { "id": "p1-dashboard", "title": "This dashboard", "detail": "Every phase, milestone and decision with live status, in one place Kevin and Ben both use.", "area": "trust", "status": "live" },
+        { "id": "p1-session", "title": "Hands-on session with Kevin's team", "detail": "Three people from Kevin's team use it hands-on. What trips them up gets fixed before Phase 1 closes.", "area": "trust", "status": "planned" },
+        { "id": "p1-repo", "title": "Its own private code home", "detail": "The code moves to its own private repository. All tests and an outside AI code review run on every change.", "area": "trust", "status": "planned" }
+      ],
+      "exit": [
+        "Kevin and Sleeptopia staff sign in from their own phones",
+        "At least 5 staff testers' Garmin nights sync on their own for 7 nights in a row after they connect",
+        "Questions Kevin picks up front get correct, hand-checked answers in the app and in Kevin's Claude app, and anything the privacy rules block is declined, never guessed",
+        "Revoking a tester's consent stops their sync and purges their data, with a certificate",
+        "Three of Kevin's team finish the hands-on session, and what they found is fixed",
+        "Every Phase 1 addition is shown working to Kevin, with Garmin as the wearable that must pass",
+        "Kevin signs off. Phase 1 closes and Phase 2 begins"
+      ]
+    },
+    {
+      "id": "p2",
+      "number": 2,
+      "name": "Ready for Real Patients",
+      "tagline": "The legal and security foundation, then the first 100 Sleeptopia patients.",
+      "status": "future",
+      "items": [
+        { "id": "p2-hosting", "title": "HIPAA-ready hosting and agreements", "detail": "A host, database, AI provider and Garmin partner that each sign a HIPAA business associate agreement.", "area": "trust", "status": "future" },
+        { "id": "p2-headstart", "title": "Research protocol and consent forms", "detail": "Drafted at the start of Phase 2, finalized by healthcare counsel and approved by a research review board (IRB).", "area": "trust", "status": "future" },
+        { "id": "p2-audit", "title": "Outside AI audit #4 on the live system", "detail": "AI red-team agents attack Sleeptopia's own logins, consent checks and Garmin connection. A written report and fixes follow.", "area": "trust", "status": "future" },
+        { "id": "p2-patients", "title": "First 25, then 100 real patients", "detail": "Coaches enroll Sleeptopia patients through the clinic door, with baseline nights captured before treatment.", "area": "real", "status": "future" },
+        { "id": "p2-clinical", "title": "CPAP and home sleep test data", "detail": "Therapy telemetry and sleep-test results flow in next to Garmin nights.", "area": "real", "status": "future" },
+        { "id": "p2-garmin-direct", "title": "Direct Garmin connection", "detail": "Switch to Garmin's own data feed if Garmin reopens developer approvals and Sleeptopia's application clears.", "area": "real", "status": "future" },
+        { "id": "p2-polish", "title": "Speed, accessibility and partner demo mode", "detail": "Every screen loads fast on a phone and passes accessibility checks. One switch shows a clean synthetic demo for partners.", "area": "smart", "status": "future" },
+        { "id": "p2-figma", "title": "Design system in Figma, linked to the code", "detail": "New screens are approved by Kevin as clickable prototypes before anything is built.", "area": "smart", "status": "future" }
+      ],
+      "exit": [
+        "Research review board approval and signed HIPAA agreements",
+        "100 consented patients with baseline nights captured",
+        "Consent revocation proven on live patient data"
+      ]
+    },
+    {
+      "id": "p3",
+      "number": 3,
+      "name": "Retail & the Positional Study",
+      "tagline": "The Mattress Hub door opens, and the flagship question gets its data.",
+      "status": "future",
+      "items": [
+        { "id": "p3-retail", "title": "In-store screener and mattress attach", "detail": "Shoppers take the sleep apnea screener in store; mattress purchases attach to consented records.", "area": "real", "status": "future" },
+        { "id": "p3-sensors", "title": "Under-mattress sensor cohort", "detail": "Nightly data from a sensor under the mattress, alongside Garmin, plus sleep position from a sensor picked because it reports position (most bed sensors don't).", "area": "real", "status": "future" },
+        { "id": "p3-study", "title": "Positional sleep apnea study launch", "detail": "Does mattress choice change outcomes for back-sleepers with apnea?", "area": "smart", "status": "future" },
+        { "id": "p3-apps", "title": "Native iPhone and Android apps", "detail": "Apple Health and Android health data join Garmin.", "area": "real", "status": "future" },
+        { "id": "p3-oral", "title": "Oral appliance therapy arm", "detail": "Patients using oral appliances join the comparison, starting with partner dentists.", "area": "real", "status": "future" }
+      ],
+      "exit": [
+        "Retail enrollment live in store #1",
+        "Sensor cohort at twice the size the study needs"
+      ]
+    },
+    {
+      "id": "p4",
+      "number": 4,
+      "name": "Research & Revenue",
+      "tagline": "The data starts earning through research and partners, and powers personal recommendations.",
+      "status": "future",
+      "items": [
+        { "id": "p4-mart", "title": "De-identified research database", "detail": "Certified de-identified and released only under data-use agreements.", "area": "trust", "status": "future" },
+        { "id": "p4-papers", "title": "First abstract and methods paper", "detail": "Published credibility no competitor can buy.", "area": "smart", "status": "future" },
+        { "id": "p4-recs", "title": "Personal recommendations, version 1", "detail": "Designed to stay outside FDA medical-device rules: comfort tips, CPAP habit nudges and \"talk to your provider\" prompts, never a diagnosis or a therapy change, each type checked against FDA guidance before it ships.", "area": "smart", "status": "future" },
+        { "id": "p4-partners", "title": "Partner reporting and the first sponsored study", "detail": "Mattress makers, wearable companies and dental practices pay for insight, never for patient data.", "area": "real", "status": "future" },
+        { "id": "p4-sites", "title": "Multi-site kit", "detail": "Other sleep and dental practices plug in and contribute data.", "area": "real", "status": "future" }
+      ],
+      "exit": [
+        "First sponsored study signed",
+        "First outside site contributing data",
+        "Research database open under data-use agreements"
+      ]
+    }
+  ],
+  "garmin": [
+    { "phase": "Today", "text": "Simulated wearable data" },
+    { "phase": "Phase 1", "text": "Staff testers' Garmin nights, through a data partner with Garmin access" },
+    { "phase": "Phase 2", "text": "Patients' Garmin nights, under HIPAA agreements; direct Garmin if approvals reopen" },
+    { "phase": "Phase 3", "text": "Garmin plus under-mattress sensors power the positional study" },
+    { "phase": "Phase 4", "text": "Wearable and mattress partners sponsor studies on the de-identified data" }
+  ],
+  "complete": {
+    "label": "Complete",
+    "sentence": "A patient walks in through either door, is consented in plain language, has their sleep measured before and after treatment, and, pooled with a few thousand others, teaches us something worth publishing. A partner pays for those insights under a data-use agreement, and no identifiable patient data has ever been sold or leaked.",
+    "targets": [
+      "300 to 600 consented participants, growing to 1,500 to 3,000",
+      "At least one sponsored study and one outside site",
+      "Zero breaches; every use of identifiable patient data traces to a current consent"
+    ],
+    "kevinDefinition": "Waiting on Kevin: a definition of success for the finished tool, in Kevin's own words. That answer sets the finish line; the sentence and targets above are Ben's draft."
+  },
+  "decisions": [
+    { "id": "d-success", "question": "What does success look like for the complete tool, in your words?", "owner": "Kevin", "status": "open" },
+    { "id": "d-closeout", "question": "Once built, are the Phase 1 additions enough to close Phase 1 and move to Phase 2?", "owner": "Kevin", "status": "open" },
+    { "id": "d-testers", "question": "Once Phase 1 is a go: which 5 to 10 staff will test, and do they already sleep in a Garmin watch?", "owner": "Kevin", "status": "open" },
+    { "id": "d-partner", "question": "Pick the Garmin data partner, with its Garmin access confirmed in writing", "owner": "Ben", "status": "open" }
+  ],
+  "updates": [
+    { "date": "2026-10-13", "text": "Phase 1 redefined as Live & Real: real logins, Garmin from staff testers, Claude built in. No patients until Phase 2." },
+    { "date": "2026-10-13", "text": "Garmin has paused new developer applications, with no reopening date; existing integrations keep working. Phase 1 connects through a data partner that already has Garmin access, and a direct connection waits for Garmin to reopen." },
+    { "date": "2026-10-13", "text": "This dashboard went live." },
+    { "date": "2026-10-13", "text": "The 2-minute walkthrough video is at the top of this page." }
+  ]
+}
