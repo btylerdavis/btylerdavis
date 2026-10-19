@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brief Builder · Ad Astra AI</title>
+<meta name="description" content="Answer eight questions and get a standing brief you paste into Claude or ChatGPT once. Your AI stops needing the morning briefing.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Brief your AI once.">
+<meta property="og:description" content="Eight questions, about five minutes. A standing brief you paste into Claude or ChatGPT once, so your AI stops needing the morning briefing.">
+<meta property="og:image" content="https://adastra-ai.com/adastra-og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0E2240">
+<link rel="icon" type="image/svg+xml" href="https://adastra-ai.com/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+<!-- Brand tokens come from the site's single source of truth; the fallbacks below only apply if it fails to load. -->
+<link rel="stylesheet" href="https://adastra-ai.com/brand.css">
+<style>
+:root{
+  --navy:var(--aa-navy,#0E2240); --navy-2:var(--aa-navy-grad-bottom,#0A1A31); --gold:var(--aa-gold,#C9A968); --paper:var(--aa-paper,#FBF8F2);
+  --ink:var(--aa-ink,#1C2A3A); --ink-soft:var(--aa-ink-soft,#43505F); --rule:var(--aa-rule,#D9CFBE); --dim:var(--aa-dim,#8DA0B8);
+  --serif:var(--aa-serif,'Cormorant Garamond',Georgia,serif); --sans:var(--aa-sans,'Inter',system-ui,-apple-system,sans-serif);
+  --hint:#5E6978; --wash:#F4EFE5;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--sans)}
+a{color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
+.bar :focus-visible,.hero :focus-visible,.cta :focus-visible,.dock :focus-visible,footer :focus-visible{outline-color:var(--gold)}
+.eyebrow{font:600 11px/1.3 var(--sans);letter-spacing:.19em;text-transform:uppercase}
+.in{max-width:1240px;margin:0 auto;padding-left:24px;padding-right:24px}
+
+/* header and hero sit on navy, like adastra-ai.com */
+.bar{background:var(--navy);border-bottom:1px solid rgba(201,169,104,.18)}
+.bar .in{display:flex;align-items:center;gap:16px;min-height:56px}
+.mark{display:flex;align-items:center;gap:12px;text-decoration:none}
+.mark svg{display:block;flex:none}
+.mark span{font:300 16px/1 var(--serif);letter-spacing:.19em;text-transform:uppercase;color:var(--paper)}
+.mark b{font-weight:300;color:var(--gold)}
+.bar .back{margin-left:auto;color:var(--dim);font-size:14px;text-decoration:none;padding:8px 0}
+.bar .back:hover{color:var(--paper)}
+.hero{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:var(--paper)}
+.hero .in{padding-top:64px;padding-bottom:60px}
+.hero .eyebrow{color:var(--gold)}
+.hero h1{margin:20px 0 0;font:300 clamp(46px,7.2vw,88px)/1.02 var(--serif);letter-spacing:-.015em}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p{margin:22px 0 0;max-width:620px;font-size:clamp(17px,2.2vw,19px);line-height:1.7;color:var(--dim)}
+.hero p strong{font-weight:400;color:var(--paper)}
+.acts{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center}
+.hero .acts{margin-top:32px}
+.hero .fine{margin-top:18px;font-size:14px;color:var(--dim)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 24px;border:1px solid var(--gold);background:var(--gold);color:var(--navy);font:600 15px/1.2 var(--sans);text-decoration:none;cursor:pointer;border-radius:0}
+.btn:hover{background:#DFC48C;border-color:#DFC48C}
+.btn.line{background:transparent;color:var(--navy);border-color:var(--navy)}
+.btn.line:hover{background:var(--navy);color:var(--paper)}
+.hero .btn.line,.cta .btn.line{color:var(--paper);border-color:rgba(251,248,242,.55)}
+.hero .btn.line:hover,.cta .btn.line:hover{background:var(--paper);color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:44px;padding:10px 16px;font-size:14px}
+.link{display:inline-flex;align-items:center;min-height:44px;background:none;border:0;padding:0;font:500 15px/1.3 var(--sans);color:inherit;text-decoration:underline;text-decoration-color:rgba(201,169,104,.75);text-decoration-thickness:1px;text-underline-offset:5px;cursor:pointer}
+
+/* form and live brief */
+.intro{padding-top:56px}
+.intro .eyebrow{color:var(--navy)}
+.intro h2{margin:16px 0 0;font:300 clamp(32px,4.2vw,50px)/1.08 var(--serif);color:var(--ink)}
+.intro p{margin:12px 0 0;color:var(--ink-soft);font-size:16px}
+.wrap{padding-top:36px;padding-bottom:72px;display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
+@media (min-width:980px){.wrap{grid-template-columns:minmax(0,1.2fr) minmax(380px,1fr);gap:56px;align-items:start}.out{position:sticky;top:24px}}
+.q{border-top:1px solid var(--rule);padding:28px 0;scroll-margin-top:16px}
+.q:first-of-type{border-top:0;padding-top:4px}
+.qh{display:flex;gap:16px;align-items:baseline}
+.qn{font:400 28px/1 var(--serif);color:var(--ink-soft);flex:none;width:34px;font-variant-numeric:lining-nums}
+.qt{margin:0;font:500 19px/1.4 var(--sans);color:var(--ink)}
+.qd{margin:6px 0 0 50px;font-size:15px;color:var(--ink-soft)}
+.qb{margin:16px 0 0 50px;display:grid;gap:12px}
+@media (max-width:560px){.qd,.qb{margin-left:0}.qn{width:auto}}
+.sub{display:block;margin-bottom:6px;font:600 11px/1.3 var(--sans);letter-spacing:.19em;text-transform:uppercase;color:var(--navy)}
+textarea,input[type=text]{width:100%;font:400 16px/1.5 var(--sans);color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:0;padding:12px 14px;margin:0}
+textarea{min-height:104px;resize:vertical}
+textarea::placeholder,input::placeholder{color:var(--hint);opacity:1}
+textarea:focus,input:focus{outline:2px solid var(--navy);outline-offset:0;border-color:var(--navy)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:9px 14px;border:1px solid var(--rule);background:#fff;color:var(--ink);font:500 14px/1.3 var(--sans);cursor:pointer;border-radius:0;text-align:left}
+.chip:hover{border-color:var(--navy)}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--paper)}
+.chip[aria-pressed="true"]::before{content:"✓\00a0"}
+.limit{font-size:13px;color:var(--hint)}
+
+.out{background:#fff;border:1px solid var(--rule);border-left:2px solid var(--gold);scroll-margin-top:12px}
+.out .hd{padding:20px 22px 16px;border-bottom:1px solid var(--rule)}
+.out .hd .eyebrow{color:var(--navy)}
+.out h2{margin:8px 0 0;font:400 30px/1.1 var(--serif);color:var(--ink)}
+.meter{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:14px;color:var(--ink-soft)}
+.meter .track{flex:1 1 140px;height:6px;background:var(--wash)}
+.meter .fill{height:6px;width:0;background:var(--navy);transition:width .3s}
+.meter b{color:var(--ink);font-weight:600}
+.doc{padding:18px 22px 8px}
+@media (min-width:980px){.doc{max-height:calc(100vh - 420px);min-height:180px;overflow:auto}}
+.doc h3{margin:20px 0 6px;font:600 11px/1.3 var(--sans);letter-spacing:.19em;text-transform:uppercase;color:var(--navy)}
+.doc h3:first-child{margin-top:0}
+.doc h4{margin:12px 0 4px;font:600 14px/1.4 var(--sans);color:var(--ink)}
+.doc p,.doc li{font-size:15px;line-height:1.6;color:var(--ink)}
+.doc p{margin:0 0 8px}
+.doc ul{margin:0 0 8px;padding-left:18px}
+.doc li{margin:2px 0}
+.doc blockquote{margin:6px 0 10px;padding:4px 0 4px 12px;border-left:2px solid var(--rule);color:var(--ink-soft);font-style:italic}
+.doc .empty{color:var(--ink-soft)}
+.acts2{padding:14px 22px 18px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.acts2 .count{margin-left:auto;font-size:13px;color:var(--hint)}
+.status{min-height:20px;padding:0 22px;font-size:14px;color:var(--ink-soft)}
+.raw{margin:0 22px 14px}
+.raw textarea{min-height:200px;font:400 13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+.howto{padding:16px 22px 20px;border-top:1px solid var(--rule);font-size:14px;line-height:1.65;color:var(--ink-soft)}
+.howto p{margin:0 0 8px}
+.howto b{color:var(--ink);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.exbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 16px;padding:6px 22px;background:var(--wash);border-bottom:1px solid var(--rule);font-size:14px;color:var(--ink)}
+.doc .lead{color:var(--ink-soft)}
+.privacy{margin-top:24px;padding:14px 16px;background:var(--wash);font-size:14px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+
+/* the paid version, on navy */
+.cta{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:var(--paper)}
+.cta .in{padding-top:72px;padding-bottom:72px}
+.cta .eyebrow{color:var(--gold)}
+.cta h2{margin:18px 0 0;max-width:820px;font:300 clamp(34px,4.6vw,56px)/1.06 var(--serif)}
+.cta p{margin:18px 0 0;max-width:640px;font-size:17px;line-height:1.7;color:var(--dim)}
+.cta .price{margin-top:26px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.cta .price b{font:400 40px/1 var(--serif);color:var(--gold)}
+.cta .price span{font-size:15px;color:var(--dim)}
+.cta .acts{margin-top:28px}
+.cta .link{color:var(--paper)}
+footer{background:var(--navy-2);color:var(--dim);border-top:1px solid rgba(201,169,104,.16);font-size:14px}
+footer .in{padding-top:32px;padding-bottom:36px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between}
+footer a{color:var(--dim)}
+footer a:hover{color:var(--paper)}
+
+/* phone: a slim dock that shows progress and jumps to the brief */
+.dock{display:none}
+@media (max-width:979px){
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(14,34,64,.97);color:var(--paper);border-top:1px solid rgba(201,169,104,.35);transition:transform .25s}
+  .dock.away{transform:translateY(110%)}
+  .dock .st{flex:1;min-width:0;font-size:14px;line-height:1.35;color:var(--dim)}
+  .dock .st b{display:block;color:var(--paper);font-weight:600}
+  body{padding-bottom:84px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.dock,.meter .fill{transition:none}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="in">
+    <a class="mark" href="https://adastra-ai.com/" aria-label="Ad Astra AI home">
+      <svg viewBox="0 0 64 64" width="19" height="19" aria-hidden="true"><polygon fill="#C9A968" points="32.0,2.0 34.411,26.18 38.364,25.636 37.82,29.589 62.0,32.0 37.82,34.411 38.364,38.364 34.411,37.82 32.0,62.0 29.589,37.82 25.636,38.364 26.18,34.411 2.0,32.0 26.18,29.589 25.636,25.636 29.589,26.18"/></svg>
+      <span>Ad Astra <b>AI</b></span>
+    </a>
+    <a class="back" href="https://adastra-ai.com/services">Services</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="in">
+    <div class="eyebrow">Brief Builder · about five minutes</div>
+    <h1>Brief your AI <em>once.</em></h1>
+    <p>You explain the business again every morning and fix the same misses. Answer eight questions and get a standing brief you paste into Claude or ChatGPT one time. <strong>Your AI stops needing the morning briefing.</strong></p>
+    <div class="acts">
+      <a class="btn" href="#q1">Start with question one</a>
+      <button class="btn line" type="button" id="example">Try an example first</button>
+    </div>
+    <p class="fine">Free. Private: everything you type stays in your browser.</p>
+    <noscript><p class="fine">This page builds your brief in the browser and needs JavaScript. The questions below still work as a checklist.</p></noscript>
+  </div>
+</section>
+
+<div class="in intro">
+  <div class="eyebrow">Eight questions</div>
+  <h2>Answer what you can. Skip what you can’t.</h2>
+  <p>Your brief builds as you type. Short answers in your own words beat polished ones.</p>
+</div>
+
+<main class="in wrap">
+  <form id="f" autocomplete="off" novalidate>
+    <section class="q" id="q1">
+      <div class="qh"><span class="qn" aria-hidden="true">01</span><h3 class="qt"><label for="biz">What does your business do, for whom, and where?</label></h3></div>
+      <p class="qd">One or two sentences, the way you’d say it to a new hire.</p>
+      <div class="qb"><textarea id="biz" data-k="biz" placeholder="We’re a six-person HVAC company in Wichita. We install and repair heating and air for homeowners within 40 miles."></textarea></div>
+    </section>
+
+    <section class="q" id="q2">
+      <div class="qh"><span class="qn" aria-hidden="true">02</span><h3 class="qt">You, and the work you hand to AI</h3></div>
+      <p class="qd">Who you are, then the jobs you use AI for most.</p>
+      <div class="qb">
+        <div class="two"><div><label class="sub" for="name">Your name</label><input type="text" id="name" data-k="name" autocomplete="name" placeholder="First and last name"></div><div><label class="sub" for="company">Business name</label><input type="text" id="company" data-k="company" autocomplete="organization" placeholder="As customers know it"></div></div>
+        <div><label class="sub" for="role">Your role</label><input type="text" id="role" data-k="role" placeholder="Owner and lead estimator"></div>
+        <div><span class="sub" id="usesL">What you use it for</span><div class="chips" data-chips="uses" role="group" aria-labelledby="usesL"></div></div>
+      </div>
+    </section>
+
+    <section class="q" id="q3">
+      <div class="qh"><span class="qn" aria-hidden="true">03</span><h3 class="qt"><label for="customers">Who are your customers, and what do they care about?</label></h3></div>
+      <p class="qd">What they worry about, what they ask most, and what makes them leave.</p>
+      <div class="qb"><textarea id="customers" data-k="customers" placeholder="Homeowners, mostly 35 to 70. They want it fixed today and hate surprise charges. They ask most about cost and how long it will take."></textarea></div>
+    </section>
+
+    <section class="q" id="q4">
+      <div class="qh"><span class="qn" aria-hidden="true">04</span><h3 class="qt">How do you sound?</h3></div>
+      <p class="qd">Pick up to three, then paste a few sentences you actually wrote.</p>
+      <div class="qb">
+        <div><span class="sub" id="voiceL">Your voice <span class="limit">(up to three)</span></span><div class="chips" data-chips="voice" role="group" aria-labelledby="voiceL"></div></div>
+        <div><label class="sub" for="sample">Something you wrote</label><textarea id="sample" data-k="sample" placeholder="Good news: it’s a $40 part, not a new system. We can have you cool again by four."></textarea></div>
+      </div>
+    </section>
+
+    <section class="q" id="q5">
+      <div class="qh"><span class="qn" aria-hidden="true">05</span><h3 class="qt">What does good look like?</h3></div>
+      <p class="qd">Pick the standards you want every time. Add your own below.</p>
+      <div class="qb">
+        <div class="chips" data-chips="good" role="group" aria-label="Standards"></div>
+        <div><label class="sub" for="goodMore">Anything else, one per line</label><textarea id="goodMore" data-k="goodMore" placeholder="Explain any number in one sentence a customer could repeat."></textarea></div>
+      </div>
+    </section>
+
+    <section class="q" id="q6">
+      <div class="qh"><span class="qn" aria-hidden="true">06</span><h3 class="qt"><label for="facts">Facts it must never get wrong</label></h3></div>
+      <p class="qd">Hours, service area, prices or ranges, policies, names, phone numbers. One per line.</p>
+      <div class="qb"><textarea id="facts" data-k="facts" placeholder="Open Monday to Saturday, 7 to 7&#10;Service call: $89, waived if we do the repair&#10;We serve homes within 40 miles of Wichita"></textarea></div>
+    </section>
+
+    <section class="q" id="q7">
+      <div class="qh"><span class="qn" aria-hidden="true">07</span><h3 class="qt">What does it keep getting wrong, and where are the lines?</h3></div>
+      <p class="qd">The fixes you make every time, and what it must never do. One per line.</p>
+      <div class="qb">
+        <div><label class="sub" for="wrong">It keeps…</label><textarea id="wrong" data-k="wrong" placeholder="Sounding like a robot&#10;Inventing services we don’t offer"></textarea></div>
+        <div><label class="sub" for="never">Never…</label><textarea id="never" data-k="never" placeholder="Never quote a repair price without seeing the system&#10;Never mention competitors"></textarea></div>
+      </div>
+    </section>
+
+    <section class="q" id="q8">
+      <div class="qh"><span class="qn" aria-hidden="true">08</span><h3 class="qt">How should it work with you?</h3></div>
+      <p class="qd">This is the difference between a tool you supervise and a partner you rely on.</p>
+      <div class="qb"><div class="chips" data-chips="posture" role="group" aria-label="Working style"></div></div>
+    </section>
+
+    <div class="privacy"><span>Your answers save on this device as you type and never leave it.</span><button class="link" type="button" id="clear">Clear my answers</button></div>
+  </form>
+
+  <aside class="out" id="brief" aria-labelledby="briefTitle">
+    <div class="hd">
+      <div class="eyebrow">Live preview</div>
+      <h2 id="briefTitle">Your standing brief</h2>
+      <div class="meter"><div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div><span id="meterTxt" role="status"><b>0 of 8</b> answered</span></div>
+    </div>
+    <div class="exbar" id="exbar" hidden><span>Example: a fictional financial planning practice. Your own answers are untouched.</span><button class="link" type="button" id="startMine">Start mine</button></div>
+    <div class="doc" id="doc"><p class="empty">Answer any question and your brief starts building here. Or tap <b>Try an example first</b> to see a finished one.</p></div>
+    <div class="acts2">
+      <button class="btn sm" type="button" id="copy" disabled>Copy brief</button>
+      <button class="btn sm line" type="button" id="share" disabled hidden>Share</button>
+      <button class="btn sm line" type="button" id="dl" disabled>Download</button>
+      <span class="count" id="words"></span>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="raw" id="rawBox" hidden><label class="sub" for="raw">Select all and copy</label><textarea id="raw" readonly></textarea></div>
+    <div class="howto">
+      <p><b>Where it goes.</b> In Claude, create a Project for your business and paste this into its instructions. In ChatGPT, create a Project and paste it into the project’s instructions. Every chat in that project starts already briefed.</p>
+      <p><b>Then test it</b> on something you do every week. When you catch yourself making the same fix, add it to question seven.</p>
+    </div>
+  </aside>
+</main>
+
+<section class="cta">
+  <div class="in">
+    <div class="eyebrow">The full version</div>
+    <h2>This is the starter. The AI Command Setup is the build.</h2>
+    <p>In 90 minutes, live and one-on-one, we build the whole instruction layer in your own account: standing instructions written from your business, your business knowledge, a configured project with memory, and the standard for what good output sounds like in your voice.</p>
+    <div class="price"><b>$300</b><span>90 minutes · one-on-one · screens shared</span></div>
+    <div class="acts">
+      <a class="btn" href="https://calendly.com/adastra-ai/ad-astra-ai-90-minute-build-session">Book the 90-minute session</a>
+      <a class="link" href="https://calendly.com/adastra-ai/30min">Not sure yet? Book a 30-minute scoping call</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="in">
+    <a class="mark" href="https://adastra-ai.com/" aria-label="Ad Astra AI home">
+      <svg viewBox="0 0 64 64" width="17" height="17" aria-hidden="true"><polygon fill="#C9A968" points="32.0,2.0 34.411,26.18 38.364,25.636 37.82,29.589 62.0,32.0 37.82,34.411 38.364,38.364 34.411,37.82 32.0,62.0 29.589,37.82 25.636,38.364 26.18,34.411 2.0,32.0 26.18,29.589 25.636,25.636 29.589,26.18"/></svg>
+      <span>Ad Astra <b>AI</b></span>
+    </a>
+    <span>Wichita, Kansas · <a href="https://adastra-ai.com/">adastra-ai.com</a> · <a href="https://adastra-ai.com/the-edge">The Edge newsletter</a></span>
+  </div>
+</footer>
+
+<div class="dock" id="dock">
+  <div class="st" id="dockTxt"><b>0 of 8 answered</b>Your brief builds as you type</div>
+  <a class="btn sm" href="#brief" id="dockGo">See my brief</a>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const KEY = 'aa-brief-builder-v1';
+
+// Chip options. Each use adds its own short rule block to the brief.
+const USES = [
+  ['email', 'Emails', ['Put the subject line first, then the email.', 'Keep it under 150 words unless I ask for more.', 'Make one clear ask, and put it near the top.']],
+  ['quote', 'Proposals and quotes', ['Lead with the outcome for the customer, then scope, timeline and price.', 'Use only prices and ranges from the Facts section. Mark anything else [CONFIRM: …].']],
+  ['marketing', 'Marketing posts', ['Write to one customer, not to everyone.', 'One idea per post. Give me three versions with different openings.', 'No hashtags or emoji unless I ask.']],
+  ['report', 'Reports and summaries', ['Start with the three things that matter most.', 'Always say what needs a decision. If I give you the last report, say what changed since then.', 'Put numbers in a table when there are more than three.']],
+  ['meeting', 'Meeting notes', ['Decisions, owners and dates first. Discussion last.', 'List anything left open as a question with an owner.']],
+  ['research', 'Research', ['Link only sources you actually opened. Separate what is known from what is estimated.', 'Say plainly when you are not sure.']],
+  ['plan', 'Planning and decisions', ['State the decision in one line before you analyze it.', 'Name the one risk that would change your answer.']],
+  ['reply', 'Customer replies', ['Acknowledge the issue in the first sentence.', 'Never promise anything that isn’t in the Facts section.', 'End with one next step and how to reach a person.']],
+  ['sop', 'Policies and how-tos', ['Numbered steps, one action per step, with who does it.', 'Say what to do when something goes wrong.']]
+];
+const SENDABLE = ['email', 'reply', 'marketing', 'quote'];
+const VOICE = ['Plain', 'Warm', 'Direct', 'Friendly', 'Formal', 'Confident', 'Reassuring', 'Technical', 'Concise', 'Playful'].map(v => [v.toLowerCase(), v]);
+const GOOD = [['answer', 'Lead with the answer'], ['short', 'Keep it short'], ['paras', 'Short paragraphs'], ['jargon', 'No jargon'], ['bullets', 'Bullets for three or more items'], ['next', 'End with one clear next step']];
+const POSTURE = [
+  ['ask', 'Ask before assuming', 'If a request is ambiguous, ask me one clarifying question before you start.'],
+  ['assume', 'Just do it', 'For small tasks, don’t ask. Make a sensible assumption, note it in one line and do the work.'],
+  ['push', 'Push back when I’m wrong', 'If I’m wrong or missing something, say so plainly and tell me why.'],
+  ['options', 'Options, then a recommendation', 'For decisions, give me two or three options with the trade-offs, then recommend one and say why.'],
+  ['check', 'Show your assumptions', 'Under anything important, list the assumptions you made, separate from the draft, so I can check them.']
+];
+const CHIPS = {uses: USES, voice: VOICE, good: GOOD, posture: POSTURE};
+const MAX = {voice: 3};
+const EXCLUSIVE = {ask: 'assume', assume: 'ask'};
+const TEXT = ['biz', 'company', 'name', 'role', 'customers', 'sample', 'goodMore', 'facts', 'wrong', 'never'];
+
+const blank = () => ({biz: '', company: '', name: '', role: '', customers: '', sample: '', goodMore: '', facts: '', wrong: '', never: '', uses: [], voice: [], good: [], posture: []});
+let st = blank();
+try { const saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved && typeof saved === 'object' && !Array.isArray(saved)) st = Object.assign(blank(), saved); } catch (e) {}
+// Saved answers from an older or damaged copy must not break the page: wrong types fall back to empty, unknown chips are dropped.
+(() => { const b = blank(); for (const k in b) if (Array.isArray(b[k]) ? !Array.isArray(st[k]) : typeof st[k] !== 'string') st[k] = b[k];
+  for (const k of Object.keys(st)) if (!(k in b)) delete st[k];
+  for (const g in CHIPS) st[g] = st[g].filter(v => CHIPS[g].some(o => o[0] === v)); })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+// ---------- the brief ----------
+// List markers need a space after them, so "0.75%" or "-5°F" keep their numbers.
+const lines = s => String(s || '').split(/\n+/).map(x => x.replace(/^\s*(?:[-*]\s+|•\s*|\d+[.)]\s+)/, '').trim()).filter(Boolean);
+const sent = s => { s = s.trim(); return s && !/[.!?:)\]"”]$/.test(s) ? s + '.' : s; };
+const soft = s => /^[A-Z][a-z]+\b/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s; // "Owner" -> "owner", but "CEO" and "IRS" stay
+const listJoin = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const pick = (opts, keys) => opts.filter(o => keys.includes(o[0]));
+// A hard line keeps the owner's own words when it already says "never", "don't", "avoid" and so on; a bare action gets "Never" in front.
+const hasNeg = s => /^(never|don['’]?t|do not|does not|doesn['’]?t|no|not|avoid|stop|refrain)\b/i.test(s) || /\bnever\b/i.test(s);
+const asRule = s => hasNeg(s) ? s : 'Never ' + soft(s);
+const answered = v => [v.biz.trim() || v.company.trim(), v.name.trim() || v.role.trim() || v.uses.length, v.customers.trim(), v.voice.length || v.sample.trim(), v.good.length || v.goodMore.trim(), v.facts.trim(), v.wrong.trim() || v.never.trim(), v.posture.length].filter(Boolean).length;
+
+// Sections: {h, p:[paragraphs], quote, ul:[bullets], sub:[{h, ul}]}; the first one has no heading.
+function build(v){
+  const S = [{p: [
+    'Use this for every task in this project. When my message asks for something different, follow my message. If a request would break a fact or a hard line in this brief, say so in one line and offer the closest version that doesn’t.',
+    'If you need a fact about our business that isn’t in this brief, the project files or my message, don’t guess and don’t hold up the work. Write [CONFIRM: what’s missing] in its place and list each one under the draft.'
+  ]}];
+  const who = [], name = v.name.trim(), role = v.role.trim().replace(/\.$/, ''), company = v.company.trim();
+  if (company) who.push('Business: ' + sent(company));
+  if (v.biz.trim()) who.push(...lines(v.biz).map(sent));
+  if (name && role) who.push('I’m ' + name + ', ' + soft(role) + '.');
+  else if (name) who.push('I’m ' + sent(name));
+  else if (role) who.push('My role: ' + sent(role));
+  if (who.length) S.push({h: 'Who you’re working for', p: who});
+  if (v.customers.trim()) S.push({h: 'Our customers', p: lines(v.customers).map(sent)});
+  const uses = pick(USES, v.uses);
+  if (uses.length) S.push({h: 'What I use you for', p: [sent(listJoin(uses.map((u, i) => i ? u[1].toLowerCase() : u[1])))]});
+  const voice = pick(VOICE, v.voice).map(x => x[0]);
+  if (voice.length || v.sample.trim()){
+    const sec = {h: 'How we sound', p: []};
+    if (voice.length) sec.p.push('Voice: ' + listJoin(voice) + '.');
+    if (v.sample.trim()){ sec.p.push('This is how I actually write. Match the voice, don’t reuse the sentences:'); sec.quote = v.sample.trim(); }
+    S.push(sec);
+  }
+  const good = pick(GOOD, v.good).map(x => sent(x[1])).concat(lines(v.goodMore).map(sent));
+  if (good.length) S.push({h: 'What good looks like', ul: good});
+  const facts = lines(v.facts).map(sent);
+  if (facts.length) S.push({h: 'Facts you must get right', ul: facts});
+  const wrong = lines(v.wrong).map(sent);
+  if (wrong.length) S.push({h: 'Stop doing this', ul: wrong});
+  const never = lines(v.never).map(x => sent(asRule(x)));
+  if (never.length) S.push({h: 'Hard lines', ul: never});
+  if (v.uses.some(u => SENDABLE.includes(u))){
+    const ul = ['Write anything I’ll send as plain text, ready to paste. No Markdown symbols like ** or #.', 'Keep notes and assumptions under the draft, never inside it. A [CONFIRM: …] placeholder is the only thing that may appear inside a draft.'];
+    if (name) ul.push('Sign off as ' + name + (company ? ', ' + company : '') + '.');
+    S.push({h: 'Drafts I’ll send', ul});
+  }
+  const posture = pick(POSTURE, v.posture).map(x => x[2]);
+  if (posture.length) S.push({h: 'How to work with me', ul: posture});
+  if (uses.length){
+    const sub = uses.map(u => ({h: u[1], ul: u[2].slice()}));
+    const plan = sub.find(s => s.h === 'Planning and decisions');
+    if (plan && !v.posture.includes('options')) plan.ul.splice(1, 0, 'Give me two or three options with the trade-offs, then your recommendation.');
+    S.push({h: 'By task', sub});
+  }
+  return S;
+}
+
+function toMD(S){
+  const out = ['# Standing brief'];
+  for (const s of S){
+    out.push('');
+    if (s.h) out.push('## ' + s.h);
+    (s.p || []).forEach((p, i) => { if (i) out.push(''); out.push(p); });
+    if (s.quote) out.push('', s.quote.split(/\n/).map(l => '> ' + l).join('\n'));
+    if (s.ul && s.ul.length){ if ((s.p || []).length || s.quote) out.push(''); s.ul.forEach(li => out.push('- ' + li)); }
+    (s.sub || []).forEach(x => { out.push('', '### ' + x.h); x.ul.forEach(li => out.push('- ' + li)); });
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+function toHTML(S){
+  return S.map(s => (s.h ? '<h3>' + esc(s.h) + '</h3>' : '') +
+    (s.p || []).map(p => '<p' + (s.h ? '' : ' class="lead"') + '>' + esc(p) + '</p>').join('') +
+    (s.quote ? '<blockquote>' + esc(s.quote).replace(/\n/g, '<br>') + '</blockquote>' : '') +
+    (s.ul && s.ul.length ? '<ul>' + s.ul.map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>' : '') +
+    (s.sub || []).map(x => '<h4>' + esc(x.h) + '</h4><ul>' + x.ul.map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>').join('')).join('');
+}
+
+// ---------- UI ----------
+// A fictional practice. It is only ever previewed: it never replaces or saves over the visitor's own answers.
+const EXAMPLE = {
+  biz: 'We’re a six-person, fee-only financial planning practice in Wichita, Kansas. We help families within about an hour of town plan for retirement, college and taxes. We don’t sell insurance or investment products.',
+  company: 'Larkspur Planning',
+  name: 'Jordan Lee',
+  role: 'Owner and lead planner',
+  uses: ['email', 'reply', 'report', 'meeting', 'marketing'],
+  customers: 'Couples and families, mostly 45 to 65, with $500,000 to $3 million saved. They worry about running out of money and about making a mistake they can’t undo. They ask most about when they can retire and how much they can spend. They leave when they feel rushed or sold to.',
+  voice: ['warm', 'plain', 'reassuring'],
+  sample: 'Good news first: you’re in better shape than you think. There are two things I’d like us to decide before year-end, and neither is urgent. I’ll walk you through both on Thursday.',
+  good: ['answer', 'paras', 'jargon', 'next'],
+  goodMore: 'Explain any number in one sentence a client could repeat to their spouse.',
+  facts: 'Office hours: Monday to Thursday 8 to 5, Friday 8 to noon\nWe take new clients within about an hour of Wichita\nPlanning fee: a flat annual fee from $3,000, quoted after a first meeting\nThe first meeting is free and takes about an hour\nMain line: (316) 555-0142',
+  wrong: 'Sounding like a sales pitch\nUsing words like delve, leverage and robust\nWriting three paragraphs when two sentences would do\nOffering services we don’t provide, like insurance',
+  never: 'In marketing and public posts, never give specific investment, tax or legal advice\nNever promise or imply returns\nNever name a client or share a client’s details\nNever say we are the best or the cheapest',
+  posture: ['ask', 'push', 'check']
+};
+const LEVELS = [[0, 'Nothing yet'], [1, 'Too thin to help'], [3, 'Getting useful'], [6, 'Strong'], [8, 'Ready to paste']];
+let md = '', lastKey = '', exampleOn = false;
+function render(){
+  const v = exampleOn ? Object.assign(blank(), EXAMPLE) : st, n = answered(v), lvl = LEVELS.filter(l => n >= l[0]).pop()[1];
+  $('#exbar').hidden = !exampleOn;
+  $('#fill').style.width = (n / 8 * 100) + '%';
+  const key = exampleOn ? 'ex' : String(n);
+  if (key !== lastKey){ $('#meterTxt').innerHTML = exampleOn ? '<b>Example</b> · 8 of 8 answered' : '<b>' + n + ' of 8</b> answered · ' + esc(lvl); lastKey = key; }
+  $('#dockTxt').innerHTML = exampleOn ? '<b>Viewing an example</b>Your own answers are untouched' : '<b>' + n + ' of 8 answered</b>' + (n ? esc(lvl) : 'Your brief builds as you type');
+  if (!n){
+    md = '';
+    $('#doc').innerHTML = '<p class="empty">Answer any question and your brief starts building here. Or tap <b>Try an example first</b> to see a finished one.</p>';
+    $('#words').textContent = '';
+  } else {
+    const S = build(v); md = toMD(S);
+    $('#doc').innerHTML = toHTML(S);
+    $('#words').textContent = md.split(/\s+/).filter(w => /\w/.test(w)).length + ' words';
+  }
+  const can = n > 0 && !exampleOn;
+  ['#copy', '#dl', '#share'].forEach(id => { $(id).disabled = !can; });
+  if (!$('#rawBox').hidden) $('#raw').value = can ? md : '';
+}
+function leaveExample(){ if (exampleOn){ exampleOn = false; lastKey = ''; } }
+
+function syncInputs(){
+  TEXT.forEach(k => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.value !== st[k]) el.value = st[k]; });
+  document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(st[b.dataset.group].includes(b.dataset.v))));
+}
+
+Object.entries(CHIPS).forEach(([group, opts]) => {
+  const box = document.querySelector('[data-chips="' + group + '"]');
+  opts.forEach(([v, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = label; b.dataset.group = group; b.dataset.v = v; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      leaveExample();
+      const cur = st[group];
+      if (cur.includes(v)) st[group] = cur.filter(x => x !== v);
+      else {
+        // At the limit the oldest pick makes way, so the tap always does something visible.
+        st[group] = (MAX[group] && cur.length >= MAX[group] ? cur.slice(1) : cur).concat(v);
+        if (group === 'posture' && EXCLUSIVE[v]) st[group] = st[group].filter(x => x !== EXCLUSIVE[v]);
+      }
+      syncInputs(); save(); render();
+    });
+    box.appendChild(b);
+  });
+});
+TEXT.forEach(k => { const el = document.querySelector('[data-k="' + k + '"]'); el.addEventListener('input', () => { leaveExample(); st[k] = el.value; save(); render(); }); });
+// There is nothing to submit; return in a one-line field must not reload the page.
+$('#f').addEventListener('submit', e => e.preventDefault());
+
+let stTimer;
+function status(msg){ const s = $('#status'); s.textContent = msg; clearTimeout(stTimer); stTimer = setTimeout(() => { s.textContent = ''; }, 4000); }
+
+$('#copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(md); status('Copied. Paste it into your project’s instructions.'); }
+  catch (e) {
+    const box = $('#rawBox'), raw = $('#raw'); box.hidden = false; raw.value = md; raw.focus(); raw.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {}
+    status(ok ? 'Copied. Paste it into your project’s instructions.' : 'Your brief is selected below. Copy it from there.');
+  }
+});
+$('#dl').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([md], {type: 'text/markdown'}));
+  const a = document.createElement('a'); a.href = url; a.download = 'standing-brief.md'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000); status('Saved as standing-brief.md.');
+});
+if (navigator.share){
+  $('#share').hidden = false;
+  $('#share').addEventListener('click', async () => { try { await navigator.share({title: 'My AI standing brief', text: md}); } catch (e) {} });
+}
+$('#clear').addEventListener('click', () => {
+  if (!answered(st) || confirm('Clear all your answers? This can’t be undone.')){ leaveExample(); st = blank(); try { localStorage.removeItem(KEY); } catch (e) {} syncInputs(); render(); status('Cleared.'); }
+});
+const smooth = () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+$('#example').addEventListener('click', () => {
+  exampleOn = true; lastKey = ''; render();
+  $('#brief').scrollIntoView({behavior: smooth(), block: 'start'});
+});
+$('#startMine').addEventListener('click', () => { leaveExample(); render(); $('#q1').scrollIntoView({behavior: smooth(), block: 'start'}); });
+
+// Phone dock steps aside once the brief itself is on screen.
+if ('IntersectionObserver' in window){
+  new IntersectionObserver(es => es.forEach(e => $('#dock').classList.toggle('away', e.isIntersecting)), {threshold: 0.12}).observe($('#brief'));
+}
+
+syncInputs(); render();
+})();
+</script>
+</body>
+</html>
