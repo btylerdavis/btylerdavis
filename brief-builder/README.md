@@ -1,6 +1,6 @@
 # Brief Builder
 
-The Brief Builder is a free Ad Astra AI tool. A business owner answers eight questions and gets a "standing brief": instructions they paste once into a Claude Project or a ChatGPT Project, so their AI stops needing the morning briefing. It leads to the AI Command Setup ($300).
+The Brief Builder is a free Ad Astra AI tool. A business owner answers eight questions and gets a "standing brief": instructions they paste once into a Claude Project or a ChatGPT Project, so their AI stops needing the morning briefing. It leads to the AI Command Setup ($500).
 
 It is live at **https://adastra-brief-builder.vercel.app**.
 
